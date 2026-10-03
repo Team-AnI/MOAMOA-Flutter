@@ -213,6 +213,7 @@ gh issue create \
 | `[DOCS]` | 문서, 가이드라인 | `[DOCS] 코드 스타일 가이드라인 정의` |
 | `[CHORE]` | 빌드, 설정, 의존성 | `[CHORE] Flutter 버전 업데이트` |
 | `[TEST]` | 테스트 | `[TEST] 로그인 ViewModel 테스트 작성` |
+| `[CI]` | CI/CD 설정 | `[CI] PR CI 구성` |
 
 #### 1-3. 본문 템플릿
 
