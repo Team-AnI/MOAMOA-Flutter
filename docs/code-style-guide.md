@@ -1,5 +1,7 @@
 # 코드 스타일 가이드라인
 
+현재 확정된 기술 스택(Flutter, MVVM Feature-First + Layered Architecture, Dio, Riverpod[Inline], Stream + StreamProvider, flutter_secure_storage/shared_preferences, go_router, flutter_lints)을 기준으로 작성한 코드 컨벤션입니다. 기본 스타일은 [Effective Dart: Style](https://dart.dev/effective-dart/style)을 따르고, 프로젝트에 특화된 부분만 아래에 추가로 정의합니다.
+
 ## 1. 네이밍 규칙
 
 **파일명**: snake_case + 역할 접미사
@@ -37,33 +39,12 @@ final scheduleListProvider =
     AsyncNotifierProvider<ScheduleListNotifier, List<Schedule>>(ScheduleListNotifier.new);
 ```
 
-## 2. 폴더/파일 구성 규칙
+## 2. 파일 구성 규칙
 
-```
-lib/
-  core/
-    network/     # Dio 설정, interceptor
-    router/      # go_router 설정
-    storage/     # secure_storage, shared_preferences 래퍼
-  features/
-    schedule/
-      presentation/
-        pages/
-        widgets/
-        providers/
-      domain/
-        entities/
-        repositories/
-        usecases/
-      data/
-        datasources/
-        repositories/
-        models/
-```
+> 전체 폴더 구조(Feature-First + Layered Architecture)는 [프로젝트 아키텍처](../README.md#프로젝트-아키텍처) 섹션을 따릅니다. 여기서는 그 구조 안에서 파일을 나누는 기준만 정의합니다.
 
-- 폴더 하나(`features/<이름>`)는 도메인 하나를 뜻합니다 (예: `schedule`, `notice`, `attendance`).
-- 의존 방향은 `presentation → domain ← data`로 고정합니다. domain은 data와 presentation을 모릅니다.
 - **위젯 분리 기준**: `build()` 내부가 2 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
+- 파일 하나에는 public 클래스 1개만 둡니다 (private 헬퍼 위젯/클래스는 예외).
 
 ## 3. import 순서
 
