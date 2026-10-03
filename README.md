@@ -178,8 +178,9 @@ flutter run
 
 #### 1-1. 등록 방법
 
-1. 저장소의 [Issues 탭](https://github.com/Team-AnI/MOAMOA-Flutter/issues) → **New issue** 를 클릭합니다.
-2. 아래 형식에 맞춰 **제목**과 **본문**을 작성합니다.
+1. 저장소의 [Issues 탭](https://github.com/Team-AnI/MOAMOA-Flutter/issues) → **New issue** 를 클릭하고, 작업 종류에 맞는 템플릿을 선택합니다.
+   - ✨ 기능 (FEAT) / 🐞 버그 (FIX) / 📚 문서 (DOCS) / 🛠 기타 작업 (REFACTOR, DESIGN, CHORE, TEST, CI)
+2. 템플릿에 채워진 형식에 맞춰 **제목**과 **본문**을 작성합니다.
 3. 오른쪽 사이드바에서 다음 항목을 설정합니다.
    - **Assignees**: 작업할 담당자 (본인)
    - **Labels**: 작업 종류 (아래 1-4 참고)
@@ -216,6 +217,8 @@ gh issue create \
 | `[CI]` | CI/CD 설정 | `[CI] PR CI 구성` |
 
 #### 1-3. 본문 템플릿
+
+> 이슈 템플릿은 `.github/ISSUE_TEMPLATE/` 에 있으며, New issue 에서 선택하면 자동으로 채워집니다.
 
 ```markdown
 ## 📝 설명
@@ -352,6 +355,8 @@ Close #12
 예시: `feat: 소셜 로그인 기능 구현 (#12)`
 
 #### 3-2. 본문 템플릿
+
+> PR 템플릿은 `.github/pull_request_template.md` 에 있으며, PR 생성 시 본문에 자동으로 채워집니다.
 
 ```markdown
 ## 📌 관련 이슈
