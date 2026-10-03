@@ -10,7 +10,7 @@ domain
 data
 ```
 
-### 1. Presentation Layer
+### 1. Layers
 
 UI 및 화면 상태를 담당합니다.
 
@@ -163,7 +163,7 @@ final userProvider =
 
 ```dart
 @riverpod
-Future<User> user(Ref ref) async {
+Future<User> user(UserRef ref) async {
   // TODO: implement
 }
 ```
