@@ -9,9 +9,10 @@
 # 하는 일:
 #   1. Flutter / Dart / JDK / (macOS) Xcode, CocoaPods 버전 점검
 #   2. upstream remote 등록 (없을 경우)
-#   3. flutter pub get
-#   4. (macOS) pod install
-#   5. flutter doctor 결과 출력
+#   3. git hooks 설치, GitHub CLI 확인
+#   4. flutter pub get
+#   5. (macOS) pod install
+#   6. flutter doctor 결과 출력
 
 set -euo pipefail
 
@@ -150,6 +151,33 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   fi
 else
   warn "git 저장소가 아닙니다."
+fi
+
+# ---------------------------------------------------------------------------
+# 4-1. 자동화 도구 (git hooks / GitHub CLI)
+# ---------------------------------------------------------------------------
+step "자동화 도구 확인"
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && [[ -d .githooks ]]; then
+  if [[ "$(git config core.hooksPath || true)" == ".githooks" ]]; then
+    ok "git hooks 설치됨 (.githooks)"
+  elif $CHECK_ONLY; then
+    warn "git hooks 가 설치되어 있지 않습니다. (설치: make hooks)"
+  else
+    git config core.hooksPath .githooks
+    chmod +x .githooks/*
+    ok "git hooks 설치 완료 (.githooks)"
+  fi
+fi
+
+if command -v gh >/dev/null 2>&1; then
+  if gh auth status >/dev/null 2>&1; then
+    ok "GitHub CLI $(gh --version | head -n 1 | awk '{print $3}') (로그인됨)"
+  else
+    warn "GitHub CLI 로그인이 필요합니다. (gh auth login)"
+  fi
+else
+  warn "GitHub CLI(gh) 가 없습니다. scripts/start.sh, scripts/pr.sh 에 필요합니다. (설치: brew install gh)"
 fi
 
 # ---------------------------------------------------------------------------
