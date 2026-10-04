@@ -131,6 +131,19 @@ flutter run
 
 > ⚠️ `android/local.properties` 등 로컬 환경 파일은 커밋하지 않습니다.
 
+#### 1-8. 자동화 도구
+
+팀 컨벤션을 자동으로 지켜주는 도구입니다. `make setup` (또는 `make hooks`) 한 번이면 설치됩니다.
+**자세한 사용법은 [Wiki - 개발 자동화 도구](https://github.com/Team-AnI/MOAMOA-Flutter/wiki/개발-자동화-도구) 를 참고하세요.**
+
+| 도구 | 하는 일 |
+| --- | --- |
+| `make start ISSUE=12 NAME=login-ui` | 이슈 번호로 컨벤션에 맞는 브랜치 생성 + 담당자 지정 |
+| `make pr` | 현재 브랜치로 컨벤션에 맞는 PR 생성 |
+| git hook `commit-msg` | 커밋 메시지에 `(#이슈번호)` 자동 추가 + 형식 검사 |
+| git hook `pre-push` | push 전 format / analyze 검사, main 직접 push 차단 |
+| `make` | 자주 쓰는 명령어 목록 (`make check`, `make format`, `make clean` …) |
+
 ### 2. 작업 흐름
 
 1. 작업 전 **Issue** 를 생성하고 담당자를 지정합니다. ([이슈 등록 방법](#1-이슈issue-등록))
@@ -139,10 +152,10 @@ flutter run
    git checkout main
    git pull upstream main
    ```
-3. Issue 번호를 포함한 브랜치를 생성합니다.
+3. Issue 번호를 포함한 브랜치를 생성합니다. (`make start ISSUE=<번호> NAME=<설명>` 으로 1~3 한 번에 가능)
 4. 작업 후 커밋하고, 본인 Fork 로 push 합니다.
-5. `upstream/main` 을 대상으로 **Pull Request** 를 생성합니다.
-6. 리뷰어 **1명 이상 Approve** 후 머지합니다.
+5. `upstream/main` 을 대상으로 **Pull Request** 를 생성합니다. (`make pr` 로 push + PR 생성 가능)
+6. 메인테이너가 리뷰어로 자동 지정되며, **1명 이상 Approve** 후 머지합니다.
 
 ### 3. 브랜치 규칙
 

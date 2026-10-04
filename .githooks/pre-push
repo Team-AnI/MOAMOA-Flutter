@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# pre-push hook
+#   1. main 브랜치로 직접 push 차단 (서버에서도 막히지만 미리 알려줌)
+#   2. CI 와 같은 검사(dart format / flutter analyze)를 push 전에 실행
+#
+# 건너뛰기: git push --no-verify  또는  SKIP_HOOKS=1 git push ...
+# 테스트까지 실행: PRE_PUSH_TEST=1 git push ...
+
+set -euo pipefail
+
+[[ "${SKIP_HOOKS:-0}" == "1" ]] && exit 0
+
+if [[ -t 1 ]]; then RED=$'\033[31m'; GREEN=$'\033[32m'; BLUE=$'\033[34m'; RESET=$'\033[0m'; else RED=""; GREEN=""; BLUE=""; RESET=""; fi
+
+# 1. main 직접 push 차단 (stdin: <local ref> <local sha> <remote ref> <remote sha>)
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    echo "${RED}✗ main 브랜치에는 직접 push 할 수 없습니다. 작업 브랜치에서 PR 을 올려주세요.${RESET}" >&2
+    echo "  브랜치 만들기: scripts/start.sh <이슈번호> <설명>" >&2
+    exit 1
+  fi
+done
+
+cd "$(git rev-parse --show-toplevel)"
+
+if ! command -v flutter >/dev/null 2>&1; then
+  echo "! flutter 명령어가 없어 push 전 검사를 건너뜁니다."
+  exit 0
+fi
+
+fail() {
+  echo >&2
+  echo "${RED}✗ $1${RESET}" >&2
+  echo "  $2" >&2
+  echo "  정말 건너뛰어야 한다면: git push --no-verify" >&2
+  exit 1
+}
+
+# 2. 포맷 검사
+echo "${BLUE}==>${RESET} push 전 검사: dart format"
+dart format --output=none --set-exit-if-changed . >/dev/null \
+  || fail "포맷이 맞지 않는 파일이 있습니다." "수정: dart format .  (또는 make format) 후 커밋해주세요."
+
+# 3. 정적 분석
+echo "${BLUE}==>${RESET} push 전 검사: flutter analyze"
+flutter analyze --no-pub \
+  || fail "flutter analyze 에서 문제가 발견되었습니다." "위 내용을 수정 후 커밋해주세요."
+
+# 4. 테스트 (선택)
+if [[ "${PRE_PUSH_TEST:-0}" == "1" ]]; then
+  echo "${BLUE}==>${RESET} push 전 검사: flutter test"
+  flutter test --no-pub || fail "테스트가 실패했습니다." "flutter test 로 확인 후 수정해주세요."
+fi
+
+echo "${GREEN}✓${RESET} push 전 검사 통과"
