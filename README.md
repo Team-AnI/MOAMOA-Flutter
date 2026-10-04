@@ -142,7 +142,7 @@ flutter run
 3. Issue 번호를 포함한 브랜치를 생성합니다.
 4. 작업 후 커밋하고, 본인 Fork 로 push 합니다.
 5. `upstream/main` 을 대상으로 **Pull Request** 를 생성합니다.
-6. 메인테이너가 리뷰어로 자동 지정되며, **1명 이상 Approve** 후 머지합니다.
+6. 리뷰어 **1명 이상 Approve** 후 머지합니다.
 
 ### 3. 브랜치 규칙
 
