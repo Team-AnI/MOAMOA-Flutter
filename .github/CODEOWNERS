@@ -1,0 +1,4 @@
+# 모든 PR 에 저장소 메인테이너(moamoa-reviewers 팀)를 리뷰어로 자동 지정합니다.
+# PR 작성자 본인은 자동으로 제외됩니다.
+# 메인테이너 변경: GitHub → Team-AnI → Teams → moamoa-reviewers 에서 멤버 수정 (이 파일은 수정 불필요)
+* @Team-AnI/moamoa-reviewers
