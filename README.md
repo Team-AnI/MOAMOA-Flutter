@@ -389,6 +389,19 @@ Close #12
 - 담당자(Assignee)는 본인, 리뷰어(Reviewers)는 1명 이상 지정합니다.
 - 머지는 리뷰어 1명 이상 Approve 후, 작성자가 직접 합니다.
 
+#### 3-4. CI (GitHub Actions)
+
+PR 을 올리면 아래 검사가 자동으로 실행되며, **모두 통과해야 머지할 수 있습니다.**
+
+| 워크플로우 | 검사 내용 | 실패 시 |
+| --- | --- | --- |
+| `CI / Format / Analyze / Test` | `dart format`, `flutter analyze`, `flutter test` | 로컬에서 같은 명령어로 확인 후 수정 |
+| `CI / Build Android` | `flutter build apk --debug` | Gradle / 네이티브 설정 확인 |
+| `PR Title / PR Title Convention` | PR 제목이 `<type>: <subject> (#이슈번호)` 형식인지 | PR 제목 수정 (재실행 자동) |
+
+- 워크플로우 파일: `.github/workflows/`
+- CI 의 Flutter 버전은 `ci.yml` 의 `FLUTTER_VERSION` 으로 고정되어 있으며, 요구 버전이 바뀌면 함께 수정합니다.
+
 ---
 
 ## 프로젝트 아키텍처
