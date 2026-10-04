@@ -142,7 +142,7 @@ flutter run
 3. Issue 번호를 포함한 브랜치를 생성합니다.
 4. 작업 후 커밋하고, 본인 Fork 로 push 합니다.
 5. `upstream/main` 을 대상으로 **Pull Request** 를 생성합니다.
-6. 리뷰어 **1명 이상 Approve** 후 머지합니다.
+6. 메인테이너가 리뷰어로 자동 지정되며, **1명 이상 Approve** 후 머지합니다.
 
 ### 3. 브랜치 규칙
 
@@ -386,7 +386,10 @@ Close #12
 - base 브랜치는 `upstream/main` 입니다.
 - 하나의 PR 에는 하나의 목적만 담고, 가능한 작은 단위로 올립니다.
 - 작업 중인 PR 은 **Draft PR** 로 올리고, 리뷰 가능할 때 Ready for review 로 전환합니다.
-- 담당자(Assignee)는 본인, 리뷰어(Reviewers)는 1명 이상 지정합니다.
+- 담당자(Assignee)는 본인으로 지정합니다.
+- 리뷰어는 `.github/CODEOWNERS` 에 따라 **메인테이너(`@Team-AnI/moamoa-reviewers`)가 자동으로 지정**됩니다. (작성자 본인 제외)
+  - 메인테이너: @SangWook16074, @wjddns0122, @seongeunii, @yhKim26
+  - 필요하면 다른 팀원을 리뷰어로 추가할 수 있습니다.
 - 머지는 리뷰어 1명 이상 Approve 후, 작성자가 직접 합니다.
 
 #### 3-4. CI (GitHub Actions)
