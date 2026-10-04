@@ -1,0 +1,31 @@
+# PR 제목이 README 의 PR 메시지 컨벤션을 따르는지 검사합니다.
+#   <type>: <subject> (#이슈번호)   예) feat: 소셜 로그인 기능 구현 (#12)
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    name: PR Title Convention
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Check PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|refactor|style|design|test|docs|chore|ci|rename|remove): .+ \(#[0-9]+\)$'
+          if [[ "$TITLE" =~ $pattern ]]; then
+            echo "✅ PR 제목이 컨벤션을 따릅니다: $TITLE"
+          else
+            echo "::error::PR 제목이 컨벤션과 다릅니다: '$TITLE'"
+            echo "형식: <type>: <subject> (#이슈번호)"
+            echo "예시: feat: 소셜 로그인 기능 구현 (#12)"
+            echo "type: feat, fix, refactor, style, design, test, docs, chore, ci, rename, remove"
+            exit 1
+          fi
