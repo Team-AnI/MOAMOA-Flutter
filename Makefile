@@ -61,7 +61,7 @@ start: ## 이슈로 작업 시작  예) make start ISSUE=12 NAME=login-ui
 	@test -n "$(ISSUE)" || (echo "사용법: make start ISSUE=<이슈번호> NAME=<영문설명>"; exit 1)
 	@./scripts/start.sh $(ISSUE) $(NAME)
 
-pr: ## 현재 브랜치로 PR 생성  예) make pr REVIEWER=gsmin02
+pr: ## 현재 브랜치로 PR 생성 (리뷰어 자동 지정, 추가: REVIEWER=아이디)
 	@./scripts/pr.sh $(if $(REVIEWER),-r $(REVIEWER))
 
 pr-draft: ## 현재 브랜치로 Draft PR 생성

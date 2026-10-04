@@ -20,7 +20,8 @@ ${BOLD}사용법${RESET}
 
 ${BOLD}옵션${RESET}
   -d, --draft               Draft PR 로 생성 (작업 중일 때)
-  -r, --reviewer <id,...>   리뷰어 지정 (GitHub 아이디, 쉼표로 여러 명)
+  -r, --reviewer <id,...>   리뷰어 추가 지정 (GitHub 아이디, 쉼표로 여러 명)
+                            메인테이너는 CODEOWNERS 로 자동 지정되므로 생략 가능
   -T, --title <제목>        PR 제목의 subject 직접 지정 (기본: 이슈 제목)
   -w, --web                 PR 생성 후 브라우저로 열기
   -n, --dry-run             실제로 실행하지 않고 실행할 명령어만 출력
@@ -30,7 +31,7 @@ ${BOLD}예시${RESET}
   scripts/pr.sh                       # 브랜치 feature/#12-login-ui, 이슈 "[FEAT] 로그인 화면 구현"
                                       # → PR 제목 "feat: 로그인 화면 구현 (#12)"
   scripts/pr.sh -d                    # Draft PR
-  scripts/pr.sh -r gsmin02,stdiodh    # 리뷰어 지정
+  scripts/pr.sh -r gsmin02,stdiodh    # 메인테이너 외 리뷰어 추가
   make pr                             # Makefile 로 실행
 EOF
 }
@@ -126,4 +127,4 @@ fi
 echo
 ok "PR 생성 완료"
 echo "  PR 본문의 '작업 내용', '리뷰 요청 사항' 을 채워주세요. (gh pr edit --body-file 또는 웹에서 수정)"
-[[ -n "$REVIEWERS" ]] || warn "리뷰어가 지정되지 않았습니다. (scripts/pr.sh -r <아이디> 또는 웹에서 지정)"
+echo "  리뷰어: 메인테이너(@Team-AnI/moamoa-reviewers)가 CODEOWNERS 로 자동 지정됩니다.${REVIEWERS:+ (추가: $REVIEWERS)}"
