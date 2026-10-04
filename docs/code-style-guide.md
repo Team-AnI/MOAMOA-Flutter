@@ -43,26 +43,23 @@ final scheduleListProvider =
 
 > 전체 폴더 구조(Feature-First + Layered Architecture)는 [프로젝트 아키텍처](../README.md#프로젝트-아키텍처) 섹션을 따릅니다. 여기서는 그 구조 안에서 파일을 나누는 기준만 정의합니다.
 
-- **위젯 분리 기준**: `build()` 내부가 2 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
+- **위젯 분리 기준**: `build()` 내부가 3~4 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
 - 파일 하나에는 public 클래스 1개만 둡니다 (private 헬퍼 위젯/클래스는 예외).
 
 ## 3. import 순서
 
 1. `dart:` core 라이브러리
-2. `package:flutter` SDK
-3. 외부 패키지 (`package:dio`, `package:flutter_riverpod` 등, 알파벳순)
-4. 프로젝트 내부 import
+2. `package:` 라이브러리 (Flutter SDK, 외부 패키지, 프로젝트 패키지 포함, 알파벳순)
+3. 상대 경로 import (사용하는 경우)
 
 각 그룹 사이는 빈 줄 한 줄로 구분합니다.
 
 ```dart
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 ```
 
