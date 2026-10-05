@@ -46,6 +46,7 @@ jobs:
         env:
           DISCORD_SCRUM_WEBHOOK: ${{ secrets.DISCORD_SCRUM_WEBHOOK }}
           PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_MENTION: ${{ vars.DISCORD_MENTION }}
           FORCE: ${{ inputs.force }}
           DRY_RUN: ${{ inputs.dry_run }}
