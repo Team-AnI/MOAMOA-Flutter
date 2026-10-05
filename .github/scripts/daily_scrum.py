@@ -8,6 +8,7 @@ Discord 웹훅으로 스크럼 안내 + 프로젝트 보드 요약 + 보드 이�
 환경 변수
   DISCORD_SCRUM_WEBHOOK  (필수) Discord 웹훅 URL
   PROJECT_READ_TOKEN     (선택) 프로젝트 보드를 읽을 GitHub 토큰. 없으면 보드 요약 생략
+  DISCORD_BOT_TOKEN      (선택) Discord 봇 토큰. 있으면 알림 메시지에 스레드를 자동으로 엽니다
   DISCORD_MENTION        (선택) 멘션. 역할 ID(숫자) / "here" / "everyone" / "none". 기본 "here"
   FORCE                  (선택) "true" 면 주말 / 공휴일에도 전송
   DRY_RUN                (선택) "true" 면 전송하지 않고 메시지 내용만 출력
@@ -35,6 +36,8 @@ SUMMARY_STATUSES = ["In Progress", "In Review"]
 STATUS_EMOJI = {"In Progress": "🔨", "In Review": "👀", "Todo": "📋"}
 
 EMBED_COLOR = 0x02569B  # Flutter blue
+DISCORD_API = "https://discord.com/api/v10"
+USER_AGENT = "MOAMOA-Bot (GitHub Actions)"
 
 # 복사해서 채워 넣을 스크럼 양식 (모바일 "텍스트 복사" 가 되도록 embed 가 아닌 본문에 넣음)
 SCRUM_TEMPLATE = """```
@@ -190,7 +193,7 @@ def build_message(today: dt.date, fields: list[dict] | None, board_error: str | 
     content, allowed = mention_content()
     description = (
         "플러터팀 데일리 스크럼 진행하겠습니다.\n"
-        "위 양식을 복사해서 **어제 한 일 / 오늘 할 일 / 논의할 점 / 멘토 질문** 공유해주세요! 🙌"
+        "위 양식을 복사해서 **스레드**에 어제 한 일 / 오늘 할 일 / 논의할 점 / 멘토 질문을 공유해주세요! 🙌"
     )
     embed = {
         "title": "☀️ 플러터팀 데일리 스크럼",
@@ -219,19 +222,21 @@ def build_message(today: dt.date, fields: list[dict] | None, board_error: str | 
     }
 
 
-def post(webhook: str, payload: dict) -> None:
-    """웹훅으로 전송합니다. 링크 버튼이 거부되면 버튼 없이 다시 보냅니다."""
-    def send(url: str, body: dict) -> None:
+def post(webhook: str, payload: dict) -> dict:
+    """웹훅으로 전송하고 보낸 메시지를 반환합니다. 링크 버튼이 거부되면 버튼 없이 다시 보냅니다."""
+    def send(url: str, body: dict) -> dict:
         req = urllib.request.Request(
             url,
             data=json.dumps(body).encode(),
-            headers={"Content-Type": "application/json", "User-Agent": "MOAMOA-Bot (GitHub Actions)"},
+            headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
         )
-        urllib.request.urlopen(req, timeout=20).close()
+        with urllib.request.urlopen(req, timeout=20) as res:
+            return json.load(res)
 
-    sep = "&" if "?" in webhook else "?"
+    # wait=true: 보낸 메시지(id, channel_id)를 응답으로 받아 스레드를 열 때 사용
+    webhook = f"{webhook}{'&' if '?' in webhook else '?'}wait=true"
     try:
-        send(f"{webhook}{sep}with_components=true", payload)
+        return send(f"{webhook}&with_components=true", payload)
     except urllib.error.HTTPError as e:
         if e.code != 400:
             raise
@@ -239,7 +244,24 @@ def post(webhook: str, payload: dict) -> None:
         payload = {k: v for k, v in payload.items() if k != "components"}
         embed = payload["embeds"][0]
         embed["description"] += f"\n\n📋 [칸반 보드 열기]({PROJECT_URL})  ·  🗓 [마일스톤]({MILESTONES_URL})"
-        send(webhook, payload)
+        return send(webhook, payload)
+
+
+def open_thread(bot_token: str, message: dict, today: dt.date) -> None:
+    """보낸 알림 메시지에 오늘 스크럼 스레드를 엽니다. (봇에 '공개 스레드 만들기' 권한 필요)"""
+    req = urllib.request.Request(
+        f"{DISCORD_API}/channels/{message['channel_id']}/messages/{message['id']}/threads",
+        data=json.dumps({
+            "name": f"📅 {today:%m/%d} ({WEEKDAYS[today.weekday()]}) 데일리 스크럼",
+            "auto_archive_duration": 1440,  # 24시간 동안 대화 없으면 보관
+        }).encode(),
+        headers={
+            "Authorization": f"Bot {bot_token}",
+            "Content-Type": "application/json",
+            "User-Agent": USER_AGENT,
+        },
+    )
+    urllib.request.urlopen(req, timeout=20).close()
 
 
 # ---------------------------------------------------------------------------
@@ -280,8 +302,19 @@ def main() -> int:
     if not webhook:
         print("✗ DISCORD_SCRUM_WEBHOOK 이 설정되지 않았습니다.", file=sys.stderr)
         return 1
-    post(webhook, payload)
+    message = post(webhook, payload)
     print(f"✓ 데일리 스크럼 알림 전송 완료 ({today})")
+
+    # 4. 스레드 (봇 토큰이 있을 때만. 실패해도 알림은 이미 전송됨)
+    bot_token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
+    if not bot_token:
+        print("! DISCORD_BOT_TOKEN 이 없어 스레드를 만들지 않습니다.", file=sys.stderr)
+        return 0
+    try:
+        open_thread(bot_token, message, today)
+        print("✓ 스레드 생성 완료")
+    except urllib.error.HTTPError as e:
+        print(f"::warning::스레드 생성 실패 ({e.code}): {e.read().decode()[:200]}")
     return 0
 
 
