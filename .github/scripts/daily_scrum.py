@@ -289,6 +289,9 @@ def main() -> int:
             print(f"공휴일({today} {name})이라 전송하지 않습니다.")
             return 0
 
+    # 일부만 실패한 경우(알림은 전송됨)도 작업을 실패로 끝내 GitHub 실패 메일로 알 수 있게 함
+    problems: list[str] = []
+
     # 2. 보드 요약
     fields, board_error = None, None
     token = os.environ.get("PROJECT_READ_TOKEN", "").strip()
@@ -297,7 +300,7 @@ def main() -> int:
             fields = board_fields(fetch_board(token), today)
         except Exception as e:  # 보드 요약 실패해도 스크럼 알림은 보냄
             board_error = type(e).__name__
-            print(f"! 보드 요약 실패: {e}", file=sys.stderr)
+            problems.append(f"보드 요약 실패 (PROJECT_READ_TOKEN 만료 / 권한 확인): {e}")
     else:
         print("! PROJECT_READ_TOKEN 이 없어 보드 요약을 생략합니다.", file=sys.stderr)
 
@@ -306,7 +309,7 @@ def main() -> int:
     # 3. 전송
     if dry_run:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
-        return 0
+        return report(problems)
     webhook = os.environ.get("DISCORD_SCRUM_WEBHOOK", "").strip()
     if not webhook:
         print("✗ DISCORD_SCRUM_WEBHOOK 이 설정되지 않았습니다.", file=sys.stderr)
@@ -318,13 +321,22 @@ def main() -> int:
     bot_token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
     if not bot_token:
         print("! DISCORD_BOT_TOKEN 이 없어 스레드를 만들지 않습니다.", file=sys.stderr)
-        return 0
+        return report(problems)
     try:
         open_thread(bot_token, message, today)
         print("✓ 스레드 생성 + 안내 메시지 전송 완료")
     except urllib.error.HTTPError as e:
-        print(f"::warning::스레드 생성 / 안내 메시지 전송 실패 ({e.code}): {e.read().decode()[:200]}")
-    return 0
+        problems.append(f"스레드 생성 / 안내 메시지 전송 실패 ({e.code}): {e.read().decode()[:200]}")
+    except Exception as e:
+        problems.append(f"스레드 생성 / 안내 메시지 전송 실패: {e}")
+    return report(problems)
+
+
+def report(problems: list[str]) -> int:
+    """부분 실패를 Actions 오류로 남기고 종료 코드를 반환합니다."""
+    for problem in problems:
+        print(f"::error::{problem}")
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":
