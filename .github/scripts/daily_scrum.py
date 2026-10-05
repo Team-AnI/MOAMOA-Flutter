@@ -36,6 +36,18 @@ STATUS_EMOJI = {"In Progress": "🔨", "In Review": "👀", "Todo": "📋"}
 
 EMBED_COLOR = 0x02569B  # Flutter blue
 
+# 복사해서 채워 넣을 스크럼 양식 (모바일 "텍스트 복사" 가 되도록 embed 가 아닌 본문에 넣음)
+SCRUM_TEMPLATE = """```
+✅ 어제 한 일
+-
+🔨 오늘 할 일
+-
+💬 논의할 점
+-
+🙋 멘토 질문
+-
+```"""
+
 
 def env_flag(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in ("1", "true", "yes")
@@ -178,7 +190,7 @@ def build_message(today: dt.date, fields: list[dict] | None, board_error: str | 
     content, allowed = mention_content()
     description = (
         "플러터팀 데일리 스크럼 진행하겠습니다.\n"
-        "**어제, 오늘 투두리스트** 공유해주세요! 🙌"
+        "위 양식을 복사해서 **어제 한 일 / 오늘 할 일 / 논의할 점 / 멘토 질문** 공유해주세요! 🙌"
     )
     embed = {
         "title": "☀️ 플러터팀 데일리 스크럼",
@@ -194,7 +206,7 @@ def build_message(today: dt.date, fields: list[dict] | None, board_error: str | 
 
     return {
         "username": "MOAMOA Bot",
-        "content": content,
+        "content": f"{content}\n{SCRUM_TEMPLATE}".lstrip(),
         "allowed_mentions": allowed,
         "embeds": [embed],
         "components": [{
