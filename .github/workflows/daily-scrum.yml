@@ -1,0 +1,52 @@
+# 평일 오전 9시(KST) Discord 데일리 스크럼 알림
+# - 주말 / 한국 공휴일은 건너뜁니다.
+# - 설정 방법: Wiki "데일리 스크럼 알림" 참고
+name: Daily Scrum
+
+on:
+  schedule:
+    # 매주 월~금 00:00 UTC = 09:00 KST (GitHub 사정으로 수 분 늦게 실행될 수 있음)
+    - cron: "0 0 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "주말 / 공휴일에도 전송"
+        type: boolean
+        default: false
+      dry_run:
+        description: "전송하지 않고 메시지 내용만 로그로 확인"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-scrum
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Discord 스크럼 알림
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install --quiet holidays
+
+      - name: Send daily scrum message
+        env:
+          DISCORD_SCRUM_WEBHOOK: ${{ secrets.DISCORD_SCRUM_WEBHOOK }}
+          PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
+          DISCORD_MENTION: ${{ vars.DISCORD_MENTION }}
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python .github/scripts/daily_scrum.py
