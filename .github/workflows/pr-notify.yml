@@ -1,0 +1,67 @@
+# PR 상태 전환 시 Discord 알림
+# - Draft → Open (ready_for_review)   : @here 리뷰 요청
+# - Open → Draft (converted_to_draft) : @here 드래프트 전환 안내
+# - 설정: 레포 시크릿 DISCORD_GITHUB_WEBHOOK 에 Discord 웹훅 URL 등록
+name: PR Notify
+
+on:
+  pull_request:
+    types: [ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Discord PR 알림
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Send Discord message
+        env:
+          DISCORD_GITHUB_WEBHOOK: ${{ secrets.DISCORD_GITHUB_WEBHOOK }}
+          ACTION: ${{ github.event.action }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          SENDER: ${{ github.event.sender.login }}
+        run: |
+          if [[ -z "$DISCORD_GITHUB_WEBHOOK" ]]; then
+            echo "::error::DISCORD_GITHUB_WEBHOOK 시크릿이 설정되지 않았습니다."
+            exit 1
+          fi
+
+          if [[ "$ACTION" == "ready_for_review" ]]; then
+            message="리뷰 부탁드립니다."
+            color=3066993   # 초록
+          else
+            message="Open된 PR이 다시 드래프트로 전환되었습니다."
+            color=10070709  # 회색
+          fi
+
+          payload=$(jq -n \
+            --arg content "@here $message" \
+            --arg title "#$PR_NUMBER $PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg author "$PR_AUTHOR" \
+            --arg sender "$SENDER" \
+            --argjson color "$color" \
+            '{
+              content: $content,
+              allowed_mentions: { parse: ["everyone"] },
+              embeds: [{
+                title: $title,
+                url: $url,
+                color: $color,
+                fields: [
+                  { name: "작성자", value: $author, inline: true },
+                  { name: "전환한 사람", value: $sender, inline: true }
+                ]
+              }]
+            }')
+
+          curl --fail-with-body -sS -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_GITHUB_WEBHOOK"
