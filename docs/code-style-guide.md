@@ -46,6 +46,79 @@ final scheduleListProvider =
 - **위젯 분리 기준**: `build()` 내부가 3~4 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
 - 파일 하나에는 public 클래스 1개만 둡니다 (private 헬퍼 위젯/클래스는 예외).
 
+예를 들어 `build()` 안에서 카드 UI를 직접 구성하면:
+
+```dart
+// Before: build() 안에서 카드 UI를 직접 구성
+class ScheduleListPage extends StatelessWidget {
+  const ScheduleListPage({super.key, required this.schedules});
+
+  final List<Schedule> schedules;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: schedules.map((schedule) {
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(schedule.title),
+                Text(schedule.date),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+```
+
+그 화면에서만 쓰는 위젯이면 private 클래스로 같은 파일에 분리합니다:
+
+```dart
+// After: 같은 화면에서만 쓰는 위젯은 private 클래스로 분리
+class ScheduleListPage extends StatelessWidget {
+  const ScheduleListPage({super.key, required this.schedules});
+
+  final List<Schedule> schedules;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: schedules.map((s) => _ScheduleCard(schedule: s)).toList(),
+    );
+  }
+}
+
+class _ScheduleCard extends StatelessWidget {
+  const _ScheduleCard({required this.schedule});
+
+  final Schedule schedule;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(schedule.title),
+            Text(schedule.date),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+다른 화면에서도 재사용한다면 `_ScheduleCard` 대신 `ScheduleCard`로 public 클래스를 만들고 `widgets/schedule_card.dart`로 옮깁니다.
+
 ## 3. import 순서
 
 1. `dart:` core 라이브러리
