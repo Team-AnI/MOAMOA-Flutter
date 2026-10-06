@@ -1,0 +1,53 @@
+# 평일 오전 10시(KST) 리뷰 대기 PR Discord 리마인드
+# - 어제 이전에 Open 되었는데 승인 / 변경 요청 리뷰가 없는 PR 을 알립니다.
+# - 주말 / 한국 공휴일은 건너뜁니다.
+# - 설정: 레포 시크릿 DISCORD_GITHUB_WEBHOOK (PR Notify 와 같은 채널)
+name: Review Reminder
+
+on:
+  schedule:
+    # 매주 월~금 01:00 UTC = 10:00 KST (GitHub 사정으로 수 분 늦게 실행될 수 있음)
+    - cron: "0 1 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "주말 / 공휴일에도 전송"
+        type: boolean
+        default: false
+      dry_run:
+        description: "전송하지 않고 메시지 내용만 로그로 확인"
+        type: boolean
+        default: false
+
+concurrency:
+  group: review-reminder
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  remind:
+    name: Discord 리뷰 리마인드
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install --quiet holidays
+
+      - name: Send review reminder
+        env:
+          DISCORD_GITHUB_WEBHOOK: ${{ secrets.DISCORD_GITHUB_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python .github/scripts/review_reminder.py
