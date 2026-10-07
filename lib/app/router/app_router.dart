@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/group/presentation/group_routes.dart';
+
 part 'app_router.g.dart';
 
 /// 각 feature 의 route 목록을 모으기만 합니다.
@@ -12,7 +14,7 @@ part 'app_router.g.dart';
 /// (동시 작업 시 충돌을 줄이기 위함)
 final List<RouteBase> _featureRoutes = [
   // ...authRoutes,
-  // ...groupRoutes,
+  ...groupRoutes,
   // ...scheduleRoutes,
   // ...noticeRoutes,
   // ...settlementRoutes,
@@ -35,6 +37,19 @@ class _PlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('MOAMOA')));
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('MOAMOA'),
+            FilledButton(
+              onPressed: () => context.go('/groups'),
+              child: const Text('내 모임'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
