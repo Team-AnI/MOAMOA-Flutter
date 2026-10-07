@@ -2,7 +2,7 @@
 # 사용법: make <명령어>   (목록: make 또는 make help)
 
 .DEFAULT_GOAL := help
-.PHONY: help setup hooks get check format format-check analyze test clean run build-apk start pr pr-draft
+.PHONY: help setup hooks get gen watch check format format-check analyze test clean run build-apk start pr pr-draft
 
 help: ## 사용 가능한 명령어 목록
 	@echo "사용법: make <명령어>"
@@ -22,6 +22,12 @@ hooks: ## git hooks 설치 (커밋 메시지 자동완성/검사, push 전 검�
 
 get: ## 의존성 설치 (flutter pub get)
 	flutter pub get
+
+gen: ## 코드 생성 (riverpod / freezed / json_serializable)
+	dart run build_runner build
+
+watch: ## 코드 생성 감시 모드 (파일 변경 시 자동 생성)
+	dart run build_runner watch
 
 # ---------------------------------------------------------------------------
 # 검사 (CI 와 동일)
