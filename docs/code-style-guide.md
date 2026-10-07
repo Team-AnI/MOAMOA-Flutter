@@ -4,6 +4,8 @@
 
 ## 1. 네이밍 규칙
 
+> View(화면에 보이는 층)는 Page 와 Widget 두 가지로 구성됩니다. Page 는 라우트에 직접 연결되는 화면 단위, Widget 은 그 화면 안에서 쓰는 구성요소입니다.
+
 **파일명**: snake_case + 역할 접미사
 
 | 역할 | 파일명 예시 |
@@ -20,8 +22,6 @@
 | Entity (domain) | `schedule.dart` |
 | Model (data) | `schedule_model.dart` |
 
-> View(화면에 보이는 층)는 Page 와 Widget 두 가지로 구성됩니다. Page 는 라우트에 직접 연결되는 화면 단위, Widget 은 그 화면 안에서 쓰는 구성요소입니다.
-
 **클래스명**: PascalCase
 
 - View — Page: `ScheduleListPage` (라우트에 연결되는 화면)
@@ -37,8 +37,16 @@
 
 **Provider 변수명**: 역할과 상관없이 반드시 `xxxProvider`로 끝냅니다.
 
+**Riverpod 작성 방식**: `@riverpod` 코드젠 애노테이션은 사용하지 않고, 아래처럼 수동(Inline)으로 선언합니다. `core/`(dio, apiClient, secureStorage 등) 레벨 Provider도 예외 없이 동일하게 Inline으로 작성합니다.
+
 ```dart
+// core/network/dio_provider.dart — core 레벨 Provider 예시
 final dioProvider = Provider<Dio>((ref) => buildDio());
+
+// core/network/api_client.dart
+final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioProvider)));
+
+// features/schedule/presentation/providers/schedule_providers.dart — feature 레벨 Provider 예시
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => ScheduleRepositoryImpl(ref.watch(scheduleRemoteDataSourceProvider)),
 );
@@ -99,7 +107,7 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
   @override
   Future<List<ScheduleModel>> fetchSchedules() async {
     final response = await _apiClient.get<List<dynamic>>('/schedules');
-    return response.data!
+    return (response.data ?? [])
         .map((json) => ScheduleModel.fromJson(json as Map<String, dynamic>))
         .toList();
   }
