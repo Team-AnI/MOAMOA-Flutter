@@ -2,7 +2,7 @@
 """
 데일리 스크럼 Discord 알림
 
-평일 오전 9시(KST)에 GitHub Actions(.github/workflows/daily-scrum.yml)에서 실행되어
+평일 오전 10시(KST)에 GitHub Actions(.github/workflows/daily-scrum.yml)에서 실행되어
 Discord 웹훅으로 스크럼 안내 + 프로젝트 보드 요약 + 보드 이동 버튼을 보냅니다.
 
 환경 변수
@@ -37,7 +37,7 @@ STATUS_EMOJI = {"In Progress": "🔨", "In Review": "👀", "Todo": "📋"}
 
 EMBED_COLOR = 0x02569B  # Flutter blue
 DISCORD_API = "https://discord.com/api/v10"
-THREAD_GREETING = "안녕하세요, 금일 스크럼 내용 공유 부탁드립니다."
+THREAD_GREETING = "안녕하세요, 금일 스크럼 내용 오후 5시까지 공유 부탁드립니다."
 USER_AGENT = "MOAMOA-Bot (GitHub Actions)"
 
 # 복사해서 채워 넣을 스크럼 양식 (모바일 "텍스트 복사" 가 되도록 embed 가 아닌 본문에 넣음)
@@ -194,7 +194,7 @@ def build_message(today: dt.date, fields: list[dict] | None, board_error: str | 
     content, allowed = mention_content()
     description = (
         "플러터팀 데일리 스크럼 진행하겠습니다.\n"
-        "위 양식을 복사해서 **스레드**에 어제 한 일 / 오늘 할 일 / 논의할 점 / 멘토 질문을 공유해주세요! 🙌"
+        "위 양식을 복사해서 **오후 5시까지** **스레드**에 어제 한 일 / 오늘 할 일 / 논의할 점 / 멘토 질문을 공유해주세요! 🙌"
     )
     embed = {
         "title": "☀️ 플러터팀 데일리 스크럼",
