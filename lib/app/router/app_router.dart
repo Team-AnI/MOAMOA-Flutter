@@ -10,7 +10,7 @@ part 'app_router.g.dart';
 /// (예: `features/auth/presentation/auth_routes.dart`),
 /// 여기서는 아래 [_featureRoutes] 에 한 줄만 추가합니다.
 /// (동시 작업 시 충돌을 줄이기 위함)
-const List<RouteBase> _featureRoutes = [
+final List<RouteBase> _featureRoutes = [
   // ...authRoutes,
   // ...groupRoutes,
   // ...scheduleRoutes,
