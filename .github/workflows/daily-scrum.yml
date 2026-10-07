@@ -1,12 +1,13 @@
-# 평일 오전 9시(KST) Discord 데일리 스크럼 알림
+# 평일 오전 10시(KST) Discord 데일리 스크럼 알림
 # - 주말 / 한국 공휴일은 건너뜁니다.
 # - 설정 방법: Wiki "데일리 스크럼 알림" 참고
 name: Daily Scrum
 
 on:
   schedule:
-    # 매주 월~금 00:00 UTC = 09:00 KST (GitHub 사정으로 수 분 늦게 실행될 수 있음)
-    - cron: "0 0 * * 1-5"
+    # 매주 월~금 00:40 UTC = 09:40 KST 트리거 → 10:00 KST 까지 대기 후 전송
+    # (cron 은 항상 UTC 기준. 정각은 GitHub 혼잡 시간대라 지연이 커서 피함)
+    - cron: "40 0 * * 1-5"
   workflow_dispatch:
     inputs:
       force:
@@ -29,8 +30,18 @@ jobs:
   notify:
     name: Discord 스크럼 알림
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 30
     steps:
+      # GitHub 스케줄은 정각에 몰려 수 시간씩 지연되므로 09:40 KST 에 미리 트리거하고 10:00 KST 까지 대기
+      - name: 10:00 KST 까지 대기
+        if: github.event_name == 'schedule'
+        run: |
+          wait=$(( $(TZ=Asia/Seoul date -d '10:00' +%s) - $(date +%s) ))
+          if [ "$wait" -gt 0 ]; then
+            echo "10:00 KST 까지 ${wait}초 대기"
+            sleep "$wait"
+          fi
+
       - uses: actions/checkout@v7
         with:
           sparse-checkout: .github/scripts
