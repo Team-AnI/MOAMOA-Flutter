@@ -12,8 +12,10 @@ class GroupField extends StatelessWidget {
     this.requiredValue = false,
     this.multiline = false,
     this.onChanged,
+    this.maxLength,
   });
   final TextEditingController controller;
+  final int? maxLength;
   final String label, hint;
   final String? helper;
   final bool enabled, requiredValue, multiline;
@@ -33,6 +35,15 @@ class GroupField extends StatelessWidget {
         height: multiline ? 112 : null,
         child: TextFormField(
           controller: controller,
+          maxLength: maxLength,
+          buildCounter: maxLength == null
+              ? null
+              : (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  maxLength,
+                }) => null,
           enabled: enabled,
           onChanged: onChanged,
           style: GroupDesign.body,
@@ -50,6 +61,14 @@ class GroupField extends StatelessWidget {
               : null,
           decoration: InputDecoration(
             hintText: hint,
+            suffix: maxLength == null
+                ? null
+                : Text(
+                    '${controller.text.characters.length}/$maxLength',
+                    style: GroupDesign.caption.copyWith(
+                      color: GroupDesign.muted,
+                    ),
+                  ),
             hintStyle: GroupDesign.body.copyWith(
               color: const Color(0xffcccccc),
             ),

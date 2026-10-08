@@ -18,6 +18,9 @@ import '../../domain/usecases/get_group_impl.dart';
 import '../../domain/usecases/get_my_groups.dart';
 import '../../domain/usecases/get_my_groups_impl.dart';
 
+/// 로그인 기능에서 현재 계정의 표시 이름을 주입합니다.
+final groupCurrentUserNameProvider = Provider<String?>((ref) => null);
+
 /// 로그인 기능에서 서버 인증 방식에 맞는 헤더를 주입합니다.
 final groupAuthHeadersProvider = Provider<Map<String, String>?>((ref) => null);
 final groupApiBaseUrlProvider = Provider<String>(

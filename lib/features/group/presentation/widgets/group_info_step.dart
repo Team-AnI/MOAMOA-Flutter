@@ -11,8 +11,10 @@ class GroupInfoStep extends StatelessWidget {
     required this.description,
     required this.onEdit,
     required this.enabled,
+    this.adminName,
   });
   final String name;
+  final String? adminName;
   final TextEditingController description;
   final VoidCallback? onEdit;
   final bool enabled;
@@ -20,7 +22,7 @@ class GroupInfoStep extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const GroupPageTitle(title: '어떤 모임인가요?', subtitle: '모임을 소개해 주세요.'),
+      const GroupPageTitle(title: '어떤 모임인가요?', subtitle: '소개와 가입 방식을 정해요.'),
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -37,7 +39,12 @@ class GroupInfoStep extends StatelessWidget {
                 children: [
                   Text(name, style: GroupDesign.heading),
                   const SizedBox(height: 2),
-                  const Text('관리자', style: GroupDesign.sub),
+                  Text(
+                    adminName == null || adminName!.trim().isEmpty
+                        ? '관리자 · 계정 정보 미연결'
+                        : '관리자 · ${adminName!.trim()}',
+                    style: GroupDesign.sub,
+                  ),
                 ],
               ),
             ),
@@ -67,9 +74,23 @@ class GroupInfoStep extends StatelessWidget {
           color: GroupDesign.fill,
           borderRadius: BorderRadius.circular(30),
         ),
-        child: Text(
-          '바로 가입',
-          style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
+        child: Row(
+          children: [
+            Expanded(
+              child: Center(
+                child: Text(
+                  '바로 가입',
+                  style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const Expanded(
+              child: Tooltip(
+                message: '승인 후 가입은 아직 지원되지 않아요.',
+                child: TextButton(onPressed: null, child: Text('승인 후 가입')),
+              ),
+            ),
+          ],
         ),
       ),
       const SizedBox(height: 8),

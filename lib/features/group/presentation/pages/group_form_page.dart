@@ -115,6 +115,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
                 GroupInfoStep(
                   name: _nameOrCode.text.trim(),
                   description: _description,
+                  adminName: ref.watch(groupCurrentUserNameProvider),
                   enabled: !submitting,
                   onEdit: submitting ? null : () => setState(() => _step = 1),
                 ),

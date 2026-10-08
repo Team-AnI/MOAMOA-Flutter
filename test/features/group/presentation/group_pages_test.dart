@@ -12,11 +12,15 @@ import 'package:moamoa/features/group/presentation/widgets/group_list_section.da
 
 Future<void> openGroups(
   WidgetTester tester,
-  FakeGroupRepository repository,
-) async {
+  FakeGroupRepository repository, {
+  String? userName,
+}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [groupRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        groupRepositoryProvider.overrideWithValue(repository),
+        groupCurrentUserNameProvider.overrideWithValue(userName),
+      ],
       child: const App(),
     ),
   );
@@ -26,6 +30,32 @@ Future<void> openGroups(
 }
 
 void main() {
+  testWidgets('생성 안내와 계정 이름을 표시하고 미지원 가입 방식은 선택할 수 없다', (tester) async {
+    await openGroups(tester, FakeGroupRepository(), userName: '조성은');
+    await tester.tap(find.text('모임 만들기'));
+    await tester.pumpAndSettle();
+    expect(find.text('앨범에서 선택'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '앨범에서 선택'))
+          .onPressed,
+      isNull,
+    );
+    expect(find.text('나중에 모임 설정에서 바꿀 수 있어요.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), '스터디 모아');
+    await tester.pump();
+    expect(find.text('6/20'), findsOneWidget);
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    expect(find.text('관리자 · 조성은'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '승인 후 가입'))
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('모임이 없으면 생성과 가입 진입 버튼을 표시한다', (tester) async {
     await openGroups(tester, FakeGroupRepository());
     expect(find.textContaining('아직 참여한 모임이 없어요'), findsOneWidget);
