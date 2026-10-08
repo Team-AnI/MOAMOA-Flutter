@@ -30,6 +30,14 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (state.errorMessage != null && state.groups.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  state.errorMessage!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
             Expanded(
               child: state.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -64,11 +72,13 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
                           trailing: Text(
                             current.canViewInviteCode ? '관리자' : '구성원',
                           ),
-                          onTap: () {
-                            ref
+                          onTap: () async {
+                            final selected = await ref
                                 .read(groupProvider.notifier)
                                 .selectGroup(current.group.id);
-                            context.go('/groups/home');
+                            if (context.mounted && selected) {
+                              context.go('/groups/home');
+                            }
                           },
                         );
                       },

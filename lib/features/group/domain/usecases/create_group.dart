@@ -11,8 +11,8 @@ class CreateGroup {
   }) {
     final trimmedName = name.trim();
     final trimmedDescription = description.trim();
-    if (trimmedName.isEmpty || trimmedDescription.isEmpty) {
-      throw ArgumentError('모임명과 소개를 입력해주세요.');
+    if (trimmedName.isEmpty) {
+      throw ArgumentError('모임명을 입력해주세요.');
     }
     return _repository.createGroup(
       name: trimmedName,

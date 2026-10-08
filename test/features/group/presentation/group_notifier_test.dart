@@ -22,7 +22,7 @@ void main() {
     repository.groups = [group];
     final notifier = container.read(groupProvider.notifier);
     await notifier.loadGroups();
-    notifier.selectGroup(group.group.id);
+    await notifier.selectGroup(group.group.id);
     expect(container.read(groupProvider).currentGroup, same(group));
     repository.groups = [];
     await notifier.loadGroups();
@@ -35,7 +35,7 @@ void main() {
     repository.groups = [group];
     final notifier = container.read(groupProvider.notifier);
     await notifier.loadGroups();
-    notifier.selectGroup(group.group.id);
+    await notifier.selectGroup(group.group.id);
     repository.loadFailure = const GroupFailure(GroupFailureReason.unavailable);
     await notifier.loadGroups();
     expect(container.read(groupProvider).currentGroup, same(group));
@@ -71,7 +71,6 @@ void main() {
 
   for (final reason in [
     GroupFailureReason.invalidCode,
-    GroupFailureReason.expiredCode,
     GroupFailureReason.alreadyJoined,
   ]) {
     test('가입 실패 $reason 시 현재 모임을 변경하지 않는다', () async {

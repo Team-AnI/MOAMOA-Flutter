@@ -79,12 +79,9 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
               TextFormField(
                 controller: _description,
                 enabled: !submitting,
-                decoration: const InputDecoration(labelText: '모임 소개'),
+                decoration: const InputDecoration(labelText: '모임 소개 (선택)'),
                 minLines: 2,
                 maxLines: 4,
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? '모임 소개를 입력해주세요.'
-                    : null,
               ),
             const SizedBox(height: 24),
             if (_error != null)

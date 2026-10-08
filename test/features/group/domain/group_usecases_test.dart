@@ -8,12 +8,20 @@ import 'package:moamoa/features/group/domain/usecases/join_group.dart';
 import '../fake_group_repository.dart';
 
 void main() {
-  test('빈 이름이나 소개는 저장소 호출 전에 거부한다', () {
+  test('빈 이름은 저장소 호출 전에 거부한다', () {
     final repository = FakeGroupRepository();
     final create = CreateGroup(repository);
     expect(() => create(name: '', description: '소개'), throwsArgumentError);
-    expect(() => create(name: '이름', description: '  '), throwsArgumentError);
+
     expect(repository.createCalls, 0);
+  });
+
+  test('소개 없이도 모임을 생성할 수 있다', () async {
+    final repository = FakeGroupRepository();
+    repository.pendingCreate.complete(makeGroup(GroupRole.admin));
+    await CreateGroup(repository)(name: '이름', description: '  ');
+    expect(repository.lastDescription, '');
+    expect(repository.createCalls, 1);
   });
 
   test('빈 초대 코드는 거부한다', () {

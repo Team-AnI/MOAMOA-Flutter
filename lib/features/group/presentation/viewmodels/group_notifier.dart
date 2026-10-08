@@ -1,13 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_provider.dart';
+import '../../data/repositories/api_group_repository.dart';
 import '../../domain/entities/current_group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/usecases/create_group.dart';
 import '../../domain/usecases/join_group.dart';
 
-/// API 명세가 확정되면 data 레이어의 구현체를 주입합니다.
+/// 로그인 기능에서 인증 헤더를 override 합니다. 토큰을 코드에 저장하지 않습니다.
+final groupAuthHeadersProvider = Provider<Map<String, String>?>((ref) => null);
+final groupApiBaseUrlProvider = Provider<String>(
+  (ref) => const String.fromEnvironment('API_BASE_URL'),
+);
+
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
-  throw const GroupFailure(GroupFailureReason.unavailable);
+  return ApiGroupRepository(
+    ref.watch(dioProvider),
+    baseUrl: ref.watch(groupApiBaseUrlProvider),
+    authHeaders: () => ref.read(groupAuthHeadersProvider),
+  );
 });
 
 final groupProvider = NotifierProvider<GroupNotifier, GroupState>(
@@ -67,10 +78,36 @@ class GroupNotifier extends Notifier<GroupState> {
     }
   }
 
-  void selectGroup(String groupId) {
-    if (state.isSubmitting || state.isLoading) return;
-    final group = state.groups.firstWhere((entry) => entry.group.id == groupId);
-    state = GroupState(groups: state.groups, currentGroup: group);
+  Future<bool> selectGroup(String groupId) async {
+    if (state.isSubmitting || state.isLoading) return false;
+    final previous = state;
+    state = GroupState(
+      groups: previous.groups,
+      currentGroup: previous.currentGroup,
+      isLoading: true,
+    );
+    try {
+      final current = await _repository.getGroup(groupId);
+      if (!ref.mounted) return false;
+      final groups = previous.groups
+          .map((entry) => entry.group.id == current.group.id ? current : entry)
+          .toList();
+      state = GroupState(
+        groups: List.unmodifiable(groups),
+        currentGroup: current,
+      );
+      return true;
+    } on Exception catch (error) {
+      if (ref.mounted) {
+        state = GroupState(
+          groups: previous.groups,
+          currentGroup: previous.currentGroup,
+          errorMessage: _message(error),
+          failureReason: error is GroupFailure ? error.reason : null,
+        );
+      }
+      return false;
+    }
   }
 
   Future<CurrentGroup?> create({
@@ -133,7 +170,8 @@ class GroupNotifier extends Notifier<GroupState> {
     if (error is GroupFailure) {
       return switch (error.reason) {
         GroupFailureReason.invalidCode => '유효하지 않은 초대 코드입니다.',
-        GroupFailureReason.expiredCode => '만료된 초대 코드입니다.',
+        GroupFailureReason.unauthorized => '로그인이 필요합니다.',
+        GroupFailureReason.validation => '입력 내용을 확인해주세요.',
         GroupFailureReason.alreadyJoined => '이미 참여 중인 모임입니다.',
         GroupFailureReason.forbidden => '관리자만 초대 코드를 확인할 수 있습니다.',
         GroupFailureReason.unavailable => '요청을 완료하지 못했습니다. 다시 시도해주세요.',

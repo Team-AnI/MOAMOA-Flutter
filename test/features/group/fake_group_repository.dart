@@ -39,6 +39,10 @@ class FakeGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<CurrentGroup> getGroup(String groupId) async =>
+      groups.firstWhere((entry) => entry.group.id == groupId);
+
+  @override
   Future<String> getInviteCode({required String groupId}) async => 'CODE';
 }
 

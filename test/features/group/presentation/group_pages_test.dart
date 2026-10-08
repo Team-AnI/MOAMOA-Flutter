@@ -75,16 +75,16 @@ void main() {
     expect(find.text('초대 코드 확인'), findsNothing);
   });
 
-  testWidgets('만료된 코드 오류를 표시하고 성공 시 일반 구성원 홈으로 이동', (tester) async {
+  testWidgets('유효하지 않은 코드 오류를 표시하고 성공 시 일반 구성원 홈으로 이동', (tester) async {
     final repository = FakeGroupRepository()
-      ..joinFailure = const GroupFailure(GroupFailureReason.expiredCode);
+      ..joinFailure = const GroupFailure(GroupFailureReason.invalidCode);
     await openGroups(tester, repository);
     await tester.tap(find.text('초대 코드로 가입하기'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'CODE');
     await tester.tap(find.text('가입하기'));
     await tester.pumpAndSettle();
-    expect(find.text('만료된 초대 코드입니다.'), findsOneWidget);
+    expect(find.text('유효하지 않은 초대 코드입니다.'), findsOneWidget);
     repository.joinFailure = null;
     await tester.tap(find.text('가입하기'));
     await tester.pumpAndSettle();
