@@ -58,6 +58,8 @@ final scheduleListProvider =
 
 위 네이밍 규칙을 실제 코드에 적용하면 아래와 같은 흐름이 됩니다. (Entity → Model → DataSource → Repository → UseCase → ViewModel → Provider → View[Page/Widget])
 
+**에러 처리 정책**: DataSource/Repository/UseCase 계층에서는 예외를 따로 잡지 않고 그대로 던집니다. 최종적으로 ViewModel 에서 `AsyncValue.guard`로 한 번만 잡아 `AsyncError` 상태로 변환합니다 (아래 ViewModel 예시의 `refresh()` 참고). 중간 계층에서 개별적으로 try-catch 를 추가하지 않습니다.
+
 ```dart
 // Entity (domain/entities/schedule.dart)
 // - 순수 도메인 모델. data/presentation 계층에 의존하지 않습니다.
@@ -92,6 +94,8 @@ class ScheduleModel {
 }
 ```
 
+> 서버로 데이터를 보내야 하는 경우(POST/PUT 요청 등)에는 Model 에 `toJson()`도 함께 추가합니다. 위 예시는 조회(GET)만 다루므로 생략했습니다.
+
 ```dart
 // DataSource (data/datasources/schedule_remote_data_source.dart, schedule_remote_data_source_impl.dart)
 // - 실제 API 호출만 담당합니다. 변환/비즈니스 로직은 넣지 않습니다.
@@ -100,7 +104,7 @@ abstract interface class ScheduleRemoteDataSource {
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
-  const ScheduleRemoteDataSourceImpl(this._apiClient);
+  const ScheduleRemoteDataSourceImpl({required this._apiClient});
 
   final ApiClient _apiClient;
 
@@ -128,21 +132,72 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
 
   @override
   Future<List<Schedule>> getSchedules() async {
-    final models = await _remoteDataSource.fetchSchedules();
-    return models.map((model) => model.toEntity()).toList();
+    final response = await _remoteDataSource.fetchSchedules();
+    return response.map((model) => model.toEntity()).toList();
   }
 }
 ```
 
 ```dart
 // UseCase (domain/usecases/get_schedules.dart)
-// - Repository 호출 1개 이상을 조합하는 단위. 호출 가능한 객체(call)로 작성합니다.
-class GetSchedules {
-  const GetSchedules(this._repository);
+// - Repository 호출 1개 이상을 조합하는 단위. 파라미터가 필요하면 Params 를 통해 받습니다.
+
+// 파라미터 공통 추상 클래스
+abstract class Params {
+  const Params();
+}
+
+// 파라미터가 필요 없는 UseCase에서 사용
+final class NoParams extends Params {
+  const NoParams();
+}
+
+// UseCase 공통 추상 클래스
+abstract class Usecase<Result, P extends Params> {
+  Future<Result> call(P params);
+}
+
+// GetSchedules 전용 파라미터
+final class GetSchedulesParams extends Params {
+  const GetSchedulesParams({
+    required this.startDate,
+    required this.endDate,
+  });
+
+  final DateTime startDate;
+  final DateTime endDate;
+}
+
+// 테스트에서 Mock/Fake로 대체하기 위한 추상 클래스
+abstract class GetSchedules extends Usecase<List<Schedule>, GetSchedulesParams> {}
+
+// 실제 구현 클래스
+final class GetSchedulesImpl implements GetSchedules {
+  GetSchedulesImpl(this._repository);
 
   final ScheduleRepository _repository;
 
-  Future<List<Schedule>> call() => _repository.getSchedules();
+  @override
+  Future<List<Schedule>> call(GetSchedulesParams params) {
+    return _repository.getSchedules(
+      startDate: params.startDate,
+      endDate: params.endDate,
+    );
+  }
+}
+
+// 파라미터가 필요 없는 UseCase 예시
+abstract class GetAllSchedules extends Usecase<List<Schedule>, NoParams> {}
+
+final class GetAllSchedulesImpl implements GetAllSchedules {
+  GetAllSchedulesImpl(this._repository);
+
+  final ScheduleRepository _repository;
+
+  @override
+  Future<List<Schedule>> call(NoParams params) {
+    return _repository.getAllSchedules();
+  }
 }
 ```
 
@@ -233,77 +288,6 @@ class _ScheduleCard extends StatelessWidget {
 
 - **위젯 분리 기준**: `build()` 내부가 3~4 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
 - 파일 하나에는 public 클래스 1개만 둡니다 (private 헬퍼 위젯/클래스는 예외).
-
-예를 들어 `build()` 안에서 카드 UI를 직접 구성하면:
-
-```dart
-// Before: build() 안에서 카드 UI를 직접 구성
-class ScheduleListPage extends StatelessWidget {
-  const ScheduleListPage({super.key, required this.schedules});
-
-  final List<Schedule> schedules;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: schedules.map((schedule) {
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(schedule.title),
-                Text(schedule.date),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-```
-
-그 화면에서만 쓰는 위젯이면 private 클래스로 같은 파일에 분리합니다:
-
-```dart
-// After: 같은 화면에서만 쓰는 위젯은 private 클래스로 분리
-class ScheduleListPage extends StatelessWidget {
-  const ScheduleListPage({super.key, required this.schedules});
-
-  final List<Schedule> schedules;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: schedules.map((s) => _ScheduleCard(schedule: s)).toList(),
-    );
-  }
-}
-
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.schedule});
-
-  final Schedule schedule;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(schedule.title),
-            Text(schedule.date),
-          ],
-        ),
-      ),
-    );
-  }
-}
-```
 
 다른 화면에서도 재사용한다면 `_ScheduleCard` 대신 `ScheduleCard`로 public 클래스를 만들고 `widgets/schedule_card.dart`로 옮깁니다.
 
