@@ -3,7 +3,7 @@
 ## 구현 범위
 
 P0 초기 계약에 따라 생성, 내 모임 목록, 초대 코드 가입, 모임 상세,
-현재 초대 코드 조회를 `ApiGroupRepository`에서 구현합니다.
+현재 초대 코드 조회를 `GroupRepositoryImpl`에서 구현합니다.
 응답은 `success`, `data`, `error`, `timestamp` envelope를 사용합니다.
 모임 상세는 목록에서 선택할 때 조회하며, 서버의 `myRole`을 권한 기준으로 사용합니다.
 모임 소개는 선택 입력입니다. P0 초대 코드는 만료되지 않으며 가입은 즉시 처리합니다.
@@ -47,9 +47,9 @@ Figma의 모임 생성/가입 화면은 확인했으나 현재 화면은 기본 
 
 ## PR 순서
 
-1. `feature/#29-group-entities` → `develop`: 공유 엔티티와 권한 테스트, 관련 이슈는 `Ref #29`.
-2. 선행 PR 머지 후 기능 브랜치에 `upstream/develop`을 merge합니다.
-3. `feature/#29-group-create-join` → `develop`: 기능 구현 Draft PR.
+1. `feature/#29-group-entities` → `main`: 공유 엔티티와 권한 테스트, 관련 이슈는 `Ref #29`.
+2. 선행 PR 머지 후 기능 브랜치에 `upstream/main`을 merge합니다.
+3. `feature/#29-group-create-join` → `main`: 기능 구현 Draft PR.
 
-선행 PR 머지 전 기능 PR도 develop을 대상으로 만들 수 있지만 엔티티 변경이 함께
+선행 PR 머지 전 기능 PR도 main을 대상으로 만들 수 있지만 엔티티 변경이 함께
 표시됩니다. 기능 PR 본문에 선행 PR 링크를 적고, 선행 PR 머지 후 동기화합니다.

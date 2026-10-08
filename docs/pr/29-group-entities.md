@@ -11,8 +11,8 @@
 
 ## 💬 리뷰 요청 사항
 - 일정·공지 기능에서 공유할 엔티티 필드와 권한 인터페이스를 확인해주세요.
-- API DTO와 화면은 후속 기능 PR에서 구현합니다.
-- base: develop / compare: feature/#29-group-entities
+- API Model와 화면은 후속 기능 PR에서 구현합니다.
+- base: main / compare: feature/#29-group-entities
 
 ## ✅ 체크리스트
 - [x] 포맷 확인
