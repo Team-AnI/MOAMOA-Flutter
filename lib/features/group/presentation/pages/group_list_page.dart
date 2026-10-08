@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../providers/group_providers.dart';
-import '../viewmodels/group_state.dart';
+import '../widgets/group_design.dart';
+import '../widgets/group_empty_state.dart';
+import '../widgets/group_entry_choices.dart';
+import '../widgets/group_icon.dart';
+import '../widgets/group_list_section.dart';
+import '../widgets/group_tab_bar.dart';
 
 class GroupListPage extends ConsumerStatefulWidget {
   const GroupListPage({super.key});
@@ -25,100 +29,111 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
     if (mounted && selected) context.go('/groups/home');
   }
 
+  void _add() => showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.white,
+    isScrollControlled: true,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(),
+    builder: (context) => const SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 0, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('모임 추가', style: GroupDesign.heading),
+            SizedBox(height: 16),
+            GroupEntryChoices(isSheet: true),
+          ],
+        ),
+      ),
+    ),
+  );
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(groupProvider);
+    final admins = state.groups
+        .where((group) => group.canViewInviteCode)
+        .toList();
+    final members = state.groups
+        .where((group) => !group.canViewInviteCode)
+        .toList();
     return Scaffold(
-      appBar: AppBar(title: const Text('내 모임')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      backgroundColor: Colors.white,
+      bottomNavigationBar: const GroupTabBar(),
+      body: SafeArea(
+        bottom: false,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (state.errorMessage != null && state.groups.isNotEmpty)
-              Text(
-                state.errorMessage!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+              child: Row(
+                children: [
+                  const Expanded(child: Text('내 모임', style: GroupDesign.title)),
+                  if (state.groups.isNotEmpty)
+                    IconButton(
+                      tooltip: '모임 추가',
+                      onPressed: state.isLoading ? null : _add,
+                      style: IconButton.styleFrom(
+                        backgroundColor: GroupDesign.ink,
+                      ),
+                      icon: const GroupIcon('header_plus'),
+                    ),
+                ],
               ),
+            ),
             Expanded(
-              child: _GroupListContent(
-                state: state,
-                onRetry: () => ref.read(groupProvider.notifier).loadGroups(),
-                onSelect: _select,
+              child: RefreshIndicator(
+                onRefresh: () => ref.read(groupProvider.notifier).loadGroups(),
+                color: GroupDesign.ink,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    if (state.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: GroupDesign.ink,
+                          ),
+                        ),
+                      ),
+                    if (state.errorMessage != null) ...[
+                      Text(state.errorMessage!, style: GroupDesign.body),
+                      TextButton(
+                        onPressed: () =>
+                            ref.read(groupProvider.notifier).loadGroups(),
+                        child: const Text('다시 시도'),
+                      ),
+                    ],
+                    if (!state.isLoading &&
+                        state.groups.isEmpty &&
+                        state.errorMessage == null) ...[
+                      const GroupEmptyState(),
+                      const SizedBox(height: 12),
+                    ],
+                    if (state.groups.isEmpty) const GroupEntryChoices(),
+                    if (admins.isNotEmpty)
+                      GroupListSection(
+                        title: '관리 중인 모임',
+                        groups: admins,
+                        onSelect: state.isLoading ? null : _select,
+                      ),
+                    if (members.isNotEmpty)
+                      GroupListSection(
+                        title: '참여 중인 모임',
+                        groups: members,
+                        onSelect: state.isLoading ? null : _select,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            FilledButton(
-              onPressed: state.isLoading
-                  ? null
-                  : () => context.push('/groups/create'),
-              child: const Text('모임 만들기'),
-            ),
-            OutlinedButton(
-              onPressed: state.isLoading
-                  ? null
-                  : () => context.push('/groups/join'),
-              child: const Text('초대 코드로 가입하기'),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-class _GroupListContent extends StatelessWidget {
-  const _GroupListContent({
-    required this.state,
-    required this.onRetry,
-    required this.onSelect,
-  });
-  final GroupState state;
-  final VoidCallback onRetry;
-  final ValueChanged<String> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (state.groups.isEmpty) {
-      if (state.errorMessage != null) {
-        return _LoadError(message: state.errorMessage!, onRetry: onRetry);
-      }
-      return const Center(
-        child: Text(
-          '아직 가입한 모임이 없어요.\n모임을 만들거나 초대 코드로 가입해보세요.',
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-    return ListView.builder(
-      itemCount: state.groups.length,
-      itemBuilder: (context, index) {
-        final current = state.groups[index];
-        return ListTile(
-          title: Text(current.group.name),
-          subtitle: Text(current.group.description),
-          trailing: Text(current.canViewInviteCode ? '관리자' : '구성원'),
-          onTap: () => onSelect(current.group.id),
-        );
-      },
-    );
-  }
-}
-
-class _LoadError extends StatelessWidget {
-  const _LoadError({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(message),
-        TextButton(onPressed: onRetry, child: const Text('다시 시도')),
-      ],
-    ),
-  );
 }

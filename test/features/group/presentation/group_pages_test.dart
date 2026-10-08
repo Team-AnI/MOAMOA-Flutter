@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
@@ -7,6 +8,7 @@ import 'package:moamoa/features/group/domain/repositories/group_repository.dart'
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
 import '../fake_group_repository.dart';
+import 'package:moamoa/features/group/presentation/widgets/group_list_section.dart';
 
 Future<void> openGroups(
   WidgetTester tester,
@@ -26,9 +28,9 @@ Future<void> openGroups(
 void main() {
   testWidgets('모임이 없으면 생성과 가입 진입 버튼을 표시한다', (tester) async {
     await openGroups(tester, FakeGroupRepository());
-    expect(find.textContaining('아직 가입한 모임이 없어요.'), findsOneWidget);
+    expect(find.textContaining('아직 참여한 모임이 없어요'), findsOneWidget);
     expect(find.text('모임 만들기'), findsOneWidget);
-    expect(find.text('초대 코드로 가입하기'), findsOneWidget);
+    expect(find.text('초대 코드로 가입'), findsOneWidget);
   });
 
   testWidgets('입력 검증, 중복 탭 방지, 생성 성공 후 관리자 홈으로 이동', (tester) async {
@@ -36,12 +38,14 @@ void main() {
     await openGroups(tester, repository);
     await tester.tap(find.text('모임 만들기'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('만들기'));
+    await tester.tap(find.text('다음'));
     await tester.pumpAndSettle();
     expect(repository.createCalls, 0);
-    await tester.enterText(find.byType(TextFormField).at(0), '모임');
-    await tester.enterText(find.byType(TextFormField).at(1), '소개');
-    await tester.tap(find.text('만들기'));
+    await tester.enterText(find.byType(TextFormField), '모임');
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '소개');
+    await tester.tap(find.widgetWithText(FilledButton, '모임 만들기'));
     await tester.pump();
     final button = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, '처리 중…'),
@@ -49,6 +53,29 @@ void main() {
     expect(button.onPressed, isNull);
     expect(repository.createCalls, 1);
     repository.pendingCreate.complete(makeGroup(GroupRole.admin));
+    await tester.pumpAndSettle();
+    expect(find.text('모임이 만들어졌어요'), findsOneWidget);
+    expect(find.text('CODE'), findsOneWidget);
+    String? copiedText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copiedText = (call.arguments as Map)['text'] as String;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await tester.tap(find.text('코드 복사'));
+    await tester.pumpAndSettle();
+    expect(copiedText, 'CODE');
+    await tester.tap(find.text('모임 홈으로'));
     await tester.pumpAndSettle();
     expect(find.text('초대 코드 확인'), findsOneWidget);
     await tester.tap(find.text('초대 코드 확인'));
@@ -61,7 +88,11 @@ void main() {
       ..joinFailure = const GroupFailure(GroupFailureReason.alreadyJoined)
       ..groups = [makeGroup(GroupRole.member)];
     await openGroups(tester, repository);
-    await tester.tap(find.text('초대 코드로 가입하기'));
+    if (repository.groups.isNotEmpty) {
+      await tester.tap(find.byTooltip('모임 추가'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('초대 코드로 가입'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'CODE');
     await tester.tap(find.text('가입하기'));
@@ -69,7 +100,12 @@ void main() {
     expect(find.text('이미 참여 중인 모임입니다.'), findsOneWidget);
     await tester.tap(find.text('기존 모임 목록으로 이동'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('모임'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(GroupListSection),
+        matching: find.text('모임'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('내 모임 목록'), findsOneWidget);
     expect(find.text('초대 코드 확인'), findsNothing);
@@ -79,7 +115,11 @@ void main() {
     final repository = FakeGroupRepository()
       ..joinFailure = const GroupFailure(GroupFailureReason.invalidCode);
     await openGroups(tester, repository);
-    await tester.tap(find.text('초대 코드로 가입하기'));
+    if (repository.groups.isNotEmpty) {
+      await tester.tap(find.byTooltip('모임 추가'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('초대 코드로 가입'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'CODE');
     await tester.tap(find.text('가입하기'));
