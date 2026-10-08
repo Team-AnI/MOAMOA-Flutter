@@ -62,9 +62,9 @@ Figma 파일: `dipwukM8kkC96pfOaqHvd3`, 빈 화면 `103:5368`, 프로필 `103:54
 
 ## PR 순서
 
-1. `feature/#29-group-entities` → `main`: 공유 엔티티와 권한 테스트, 관련 이슈는 `Ref #29`.
-2. 선행 PR 머지 후 기능 브랜치에 `upstream/main`을 merge합니다.
-3. `feature/#29-group-create-join` → `main`: 기능 구현 Draft PR.
+1. `feature/#29-group-entities` → `develop`: 공유 엔티티와 권한 테스트, 관련 이슈는 `Ref #29`.
+2. 선행 PR 머지 후 기능 브랜치에 `upstream/develop`을 merge합니다.
+3. `feature/#29-group-create-join` → `develop`: 기능 구현 Draft PR.
 
-선행 PR 머지 전 기능 PR도 main을 대상으로 만들 수 있지만 엔티티 변경이 함께
+선행 PR 머지 전 기능 PR도 develop을 대상으로 만들 수 있지만 엔티티 변경이 함께
 표시됩니다. 기능 PR 본문에 선행 PR 링크를 적고, 선행 PR 머지 후 동기화합니다.
