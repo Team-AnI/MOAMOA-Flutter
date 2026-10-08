@@ -4,8 +4,8 @@ import '../../domain/entities/group_member.dart';
 import '../../domain/entities/group_role.dart';
 
 /// 생성·가입·목록·상세 응답에서 공통으로 사용하는 API 필드입니다.
-class MeetingDto {
-  MeetingDto.fromJson(Map<String, dynamic> json)
+class MeetingModel {
+  MeetingModel.fromJson(Map<String, dynamic> json)
     : id = json['meetingId'] as int,
       name = json['name'] as String,
       description = json['description'] as String? ?? '',
@@ -22,7 +22,7 @@ class MeetingDto {
   final GroupRole role;
   final int? memberCount;
 
-  CurrentGroup toDomain({String? descriptionOverride}) => CurrentGroup(
+  CurrentGroup toEntity({String? descriptionOverride}) => CurrentGroup(
     group: Group(
       id: id.toString(),
       name: name,

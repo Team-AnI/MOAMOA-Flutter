@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/usecases/get_group_invite_code.dart';
-import '../viewmodels/group_notifier.dart';
+import '../providers/group_providers.dart';
 
 class GroupHomePage extends ConsumerStatefulWidget {
   const GroupHomePage({super.key});
@@ -21,9 +20,19 @@ class _GroupHomePageState extends ConsumerState<GroupHomePage> {
     if (current == null || !current.canViewInviteCode) return;
     setState(() => _loadingCode = true);
     try {
-      final code = await GetGroupInviteCode(ref.read(groupRepositoryProvider))(
-        current,
-      );
+      final code = await ref.read(groupProvider.notifier).getInviteCode();
+      if (code == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                ref.read(groupProvider).errorMessage ?? '초대 코드를 불러오지 못했습니다.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
       if (!mounted || ref.read(groupProvider).currentGroup != current) return;
       await showDialog<void>(
         context: context,

@@ -1,52 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/dio_provider.dart';
-import '../../data/repositories/api_group_repository.dart';
 import '../../domain/entities/current_group.dart';
 import '../../domain/repositories/group_repository.dart';
-import '../../domain/usecases/create_group.dart';
-import '../../domain/usecases/join_group.dart';
+import '../../domain/usecases/params/create_group_params.dart';
+import '../../domain/usecases/params/join_group_params.dart';
+import '../../domain/usecases/params/get_group_params.dart';
+import '../../domain/usecases/params/get_group_invite_code_params.dart';
+import '../../../../core/usecases/no_params.dart';
+import '../providers/group_providers.dart';
+import 'group_state.dart';
 
-/// 로그인 기능에서 인증 헤더를 override 합니다. 토큰을 코드에 저장하지 않습니다.
-final groupAuthHeadersProvider = Provider<Map<String, String>?>((ref) => null);
-final groupApiBaseUrlProvider = Provider<String>(
-  (ref) => const String.fromEnvironment('API_BASE_URL'),
-);
-
-final groupRepositoryProvider = Provider<GroupRepository>((ref) {
-  return ApiGroupRepository(
-    ref.watch(dioProvider),
-    baseUrl: ref.watch(groupApiBaseUrlProvider),
-    authHeaders: () => ref.read(groupAuthHeadersProvider),
-  );
-});
-
-final groupProvider = NotifierProvider<GroupNotifier, GroupState>(
-  GroupNotifier.new,
-);
-
-class GroupState {
-  const GroupState({
-    this.groups = const [],
-    this.currentGroup,
-    this.isSubmitting = false,
-    this.isLoading = false,
-    this.errorMessage,
-    this.failureReason,
-  });
-  final List<CurrentGroup> groups;
-  final CurrentGroup? currentGroup;
-  final bool isSubmitting;
-  final bool isLoading;
-  final String? errorMessage;
-  final GroupFailureReason? failureReason;
-}
-
-class GroupNotifier extends Notifier<GroupState> {
+class GroupViewModel extends Notifier<GroupState> {
   @override
   GroupState build() => const GroupState();
-
-  GroupRepository get _repository => ref.read(groupRepositoryProvider);
 
   Future<void> loadGroups() async {
     if (state.isLoading || state.isSubmitting) return;
@@ -57,7 +23,7 @@ class GroupNotifier extends Notifier<GroupState> {
       isLoading: true,
     );
     try {
-      final groups = await _repository.getMyGroups();
+      final groups = await ref.read(getMyGroupsProvider)(const NoParams());
       if (!ref.mounted) return;
       CurrentGroup? selected;
       for (final group in groups) {
@@ -87,7 +53,9 @@ class GroupNotifier extends Notifier<GroupState> {
       isLoading: true,
     );
     try {
-      final current = await _repository.getGroup(groupId);
+      final current = await ref.read(getGroupProvider)(
+        GetGroupParams(groupId: groupId),
+      );
       if (!ref.mounted) return false;
       final groups = previous.groups
           .map((entry) => entry.group.id == current.group.id ? current : entry)
@@ -115,12 +83,17 @@ class GroupNotifier extends Notifier<GroupState> {
     required String description,
   }) {
     return _submit(
-      () => CreateGroup(_repository)(name: name, description: description),
+      () => ref.read(createGroupProvider)(
+        CreateGroupParams(name: name, description: description),
+      ),
     );
   }
 
   Future<CurrentGroup?> join(String inviteCode) {
-    return _submit(() => JoinGroup(_repository)(inviteCode: inviteCode));
+    return _submit(
+      () =>
+          ref.read(joinGroupProvider)(JoinGroupParams(inviteCode: inviteCode)),
+    );
   }
 
   Future<CurrentGroup?> _submit(Future<CurrentGroup> Function() action) async {
@@ -158,6 +131,26 @@ class GroupNotifier extends Notifier<GroupState> {
         state = GroupState(
           groups: previous.groups,
           currentGroup: previous.currentGroup,
+          errorMessage: _message(error),
+          failureReason: error is GroupFailure ? error.reason : null,
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<String?> getInviteCode() async {
+    final current = state.currentGroup;
+    if (current == null) return null;
+    try {
+      return await ref.read(getGroupInviteCodeProvider)(
+        GetGroupInviteCodeParams(currentGroup: current),
+      );
+    } on Exception catch (error) {
+      if (ref.mounted) {
+        state = GroupState(
+          groups: state.groups,
+          currentGroup: state.currentGroup,
           errorMessage: _message(error),
           failureReason: error is GroupFailure ? error.reason : null,
         );

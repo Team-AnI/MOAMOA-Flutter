@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/repositories/group_repository.dart';
-import '../viewmodels/group_notifier.dart';
+import '../providers/group_providers.dart';
 
 class GroupFormPage extends ConsumerStatefulWidget {
   const GroupFormPage({super.key, required this.isJoining});
@@ -65,24 +65,12 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            TextFormField(
-              controller: _nameOrCode,
+            _GroupFields(
+              isJoining: widget.isJoining,
               enabled: !submitting,
-              decoration: InputDecoration(
-                labelText: widget.isJoining ? '초대 코드' : '모임명',
-              ),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? '필수 항목을 입력해주세요.'
-                  : null,
+              nameOrCode: _nameOrCode,
+              description: _description,
             ),
-            if (!widget.isJoining)
-              TextFormField(
-                controller: _description,
-                enabled: !submitting,
-                decoration: const InputDecoration(labelText: '모임 소개 (선택)'),
-                minLines: 2,
-                maxLines: 4,
-              ),
             const SizedBox(height: 24),
             if (_error != null)
               Padding(
@@ -112,4 +100,37 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       ),
     );
   }
+}
+
+class _GroupFields extends StatelessWidget {
+  const _GroupFields({
+    required this.isJoining,
+    required this.enabled,
+    required this.nameOrCode,
+    required this.description,
+  });
+  final bool isJoining;
+  final bool enabled;
+  final TextEditingController nameOrCode;
+  final TextEditingController description;
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      TextFormField(
+        controller: nameOrCode,
+        enabled: enabled,
+        decoration: InputDecoration(labelText: isJoining ? '초대 코드' : '모임명'),
+        validator: (value) =>
+            value == null || value.trim().isEmpty ? '필수 항목을 입력해주세요.' : null,
+      ),
+      if (!isJoining)
+        TextFormField(
+          controller: description,
+          enabled: enabled,
+          decoration: const InputDecoration(labelText: '모임 소개 (선택)'),
+          minLines: 2,
+          maxLines: 4,
+        ),
+    ],
+  );
 }

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
 import 'package:moamoa/features/group/domain/entities/group_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
-import 'package:moamoa/features/group/presentation/viewmodels/group_notifier.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
 import '../fake_group_repository.dart';
 

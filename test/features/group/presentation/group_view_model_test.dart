@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/group/domain/entities/group_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
-import 'package:moamoa/features/group/presentation/viewmodels/group_notifier.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
 import '../fake_group_repository.dart';
 
@@ -88,5 +88,25 @@ void main() {
       container.read(groupProvider).currentGroup!.canViewInviteCode,
       isFalse,
     );
+  });
+  test('관리자의 초대 코드를 ViewModel에서 조회한다', () async {
+    final group = makeGroup(GroupRole.admin);
+    repository.groups = [group];
+    final viewModel = container.read(groupProvider.notifier);
+    await viewModel.selectGroup(group.group.id);
+    expect(await viewModel.getInviteCode(), 'CODE');
+  });
+
+  test('일반 구성원의 초대 코드 조회는 권한 오류로 처리한다', () async {
+    final group = makeGroup(GroupRole.member);
+    repository.groups = [group];
+    final viewModel = container.read(groupProvider.notifier);
+    await viewModel.selectGroup(group.group.id);
+    expect(await viewModel.getInviteCode(), isNull);
+    expect(
+      container.read(groupProvider).failureReason,
+      GroupFailureReason.forbidden,
+    );
+    expect(container.read(groupProvider).currentGroup, same(group));
   });
 }

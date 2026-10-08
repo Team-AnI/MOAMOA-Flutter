@@ -1,18 +1,12 @@
-import 'package:dio/dio.dart';
-
 import '../../domain/entities/current_group.dart';
 import '../../domain/repositories/group_repository.dart';
-import '../models/meeting_dto.dart';
+import '../datasources/group_remote_data_source.dart';
+import '../models/group_api_failure.dart';
+import '../models/meeting_model.dart';
 
-class ApiGroupRepository implements GroupRepository {
-  ApiGroupRepository(
-    this._dio, {
-    required this.baseUrl,
-    required this.authHeaders,
-  });
-  final Dio _dio;
-  final String baseUrl;
-  final Map<String, String>? Function() authHeaders;
+class GroupRepositoryImpl implements GroupRepository {
+  const GroupRepositoryImpl({required this.remoteDataSource});
+  final GroupRemoteDataSource remoteDataSource;
 
   Future<Map<String, dynamic>> _request(
     String method,
@@ -20,60 +14,11 @@ class ApiGroupRepository implements GroupRepository {
     Map<String, dynamic>? body,
     bool isJoining = false,
   }) async {
-    final uri = Uri.tryParse(baseUrl);
-    if (uri == null ||
-        !uri.hasAuthority ||
-        !['http', 'https'].contains(uri.scheme)) {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    }
-    final headers = authHeaders();
-    if (headers == null) {
-      throw const GroupFailure(GroupFailureReason.unauthorized);
-    }
     try {
-      final response = await _dio.request<Object?>(
-        uri.resolve(path).toString(),
-        data: body,
-        options: Options(
-          method: method,
-          headers: headers,
-          contentType: Headers.jsonContentType,
-        ),
-      );
-      return _data(response.data, isJoining: isJoining);
-    } on DioException catch (error) {
-      final payload = error.response?.data;
-      if (payload is Map<String, dynamic> &&
-          payload['error'] is Map<String, dynamic>) {
-        throw _failure(
-          (payload['error'] as Map<String, dynamic>)['code'],
-          isJoining: isJoining,
-        );
-      }
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    } on FormatException {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    } on TypeError {
-      throw const GroupFailure(GroupFailureReason.unavailable);
+      return await remoteDataSource.request(method, path, body: body);
+    } on GroupApiFailure catch (error) {
+      throw _failure(error.code, isJoining: isJoining);
     }
-  }
-
-  Map<String, dynamic> _data(Object? payload, {required bool isJoining}) {
-    if (payload is! Map<String, dynamic>) {
-      throw const FormatException('잘못된 API 응답');
-    }
-    if (payload['success'] == false) {
-      final error = payload['error'];
-      throw _failure(
-        error is Map<String, dynamic> ? error['code'] : null,
-        isJoining: isJoining,
-      );
-    }
-    if (payload['success'] != true ||
-        payload['data'] is! Map<String, dynamic>) {
-      throw const FormatException('잘못된 API 응답');
-    }
-    return payload['data'] as Map<String, dynamic>;
   }
 
   GroupFailure _failure(Object? code, {required bool isJoining}) =>
@@ -90,9 +35,9 @@ class ApiGroupRepository implements GroupRepository {
 
   CurrentGroup _meeting(Map<String, dynamic> json, {String? description}) {
     try {
-      return MeetingDto.fromJson(
+      return MeetingModel.fromJson(
         json,
-      ).toDomain(descriptionOverride: description);
+      ).toEntity(descriptionOverride: description);
     } on FormatException {
       throw const GroupFailure(GroupFailureReason.unavailable);
     } on TypeError {

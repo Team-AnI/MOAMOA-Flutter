@@ -3,7 +3,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/group/data/repositories/api_group_repository.dart';
+import 'package:moamoa/features/group/data/repositories/group_repository_impl.dart';
+import 'package:moamoa/features/group/data/datasources/group_remote_data_source_impl.dart';
 import 'package:moamoa/features/group/domain/entities/group_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 
@@ -37,14 +38,16 @@ class StubAdapter implements HttpClientAdapter {
 void main() {
   late Dio dio;
   late StubAdapter adapter;
-  late ApiGroupRepository repository;
+  late GroupRepositoryImpl repository;
   setUp(() {
     adapter = StubAdapter();
     dio = Dio()..httpClientAdapter = adapter;
-    repository = ApiGroupRepository(
-      dio,
-      baseUrl: 'https://example.test',
-      authHeaders: () => {'Authorization': 'test-auth'},
+    repository = GroupRepositoryImpl(
+      remoteDataSource: GroupRemoteDataSourceImpl(
+        dio: dio,
+        baseUrl: 'https://example.test',
+        authHeaders: () => {'Authorization': 'test-auth'},
+      ),
     );
   });
   tearDown(() => dio.close());
@@ -169,19 +172,23 @@ void main() {
   });
 
   test('서버와 인증 설정이 없으면 네트워크 요청을 보내지 않는다', () async {
-    final missingServer = ApiGroupRepository(
-      dio,
-      baseUrl: '',
-      authHeaders: () => {},
+    final missingServer = GroupRepositoryImpl(
+      remoteDataSource: GroupRemoteDataSourceImpl(
+        dio: dio,
+        baseUrl: '',
+        authHeaders: () => {},
+      ),
     );
     await expectLater(
       missingServer.getMyGroups(),
       throwsA(isA<GroupFailure>()),
     );
-    final missingAuth = ApiGroupRepository(
-      dio,
-      baseUrl: 'https://example.test',
-      authHeaders: () => null,
+    final missingAuth = GroupRepositoryImpl(
+      remoteDataSource: GroupRemoteDataSourceImpl(
+        dio: dio,
+        baseUrl: 'https://example.test',
+        authHeaders: () => null,
+      ),
     );
     await expectLater(
       missingAuth.getMyGroups(),
