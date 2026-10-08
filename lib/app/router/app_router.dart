@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/group/presentation/group_routes.dart';
-
-part 'app_router.g.dart';
 
 /// 각 feature 의 route 목록을 모으기만 합니다.
 ///
@@ -20,8 +18,7 @@ final List<RouteBase> _featureRoutes = [
   // ...settlementRoutes,
 ];
 
-@Riverpod(keepAlive: true)
-GoRouter appRouter(Ref ref) {
+final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
@@ -29,7 +26,7 @@ GoRouter appRouter(Ref ref) {
       ..._featureRoutes,
     ],
   );
-}
+});
 
 /// 첫 화면이 생기기 전까지 사용하는 임시 화면입니다. (첫 화면 구현 시 제거)
 class _PlaceholderPage extends StatelessWidget {
