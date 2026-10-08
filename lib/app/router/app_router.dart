@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/features/schedule/presentation/schedule_routes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
@@ -13,7 +14,7 @@ part 'app_router.g.dart';
 final List<RouteBase> _featureRoutes = [
   // ...authRoutes,
   // ...groupRoutes,
-  // ...scheduleRoutes,
+  ...scheduleRoutes,
   // ...noticeRoutes,
   // ...settlementRoutes,
 ];
@@ -35,6 +36,20 @@ class _PlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('MOAMOA')));
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('MOAMOA'),
+            // TODO: 홈 화면이 생기면 제거합니다. (일정 화면 확인용 임시 진입점)
+            TextButton(
+              onPressed: () => context.push('/meetings/1/schedules'),
+              child: const Text('일정'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

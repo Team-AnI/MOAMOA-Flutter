@@ -23,7 +23,7 @@ class ScheduleCreateViewModel extends AsyncNotifier<int?> {
   }) async {
     if (state.isLoading) return; // 중복 탭 방지
     state = const AsyncLoading();
-    state = await AsyncValue.guard(
+    final result = await AsyncValue.guard(
       () => CreateSchedule(ref.read(scheduleRepositoryProvider))(
         meetingId: meetingId,
         title: title,
@@ -33,6 +33,8 @@ class ScheduleCreateViewModel extends AsyncNotifier<int?> {
         location: location,
       ),
     );
-    if (!state.hasError) ref.invalidate(scheduleListProvider);
+    if (!ref.mounted) return; // 제출 중에 화면이 닫힌 경우
+    if (!result.hasError) ref.invalidate(scheduleListProvider);
+    state = result;
   }
 }

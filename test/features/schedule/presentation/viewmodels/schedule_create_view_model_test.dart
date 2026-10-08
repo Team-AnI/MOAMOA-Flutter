@@ -19,6 +19,8 @@ void main() {
       overrides: [scheduleRepositoryProvider.overrideWithValue(repository)],
     );
     addTearDown(container.dispose);
+    // 화면이 구독하는 것처럼 상태를 유지한다. (autoDispose 라서 구독이 없으면 사라진다)
+    container.listen(scheduleCreateProvider(1), (_, _) {});
   });
 
   Future<void> submit({String title = '정모', DateTime? start}) {
@@ -85,5 +87,16 @@ void main() {
     await container.read(scheduleListProvider(args).future);
 
     expect(repository.listCallCount, 2);
+  });
+
+  test('성공한 뒤 잘못된 입력을 제출해도 성공이 아니라 오류 상태가 된다', () async {
+    await submit(start: startAt);
+    expect(state().value, 100);
+
+    await submit(title: ' ', start: startAt);
+
+    // 오류 상태는 이전 성공 값(100)을 들고 있을 수 있으므로 AsyncData 가 아니어야 한다.
+    expect(state(), isNot(isA<AsyncData<int?>>()));
+    expect(state().error, isA<ScheduleValidationException>());
   });
 }
