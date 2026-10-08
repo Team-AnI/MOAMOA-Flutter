@@ -52,6 +52,28 @@ void main() {
   });
   tearDown(() => dio.close());
 
+  for (final base in [
+    'https://example.test',
+    'https://example.test/',
+    'https://example.test/api',
+    'https://example.test/api/',
+  ]) {
+    test('API 주소의 경로 접두사와 끝 슬래시를 보존한다: $base', () async {
+      final source = GroupRemoteDataSourceImpl(
+        dio: dio,
+        baseUrl: base,
+        authHeaders: () => {'Authorization': 'test-auth'},
+      );
+      await source.request('GET', '/v1/meetings');
+      expect(
+        adapter.requests.single.uri.toString(),
+        base.contains('/api')
+            ? 'https://example.test/api/v1/meetings'
+            : 'https://example.test/v1/meetings',
+      );
+    });
+  }
+
   test('생성은 선택 소개를 생략하고 ADMIN 응답을 사용한다', () async {
     final current = await repository.createGroup(name: '러닝', description: '');
     expect(adapter.requests.single.path, 'https://example.test/v1/meetings');

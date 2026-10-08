@@ -16,6 +16,9 @@ P0 초기 계약에 따라 생성, 내 모임 목록, 초대 코드 가입, 모�
 flutter run --dart-define=API_BASE_URL=https://your-development-server
 ```
 
+`API_BASE_URL`에 `/api` 같은 경로 접두사가 있으면 해당 경로 뒤에 `/v1/...`을 붙입니다.
+이미 `/v1`이 포함된 주소는 버전 경로가 중복되므로 서버의 기준 주소를 확인해야 합니다.
+
 인증 방식과 로그인 연동은 아직 확정되지 않았습니다.
 로그인 담당 기능에서 `groupAuthHeadersProvider`를 override하여 인증 헤더를 공급합니다.
 서버 인증 방식이 확정되기 전에 Bearer 방식이나 secure storage 키를 가정하지 않습니다.

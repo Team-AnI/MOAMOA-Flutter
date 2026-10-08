@@ -7,8 +7,9 @@ class GroupEntryChoices extends StatelessWidget {
   const GroupEntryChoices({super.key, this.isSheet = false});
   final bool isSheet;
   void _open(BuildContext context, String path) {
+    final router = GoRouter.of(context);
     if (isSheet) Navigator.pop(context);
-    context.push(path);
+    router.push(path);
   }
 
   @override

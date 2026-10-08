@@ -19,7 +19,9 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final uri = Uri.tryParse(baseUrl);
+    final cleanBase = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
+    final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    final uri = Uri.tryParse(cleanBase);
     if (uri == null ||
         !uri.hasAuthority ||
         !['http', 'https'].contains(uri.scheme)) {
@@ -31,7 +33,7 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     }
     try {
       final response = await dio.request<Object?>(
-        uri.resolve(path).toString(),
+        uri.resolve(cleanPath).toString(),
         data: body,
         options: Options(
           method: method,

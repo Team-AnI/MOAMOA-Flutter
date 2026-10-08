@@ -94,6 +94,25 @@ void main() {
       await tester.tap(find.byTooltip('모임 추가'));
       await tester.pumpAndSettle();
       await _capture(tester, boundary, 'add-sheet', size);
+      for (final entry in {
+        '모임 만들기': '/groups/create',
+        '초대 코드로 가입': '/groups/join',
+      }.entries) {
+        await tester.tap(find.text(entry.key));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            entry.value == '/groups/create' ? '모임 프로필을 정해요' : '초대 코드를 입력해 주세요',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('모임 추가'), findsNothing);
+        expect(tester.takeException(), isNull);
+        router.go('/groups');
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('모임 추가'));
+        await tester.pumpAndSettle();
+      }
     });
   }
 }
