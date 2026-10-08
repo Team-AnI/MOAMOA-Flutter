@@ -58,7 +58,6 @@ final scheduleListProvider =
 
 위 네이밍 규칙을 실제 코드에 적용하면 아래와 같은 흐름이 됩니다. (Entity → Model → DataSource → Repository → UseCase → ViewModel → Provider → View[Page/Widget])
 
-**에러 처리 정책**: DataSource/Repository/UseCase 계층에서는 예외를 따로 잡지 않고 그대로 던집니다. 최종적으로 ViewModel 에서 `AsyncValue.guard`로 한 번만 잡아 `AsyncError` 상태로 변환합니다 (아래 ViewModel 예시의 `refresh()` 참고). 중간 계층에서 개별적으로 try-catch 를 추가하지 않습니다.
 
 ```dart
 // Entity (domain/entities/schedule.dart)
