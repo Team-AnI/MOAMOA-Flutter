@@ -58,7 +58,6 @@ final scheduleListProvider =
 
 위 네이밍 규칙을 실제 코드에 적용하면 아래와 같은 흐름이 됩니다. (Entity → Model → DataSource → Repository → UseCase → ViewModel → Provider → View[Page/Widget])
 
-
 ```dart
 // Entity (domain/entities/schedule.dart)
 // - 순수 도메인 모델. data/presentation 계층에 의존하지 않습니다.
@@ -125,7 +124,7 @@ abstract interface class ScheduleRepository {
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  const ScheduleRepositoryImpl(this._remoteDataSource);
+  const ScheduleRepositoryImpl({required this._remoteDataSource});
 
   final ScheduleRemoteDataSource _remoteDataSource;
 
@@ -172,7 +171,7 @@ abstract class GetSchedules extends Usecase<List<Schedule>, GetSchedulesParams> 
 
 // 실제 구현 클래스
 final class GetSchedulesImpl implements GetSchedules {
-  GetSchedulesImpl(this._repository);
+  GetSchedulesImpl({required this._repository});
 
   final ScheduleRepository _repository;
 
@@ -189,7 +188,7 @@ final class GetSchedulesImpl implements GetSchedules {
 abstract class GetAllSchedules extends Usecase<List<Schedule>, NoParams> {}
 
 final class GetAllSchedulesImpl implements GetAllSchedules {
-  GetAllSchedulesImpl(this._repository);
+  GetAllSchedulesImpl({required this._repository});
 
   final ScheduleRepository _repository;
 
