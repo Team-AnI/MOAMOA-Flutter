@@ -102,7 +102,8 @@ abstract interface class ScheduleRemoteDataSource {
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
-  const ScheduleRemoteDataSourceImpl({required this._apiClient});
+  const ScheduleRemoteDataSourceImpl({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
@@ -218,7 +219,7 @@ class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
 // Provider 모음 (presentation/providers/schedule_providers.dart)
 // - 계층별 객체를 Riverpod 에 등록합니다. 아래로 갈수록 상위 계층이 하위 계층을 watch 합니다.
 final scheduleRemoteDataSourceProvider = Provider<ScheduleRemoteDataSource>(
-  (ref) => ScheduleRemoteDataSourceImpl(ref.watch(apiClientProvider)),
+  (ref) => ScheduleRemoteDataSourceImpl(apiClient: ref.watch(apiClientProvider)),
 );
 
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
