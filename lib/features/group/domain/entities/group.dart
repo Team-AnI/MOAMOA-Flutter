@@ -6,7 +6,7 @@ class Group {
     required this.description,
     this.imageUrl,
     this.memberCount,
-  });
+  }) : assert(memberCount == null || memberCount >= 0, '구성원 수는 음수일 수 없습니다.');
 
   final String id;
   final String name;

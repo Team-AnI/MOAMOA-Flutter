@@ -12,5 +12,9 @@ class CurrentGroup {
   final Group group;
   final GroupMember membership;
 
+  bool get canWriteNotices => membership.role.canWriteNotices;
+  bool get canCreateSchedules => membership.role.canCreateSchedules;
+  bool get canConfirmSchedules => membership.role.canConfirmSchedules;
+
   bool get canViewInviteCode => membership.role.canViewInviteCode;
 }

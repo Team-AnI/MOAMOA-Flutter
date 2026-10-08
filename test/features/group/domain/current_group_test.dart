@@ -26,6 +26,9 @@ void main() {
       ),
     );
     expect(current.canViewInviteCode, isTrue);
+    expect(current.canWriteNotices, isTrue);
+    expect(current.canCreateSchedules, isTrue);
+    expect(current.canConfirmSchedules, isTrue);
   });
 
   test('일반 구성원은 초대 코드를 확인할 권한이 없다', () {
@@ -38,6 +41,9 @@ void main() {
       ),
     );
     expect(current.canViewInviteCode, isFalse);
+    expect(current.canWriteNotices, isFalse);
+    expect(current.canCreateSchedules, isFalse);
+    expect(current.canConfirmSchedules, isFalse);
   });
 
   test('다른 모임의 구성원 정보를 현재 모임에 연결할 수 없다', () {
