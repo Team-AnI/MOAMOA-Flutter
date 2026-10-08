@@ -1,6 +1,6 @@
 # PR 상태 전환 시 Discord 알림
 # - Open → Draft (converted_to_draft) : @here 드래프트 전환 안내
-# - 리뷰 요청은 PR 별로 보내지 않고 Review Reminder 가 평일 10시(KST)에 한 번에 모아 보냅니다.
+# - 리뷰 요청은 PR 별로 보내지 않고 A-AND-I-DISCORD-UTIL 의 리뷰 리마인드가 평일 10시(KST)에 한 번에 모아 보냅니다.
 # - 설정: 레포 시크릿 DISCORD_GITHUB_WEBHOOK 에 Discord 웹훅 URL 등록
 name: PR Notify
 
