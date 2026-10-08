@@ -48,7 +48,7 @@ final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioPr
 
 // features/schedule/presentation/providers/schedule_providers.dart — feature 레벨 Provider 예시
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
-  (ref) => ScheduleRepositoryImpl(ref.watch(scheduleRemoteDataSourceProvider)),
+  (ref) => ScheduleRepositoryImpl(remoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
 );
 final scheduleListProvider =
     AsyncNotifierProvider<ScheduleListViewModel, List<Schedule>>(ScheduleListViewModel.new);
@@ -125,7 +125,8 @@ abstract interface class ScheduleRepository {
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  const ScheduleRepositoryImpl({required this._remoteDataSource});
+  const ScheduleRepositoryImpl({required ScheduleRemoteDataSource remoteDataSource})
+      : _remoteDataSource = remoteDataSource;
 
   final ScheduleRemoteDataSource _remoteDataSource;
 
@@ -172,7 +173,8 @@ abstract class GetSchedules extends Usecase<List<Schedule>, GetSchedulesParams> 
 
 // 실제 구현 클래스
 final class GetSchedulesImpl implements GetSchedules {
-  GetSchedulesImpl({required this._repository});
+  GetSchedulesImpl({required ScheduleRepository repository})
+      : _repository = repository;
 
   final ScheduleRepository _repository;
 
@@ -189,7 +191,8 @@ final class GetSchedulesImpl implements GetSchedules {
 abstract class GetAllSchedules extends Usecase<List<Schedule>, NoParams> {}
 
 final class GetAllSchedulesImpl implements GetAllSchedules {
-  GetAllSchedulesImpl({required this._repository});
+  GetAllSchedulesImpl({required ScheduleRepository repository})
+      : _repository = repository;
 
   final ScheduleRepository _repository;
 
@@ -223,7 +226,7 @@ final scheduleRemoteDataSourceProvider = Provider<ScheduleRemoteDataSource>(
 );
 
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
-  (ref) => ScheduleRepositoryImpl(ref.watch(scheduleRemoteDataSourceProvider)),
+  (ref) => ScheduleRepositoryImpl(remoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
 );
 
 final getSchedulesProvider = Provider<GetSchedules>(
