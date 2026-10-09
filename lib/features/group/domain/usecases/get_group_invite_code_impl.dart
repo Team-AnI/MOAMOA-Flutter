@@ -1,3 +1,4 @@
+import '../entities/current_group.dart';
 import '../repositories/group_repository.dart';
 import 'get_group_invite_code.dart';
 import 'params/get_group_invite_code_params.dart';

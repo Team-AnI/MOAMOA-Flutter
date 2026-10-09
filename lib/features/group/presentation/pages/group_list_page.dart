@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../domain/entities/current_group.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_empty_state.dart';

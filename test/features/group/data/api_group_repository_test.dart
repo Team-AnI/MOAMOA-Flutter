@@ -1,3 +1,4 @@
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
