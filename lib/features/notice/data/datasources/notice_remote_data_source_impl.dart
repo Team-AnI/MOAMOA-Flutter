@@ -80,7 +80,17 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
   }
 
   /// 공통 응답 { success, data, error, timestamp } 에서 data 를 꺼냅니다.
+  ///
+  /// 응답 형식이 다르면 크래시 대신 DioException 을 던져 Repository 에서 처리되게 합니다.
   Map<String, dynamic> _data(Response<Map<String, dynamic>> response) {
-    return response.data!['data'] as Map<String, dynamic>;
+    final data = response.data?['data'];
+    if (data is! Map<String, dynamic>) {
+      throw DioException.badResponse(
+        statusCode: response.statusCode ?? 200,
+        requestOptions: response.requestOptions,
+        response: response,
+      );
+    }
+    return data;
   }
 }

@@ -112,6 +112,11 @@ class NoticeRepositoryImpl implements NoticeRepository {
         );
       }
     }
-    return const NoticeException('네트워크 연결을 확인해주세요.');
+    // 응답 자체를 받지 못한 경우(연결 실패, 시간 초과)
+    if (e.response == null) {
+      return const NoticeException('네트워크 연결을 확인해주세요.');
+    }
+    // 응답은 받았지만 형식이 예상과 다른 경우
+    return const NoticeException('요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
   }
 }
