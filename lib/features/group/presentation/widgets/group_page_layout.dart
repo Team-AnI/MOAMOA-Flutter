@@ -62,7 +62,13 @@ class GroupPageLayout extends StatelessWidget {
           ),
           if (bottom != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              // SafeArea가 확보한 여백에 디자인 여백을 중복해서 더하지 않습니다.
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                (20 - MediaQuery.paddingOf(context).bottom).clamp(0.0, 20.0),
+              ),
               child: bottom!,
             ),
         ],
