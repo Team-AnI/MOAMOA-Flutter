@@ -5,7 +5,9 @@ import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import '../schedule_format.dart';
 import 'schedule_status_pill.dart';
 
-/// 캘린더에서 선택한 날짜의 일정 한 줄
+/// 캘린더에서 선택한 날짜의 일정 한 줄입니다. 시작 시각과 소요 시간, 세로 막대,
+/// 제목/장소, 상태 라벨 순서로 보여주며 종료 일시가 없으면 소요 시간은 생략합니다.
+/// [onTap] 은 줄을 눌렀을 때(상세로 이동) 호출됩니다.
 class ScheduleEventTile extends StatelessWidget {
   const ScheduleEventTile({super.key, required this.schedule, this.onTap});
 
@@ -45,7 +47,7 @@ class ScheduleEventTile extends StatelessWidget {
   }
 }
 
-/// 시작 시각과 소요 시간
+/// 시작 시각과 소요 시간입니다.
 class _TimeColumn extends StatelessWidget {
   const _TimeColumn({required this.start, required this.end});
 
@@ -72,7 +74,7 @@ class _TimeColumn extends StatelessWidget {
   }
 }
 
-/// 시간과 제목 사이의 세로 막대
+/// 시간과 제목 사이의 세로 막대입니다.
 class _AccentBar extends StatelessWidget {
   const _AccentBar();
 
@@ -89,7 +91,7 @@ class _AccentBar extends StatelessWidget {
   }
 }
 
-/// 제목과 장소
+/// 제목과 장소입니다.
 class _EventTexts extends StatelessWidget {
   const _EventTexts({required this.title, required this.location});
 

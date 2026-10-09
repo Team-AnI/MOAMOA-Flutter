@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 
-/// 월 달력. 일정이 있는 날에는 점을 표시합니다.
+/// 월 달력입니다. 일정이 있는 날에는 숫자 아래에 점을 표시합니다.
+///
+/// 값을 들고 있지 않고 받은 값으로만 그립니다.
+/// - [month]: 보여줄 달. 상단 화살표를 누르면 [onMonthChanged] 가 호출됩니다.
+/// - [selected]: 선택된 날짜. 날짜를 누르면 [onSelected] 가 호출됩니다.
+/// - [markedDays]: 일정이 있는 날짜들(시각 제외)
+///
+/// 요일은 일요일부터 시작합니다.
 class ScheduleCalendar extends StatelessWidget {
   const ScheduleCalendar({
     super.key,
@@ -13,20 +20,19 @@ class ScheduleCalendar extends StatelessWidget {
     required this.onSelected,
   });
 
-  /// 보여줄 달의 1일
   final DateTime month;
   final DateTime selected;
 
-  /// 일정이 있는 날(시각을 뺀 날짜)
   final Set<DateTime> markedDays;
   final ValueChanged<DateTime> onMonthChanged;
   final ValueChanged<DateTime> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    // month 가 1일이 아니어도 첫 요일이 틀어지지 않게 1일을 직접 만든다.
+    // month 가 1일이 아니어도 첫 요일이 틀어지지 않게 1일을 직접 만듭니다.
     final leading = DateTime(month.year, month.month).weekday % 7; // 일요일 시작
     final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
+    // 1일 앞의 빈 칸(null) + 1일~말일. 마지막 줄은 빈 칸으로 7칸을 채웁니다.
     final cells = <int?>[
       ...List.filled(leading, null),
       for (var d = 1; d <= daysInMonth; d++) d,
@@ -46,6 +52,7 @@ class ScheduleCalendar extends StatelessWidget {
         children: [
           _MonthHeader(month: month, onMonthChanged: onMonthChanged),
           const _WeekdayRow(),
+          // 7칸씩 끊어서 한 주(한 줄)로 그립니다.
           for (var i = 0; i < cells.length; i += 7)
             Row(
               children: [
@@ -70,7 +77,7 @@ class ScheduleCalendar extends StatelessWidget {
   }
 }
 
-/// 달력 상단: 이전 달 / 연월 / 다음 달
+/// 달력 상단의 이전 달 / 연월 / 다음 달입니다.
 class _MonthHeader extends StatelessWidget {
   const _MonthHeader({required this.month, required this.onMonthChanged});
 
@@ -101,7 +108,7 @@ class _MonthHeader extends StatelessWidget {
   }
 }
 
-/// 요일 줄 (일 ~ 토)
+/// 요일 줄(일 ~ 토)입니다.
 class _WeekdayRow extends StatelessWidget {
   const _WeekdayRow();
 
@@ -124,7 +131,7 @@ class _WeekdayRow extends StatelessWidget {
   }
 }
 
-/// 달력의 하루. 숫자 아래에 일정이 있으면 점이 붙는다.
+/// 달력의 하루입니다. 일정이 있으면 숫자 아래에 점이 붙습니다.
 class _DayCell extends StatelessWidget {
   const _DayCell({
     required this.date,
@@ -168,7 +175,7 @@ class _DayCell extends StatelessWidget {
   }
 }
 
-/// 날짜 숫자. 선택/오늘/지난 날짜에 따라 배경과 글자색이 달라진다.
+/// 날짜 숫자입니다. 선택/오늘/지난 날짜에 따라 배경과 글자색이 달라집니다.
 class _DayNumber extends StatelessWidget {
   const _DayNumber({required this.date, required this.selected});
 
@@ -182,6 +189,7 @@ class _DayNumber extends StatelessWidget {
     final isToday = DateUtils.isSameDay(date, today);
     final isPast = date.isBefore(today);
 
+    // 우선순위: 선택한 날 > 오늘 > 지난 날(흐리게) > 그 밖의 날
     final Color? background = isSelected
         ? MoaColors.accent
         : isToday
@@ -208,6 +216,7 @@ class _DayNumber extends StatelessWidget {
   }
 }
 
+/// 이전/다음 달 이동 버튼입니다. [icon] 은 assets/icons 의 파일 이름입니다.
 class _MonthButton extends StatelessWidget {
   const _MonthButton(this.icon, this.onTap, {super.key});
 

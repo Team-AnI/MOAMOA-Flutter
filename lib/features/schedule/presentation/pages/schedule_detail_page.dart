@@ -8,7 +8,7 @@ import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
 
-/// 일정 상세.
+/// 일정 상세 화면입니다.
 /// TODO: Figma 에 직접 생성한 일정의 상세 화면이 없어 기존 화면 스타일로 임시 구성했습니다.
 class ScheduleDetailPage extends ConsumerWidget {
   const ScheduleDetailPage({
@@ -28,7 +28,7 @@ class ScheduleDetailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: const MoaAppBar(),
+      appBar: MoaAppBar(),
       body: SafeArea(
         child: Column(
           children: [

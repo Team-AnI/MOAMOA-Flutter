@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_detail_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_view_model.dart';
@@ -17,7 +19,7 @@ final createScheduleProvider = Provider<CreateSchedule>(
       CreateScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
 );
 
-/// 현재 사용자가 이 모임의 관리자인지.
+/// 현재 사용자가 이 모임의 관리자인지 알려줍니다.
 /// TODO(#29): 모임 상세 응답의 myRole 로 교체합니다. (지금은 개발용으로 항상 true)
 final scheduleAdminProvider = Provider<bool>((ref) => true);
 
@@ -35,7 +37,16 @@ final scheduleDetailProvider =
       ScheduleDetailArgs
     >(ScheduleDetailViewModel.new);
 
-/// 인자는 일정을 만들 모임의 id.
+/// 인자는 일정을 만들 모임의 id 입니다.
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공 id, 오류)가 남지 않게 초기화합니다.
-final scheduleCreateProvider = AsyncNotifierProvider.autoDispose
-    .family<ScheduleCreateViewModel, int?, int>(ScheduleCreateViewModel.new);
+final scheduleCreateProvider = NotifierProvider.autoDispose
+    .family<ScheduleCreateViewModel, ScheduleCreateState, int>(
+      ScheduleCreateViewModel.new,
+    );
+
+/// 캘린더 탭의 월/선택 날짜. 목록 페이지가 구독을 유지하므로 탭을 오가도 값이 남습니다.
+final scheduleCalendarProvider =
+    NotifierProvider.autoDispose<
+      ScheduleCalendarViewModel,
+      ScheduleCalendarState
+    >(ScheduleCalendarViewModel.new);

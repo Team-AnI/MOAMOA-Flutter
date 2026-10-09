@@ -2,29 +2,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
 
 import '../providers/schedule_providers.dart';
+import 'schedule_create_state.dart';
+import 'schedule_create_status.dart';
 
-/// 일정 생성 ViewModel. 상태는 제출 결과를 나타냅니다.
-/// - data(null): 아직 제출 전 / loading: 제출 중 / data(id): 생성 성공
-/// - error: 실패. 입력 문제면 ScheduleValidationException
-class ScheduleCreateViewModel extends AsyncNotifier<int?> {
+/// 일정 만들기 ViewModel 입니다. [meetingId] 모임에 일정을 만들고 제출 과정을 [ScheduleCreateState] 로 알립니다.
+class ScheduleCreateViewModel extends Notifier<ScheduleCreateState> {
   ScheduleCreateViewModel(this.meetingId);
 
   final int meetingId;
 
   @override
-  int? build() => null;
+  ScheduleCreateState build() => const ScheduleCreateState();
 
   Future<void> submit({
     required String title,
     String description = '',
-    DateTime? startAt,
+    required DateTime startAt,
     DateTime? endAt,
     String location = '',
   }) async {
-    if (state.isLoading) return; // 중복 탭 방지
-    state = const AsyncLoading();
-    final result = await AsyncValue.guard(
-      () => ref.read(createScheduleProvider)(
+    if (state.status == ScheduleCreateStatus.submitting) return; // 중복 탭 방지
+    state = const ScheduleCreateState(status: ScheduleCreateStatus.submitting);
+
+    ScheduleCreateState result;
+    try {
+      final created = await ref.read(createScheduleProvider)(
         CreateScheduleParams(
           meetingId: meetingId,
           title: title,
@@ -33,10 +35,19 @@ class ScheduleCreateViewModel extends AsyncNotifier<int?> {
           endAt: endAt,
           location: location,
         ),
-      ),
-    );
+      );
+      result = ScheduleCreateState(
+        status: ScheduleCreateStatus.success,
+        created: created,
+      );
+    } catch (_) {
+      result = const ScheduleCreateState(status: ScheduleCreateStatus.failure);
+    }
+
     if (!ref.mounted) return; // 제출 중에 화면이 닫힌 경우
-    if (!result.hasError) ref.invalidate(scheduleListProvider);
+    if (result.status == ScheduleCreateStatus.success) {
+      ref.invalidate(scheduleListProvider);
+    }
     state = result;
   }
 }

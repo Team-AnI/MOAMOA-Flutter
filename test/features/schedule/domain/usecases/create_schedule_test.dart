@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_create_request.dart';
-import 'package:moamoa/features/schedule/domain/errors/schedule_validation_error.dart';
-import 'package:moamoa/features/schedule/domain/errors/schedule_validation_exception.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
@@ -18,8 +17,8 @@ void main() {
     createSchedule = CreateScheduleImpl(repository: repository);
   });
 
-  test('올바른 입력이면 요청 객체로 저장하고 일정 id 를 돌려준다', () async {
-    final id = await createSchedule(
+  test('올바른 입력이면 요청 객체로 저장하고 생성된 일정을 돌려준다', () async {
+    final created = await createSchedule(
       CreateScheduleParams(
         meetingId: 1,
         title: '10월 정기 러닝',
@@ -30,7 +29,10 @@ void main() {
       ),
     );
 
-    expect(id, 100);
+    expect(
+      created,
+      CreatedSchedule(id: 100, title: '10월 정기 러닝', startAt: startAt),
+    );
     expect(
       repository.createCalls.single,
       ScheduleCreateRequest(
@@ -74,58 +76,5 @@ void main() {
     expect(request.title, '정모');
     expect(request.description, '');
     expect(request.location, '');
-  });
-
-  group('잘못된 입력은 저장하지 않고 사유를 알려준다', () {
-    final cases =
-        <
-          String,
-          ({CreateScheduleParams params, Set<ScheduleValidationError> errors})
-        >{
-          '제목이 공백뿐': (
-            params: CreateScheduleParams(
-              meetingId: 1,
-              title: '   ',
-              startAt: startAt,
-            ),
-            errors: {ScheduleValidationError.titleRequired},
-          ),
-          '시작 일시 없음': (
-            params: const CreateScheduleParams(meetingId: 1, title: '정모'),
-            errors: {ScheduleValidationError.startAtRequired},
-          ),
-          '종료가 시작보다 이전': (
-            params: CreateScheduleParams(
-              meetingId: 1,
-              title: '정모',
-              startAt: endAt,
-              endAt: startAt,
-            ),
-            errors: {ScheduleValidationError.endBeforeStart},
-          ),
-          '여러 항목이 동시에 잘못': (
-            params: const CreateScheduleParams(meetingId: 1, title: ''),
-            errors: {
-              ScheduleValidationError.titleRequired,
-              ScheduleValidationError.startAtRequired,
-            },
-          ),
-        };
-
-    cases.forEach((name, c) {
-      test(name, () async {
-        await expectLater(
-          createSchedule(c.params),
-          throwsA(
-            isA<ScheduleValidationException>().having(
-              (e) => e.errors,
-              'errors',
-              c.errors,
-            ),
-          ),
-        );
-        expect(repository.createCalls, isEmpty);
-      });
-    });
   });
 }

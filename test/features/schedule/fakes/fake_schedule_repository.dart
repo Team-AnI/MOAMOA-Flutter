@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_create_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
@@ -19,10 +20,15 @@ class FakeScheduleRepository implements ScheduleRepository {
   Object? error;
 
   @override
-  Future<int> createSchedule(ScheduleCreateRequest request) async {
+  Future<CreatedSchedule> createSchedule(ScheduleCreateRequest request) async {
     createCalls.add(request);
     if (error != null) throw error!;
-    return createCompleter?.future ?? 100;
+    final id = await (createCompleter?.future ?? Future.value(100));
+    return CreatedSchedule(
+      id: id,
+      title: request.title,
+      startAt: request.startAt,
+    );
   }
 
   @override

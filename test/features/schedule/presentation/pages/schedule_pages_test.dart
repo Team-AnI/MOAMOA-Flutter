@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/presentation/pages/schedule_create_page.dart';
 import 'package:moamoa/features/schedule/presentation/pages/schedule_detail_page.dart';
@@ -23,6 +24,9 @@ void main() {
   );
 
   late FakeScheduleRepository repository;
+
+  FilledButton submitButton(WidgetTester tester) =>
+      tester.widget<FilledButton>(find.widgetWithText(FilledButton, '일정 만들기'));
 
   setUp(() {
     repository = FakeScheduleRepository(schedules: [run]);
@@ -148,54 +152,32 @@ void main() {
     testWidgets('상단 바는 AppBar 를 사용한다', (tester) async {
       await pumpPage(tester, const ScheduleCreatePage(meetingId: 1));
 
-      expect(find.byType(AppBar), findsOneWidget);
+      expect(find.byType(MoaAppBar), findsOneWidget);
     });
 
-    testWidgets('필수 입력 없이 만들면 저장하지 않고 오류 문구를 보여준다', (tester) async {
+    testWidgets('필수 입력이 없으면 만들기 버튼이 비활성화된다', (tester) async {
       await pumpPage(tester, const ScheduleCreatePage(meetingId: 1));
 
-      await tester.tap(find.widgetWithText(FilledButton, '일정 만들기'));
-      await tester.pumpAndSettle();
+      expect(submitButton(tester).onPressed, isNull);
 
-      expect(find.text('일정 이름을 입력해 주세요.'), findsOneWidget);
-      expect(find.text('시작 일시를 선택해 주세요.'), findsOneWidget);
-      expect(repository.createCalls, isEmpty);
+      await tester.enterText(find.byType(TextField).first, '정모');
+      await tester.pump();
+      expect(submitButton(tester).onPressed, isNull);
     });
 
-    testWidgets('제목만 입력하면 시작 일시 오류만 남는다', (tester) async {
+    testWidgets('이름과 시작 일시를 입력하면 만들기 버튼이 활성화된다', (tester) async {
       await pumpPage(tester, const ScheduleCreatePage(meetingId: 1));
 
       await tester.enterText(find.byType(TextField).first, '정모');
-      await tester.tap(find.widgetWithText(FilledButton, '일정 만들기'));
+      await tester.tap(find.text('날짜와 시간을 선택해 주세요').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
 
-      expect(find.text('일정 이름을 입력해 주세요.'), findsNothing);
-      expect(find.text('시작 일시를 선택해 주세요.'), findsOneWidget);
+      expect(submitButton(tester).onPressed, isNotNull);
     });
-  });
-
-  testWidgets('이전에 만든 일정이 있어도 잘못된 입력이면 화면을 닫지 않고 오류를 보여준다', (tester) async {
-    final container = ProviderContainer(
-      overrides: [scheduleRepositoryProvider.overrideWithValue(repository)],
-    );
-    addTearDown(container.dispose);
-    final provider = scheduleCreateProvider(1);
-    container.listen(provider, (_, _) {}); // 이전 제출 결과가 남아 있는 상황
-    await container
-        .read(provider.notifier)
-        .submit(title: '정모', startAt: DateTime(2026, 10, 11, 7));
-    expect(container.read(provider).value, 100);
-
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: ScheduleCreatePage(meetingId: 1)),
-      ),
-    );
-    await tester.tap(find.widgetWithText(FilledButton, '일정 만들기'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('일정 이름을 입력해 주세요.'), findsOneWidget);
   });
 
   testWidgets('달력은 month 가 1일이 아니어도 1일의 요일 위치가 같다', (tester) async {
@@ -228,7 +210,7 @@ void main() {
       const ScheduleDetailPage(meetingId: 1, scheduleId: 20),
     );
 
-    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(MoaAppBar), findsOneWidget);
     expect(find.text('10월 정기 러닝'), findsOneWidget);
     expect(find.textContaining('19:00 ~ 21:00'), findsOneWidget);
     expect(find.text('반포 한강공원'), findsOneWidget);

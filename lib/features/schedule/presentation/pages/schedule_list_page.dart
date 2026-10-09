@@ -7,13 +7,31 @@ import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 
 import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
+import '../viewmodels/schedule_list_view_model.dart';
 import '../widgets/schedule_calendar.dart';
 import '../widgets/schedule_card.dart';
 import '../widgets/schedule_event_tile.dart';
 
+/// 일정 화면들의 라우트 기본 경로입니다. 예: `/meetings/1/schedules`
+/// (일정 만들기는 `…/new`, 상세는 `…/{일정 id}` 로 이어집니다.)
 String _basePath(int meetingId) => '/meetings/$meetingId/schedules';
 
-/// 일정 탭: 목록 / 캘린더
+/// 캘린더 탭이 조회하는 기간입니다. [month] 달의 1일 ~ 말일
+ScheduleListArgs _monthArgs(int meetingId, DateTime month) => (
+  meetingId: meetingId,
+  startDate: month,
+  endDate: DateTime(month.year, month.month + 1, 0),
+);
+
+/// 일정 탭 화면. 위에서부터 다음 순서로 구성됩니다.
+///
+/// 1. 헤더: 제목 "일정"과 일정 만들기 `+` 버튼(관리자에게만 보임)
+/// 2. 목록 / 캘린더 전환 토글
+/// 3. 선택한 탭의 내용([_ListTab] 또는 [_CalendarTab])
+///
+/// - [meetingId]: 일정을 볼 모임. 라우트(`/meetings/:meetingId/schedules`)에서 전달됩니다.
+/// - 토글 상태는 이 화면 안에서만 쓰여서 State 가 직접 들고 있습니다.
+/// - 캘린더의 월/선택 날짜는 [ScheduleCalendarViewModel] 이 들고 있어서 토글을 오가도 유지됩니다.
 class ScheduleListPage extends ConsumerStatefulWidget {
   const ScheduleListPage({super.key, required this.meetingId});
 
@@ -24,22 +42,13 @@ class ScheduleListPage extends ConsumerStatefulWidget {
 }
 
 class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
-  final _today = DateUtils.dateOnly(DateTime.now());
   bool _calendar = false;
-  // 캘린더 탭의 상태. 목록 탭으로 갔다 와도 유지되도록 페이지가 들고 있는다.
-  late DateTime _month = DateTime(_today.year, _today.month);
-  late DateTime _selected = _today;
-
-  /// 월을 바꾸면 선택 날짜도 그 달로 옮긴다. (이번 달이면 오늘, 아니면 1일)
-  void _changeMonth(DateTime month) {
-    setState(() {
-      _month = month;
-      _selected = DateUtils.isSameMonth(month, _today) ? _today : month;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    // 목록 탭으로 가서 캘린더 탭이 사라져도 보던 달/선택 날짜가 남도록 구독을 유지합니다.
+    ref.listen(scheduleCalendarProvider, (_, _) {});
+
     return Scaffold(
       backgroundColor: MoaColors.page,
       body: SafeArea(
@@ -58,13 +67,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
             ),
             Expanded(
               child: _calendar
-                  ? _CalendarTab(
-                      meetingId: widget.meetingId,
-                      month: _month,
-                      selected: _selected,
-                      onMonthChanged: _changeMonth,
-                      onSelected: (date) => setState(() => _selected = date),
-                    )
+                  ? _CalendarTab(meetingId: widget.meetingId)
                   : _ListTab(meetingId: widget.meetingId),
             ),
           ],
@@ -74,7 +77,10 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
   }
 }
 
-/// 목록 탭: 지난 3개월 ~ 앞으로 1년의 일정을 시작 일시 순으로 보여준다.
+/// 목록 탭: 지난 3개월 ~ 앞으로 1년의 일정을 시작 일시 순으로 카드로 보여줍니다.
+///
+/// 불러오는 중에는 로딩 표시, 실패하면 "다시 시도" 버튼이 있는 안내, 일정이 없으면 빈 안내를 보여줍니다.
+/// 카드를 누르면 일정 상세 화면으로 이동합니다.
 class _ListTab extends ConsumerWidget {
   const _ListTab({required this.meetingId});
 
@@ -113,33 +119,25 @@ class _ListTab extends ConsumerWidget {
   }
 }
 
-/// 캘린더 탭: 보고 있는 달의 일정을 조회하고, 선택한 날짜의 일정을 아래에 보여준다.
+/// 캘린더 탭: 보고 있는 달의 일정을 조회해서 달력에 점으로 표시하고,
+/// 선택한 날짜의 일정을 아래에 보여줍니다.
+///
+/// 보고 있는 달과 선택 날짜는 [scheduleCalendarProvider] 에서 읽고, 월 이동/날짜 선택은
+/// 그 ViewModel 의 메서드로 바꿉니다. 이 위젯은 값을 들고 있지 않습니다.
 class _CalendarTab extends ConsumerWidget {
-  const _CalendarTab({
-    required this.meetingId,
-    required this.month,
-    required this.selected,
-    required this.onMonthChanged,
-    required this.onSelected,
-  });
+  const _CalendarTab({required this.meetingId});
 
   final int meetingId;
-  final DateTime month;
-  final DateTime selected;
-  final ValueChanged<DateTime> onMonthChanged;
-  final ValueChanged<DateTime> onSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(
-      scheduleListProvider((
-        meetingId: meetingId,
-        startDate: month,
-        endDate: DateTime(month.year, month.month + 1, 0),
-      )),
+    final calendar = ref.watch(scheduleCalendarProvider);
+    final viewModel = ref.read(scheduleCalendarProvider.notifier);
+    final schedules = ref.watch(
+      scheduleListProvider(_monthArgs(meetingId, calendar.month)),
     );
     final marked = {
-      for (final s in state.value ?? const <Schedule>[])
+      for (final s in schedules.value ?? const <Schedule>[])
         DateUtils.dateOnly(s.startAt.toLocal()),
     };
 
@@ -147,42 +145,41 @@ class _CalendarTab extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       children: [
         ScheduleCalendar(
-          month: month,
-          selected: selected,
+          month: calendar.month,
+          selected: calendar.selected,
           markedDays: marked,
-          onMonthChanged: onMonthChanged,
-          onSelected: onSelected,
+          onMonthChanged: viewModel.changeMonth,
+          onSelected: viewModel.select,
         ),
         const SizedBox(height: 24),
         Text(
-          '${selected.month}월 ${selected.day}일 ${selected.weekdayKo}요일',
+          '${calendar.selected.month}월 ${calendar.selected.day}일 '
+          '${calendar.selected.weekdayKo}요일',
           style: MoaText.titleM,
         ),
         const SizedBox(height: 12),
-        _SelectedDaySchedules(
-          meetingId: meetingId,
-          state: state,
-          selected: selected,
-        ),
+        _SelectedDaySchedules(meetingId: meetingId),
       ],
     );
   }
 }
 
-/// 선택한 날짜의 일정. 달력은 그대로 두고 이 영역에서 로딩/오류/빈 날짜를 처리한다.
+/// 선택한 날짜의 일정 영역. 달력은 그대로 두고 이 영역에서만 상태를 처리합니다.
+///
+/// 불러오는 중이면 로딩 표시, 실패하면 "다시 시도" 안내, 그날 일정이 없으면 빈 안내,
+/// 있으면 시작 일시 순으로 일정 줄([ScheduleEventTile])을 보여줍니다.
 class _SelectedDaySchedules extends ConsumerWidget {
-  const _SelectedDaySchedules({
-    required this.meetingId,
-    required this.state,
-    required this.selected,
-  });
+  const _SelectedDaySchedules({required this.meetingId});
 
   final int meetingId;
-  final AsyncValue<List<Schedule>> state;
-  final DateTime selected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final calendar = ref.watch(scheduleCalendarProvider);
+    final state = ref.watch(
+      scheduleListProvider(_monthArgs(meetingId, calendar.month)),
+    );
+
     const padding = EdgeInsets.symmetric(vertical: 20);
     if (state.isLoading) {
       return const Padding(
@@ -201,7 +198,9 @@ class _SelectedDaySchedules extends ConsumerWidget {
     }
 
     final events = (state.value ?? const <Schedule>[])
-        .where((s) => DateUtils.isSameDay(s.startAt.toLocal(), selected))
+        .where(
+          (s) => DateUtils.isSameDay(s.startAt.toLocal(), calendar.selected),
+        )
         .toList();
     if (events.isEmpty) {
       return const Padding(
@@ -222,6 +221,8 @@ class _SelectedDaySchedules extends ConsumerWidget {
   }
 }
 
+/// 화면 맨 위의 제목과 일정 만들기 `+` 버튼입니다.
+/// [showAdd] 가 false 이면(관리자가 아니면) 버튼을 그리지 않습니다.
 class _Header extends StatelessWidget {
   const _Header({required this.showAdd, required this.onAdd});
 
@@ -235,7 +236,7 @@ class _Header extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text('일정', style: MoaText.titleXl)),
-          // 관리자에게만 보인다.
+          // 관리자에게만 보입니다.
           if (showAdd)
             GestureDetector(
               key: const Key('schedule-add-button'),
@@ -257,6 +258,8 @@ class _Header extends StatelessWidget {
   }
 }
 
+/// 목록 / 캘린더 전환 토글. [calendar] 가 true 이면 캘린더가 선택된 상태이고,
+/// 누르면 [onChanged] 로 선택한 쪽(true: 캘린더, false: 목록)을 알립니다.
 class _Segmented extends StatelessWidget {
   const _Segmented({required this.calendar, required this.onChanged});
 
@@ -289,6 +292,7 @@ class _Segmented extends StatelessWidget {
   }
 }
 
+/// 토글의 버튼 하나. [selected] 이면 흰 배경과 그림자로 선택된 모양을 보여줍니다.
 class _SegmentButton extends StatelessWidget {
   const _SegmentButton({
     required this.label,
@@ -330,6 +334,7 @@ class _SegmentButton extends StatelessWidget {
   }
 }
 
+/// 화면 가운데의 안내 문구. [onRetry] 를 주면 "다시 시도" 버튼이 함께 보입니다.
 class _Message extends StatelessWidget {
   const _Message(this.text, {this.onRetry});
 

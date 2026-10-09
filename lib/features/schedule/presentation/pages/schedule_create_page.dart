@@ -4,13 +4,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
-import 'package:moamoa/features/schedule/domain/errors/schedule_validation_error.dart';
-import 'package:moamoa/features/schedule/domain/errors/schedule_validation_exception.dart';
 
 import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
+import '../viewmodels/schedule_create_state.dart';
+import '../viewmodels/schedule_create_status.dart';
 
-/// 일정 만들기 (관리자)
+/// 일정 만들기 화면 (관리자). 입력 → 제출 → 결과 순서로 동작합니다.
+///
+/// - 입력: 이름, 시작 일시(필수), 종료 일시(선택), 장소(선택), 설명(선택)
+/// - 제출: 아래 버튼. 제출 중에는 버튼이 비활성화되어 중복 제출이 막힙니다.
+/// - 결과: 성공하면 화면을 닫고(목록은 ViewModel 이 새로 불러옵니다), 입력이 잘못됐으면 해당 입력 아래에
+///   문구를 보여주며, 그 밖의 실패는 하단 안내(SnackBar)로 알립니다.
+///
+/// [meetingId] 는 일정을 만들 모임입니다. 제출 상태는 [scheduleCreateProvider] 가 관리합니다.
 class ScheduleCreatePage extends ConsumerStatefulWidget {
   const ScheduleCreatePage({super.key, required this.meetingId});
 
@@ -20,12 +27,19 @@ class ScheduleCreatePage extends ConsumerStatefulWidget {
   ConsumerState<ScheduleCreatePage> createState() => _ScheduleCreatePageState();
 }
 
+/// 글자 입력 컨트롤러 3개와 선택한 시작/종료 일시를 들고 있습니다.
 class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   final _title = TextEditingController();
   final _location = TextEditingController();
   final _description = TextEditingController();
   DateTime? _startAt;
   DateTime? _endAt;
+
+  @override
+  void initState() {
+    super.initState();
+    _title.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -35,6 +49,9 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
     super.dispose();
   }
 
+  /// 날짜를 고른 뒤 이어서 시간을 골라 하나의 일시로 줍니다.
+  /// 둘 중 하나라도 취소하거나, 고르는 동안 화면이 닫히면 null 을 돌려줍니다.
+  /// [initial] 은 선택창이 처음 보여줄 값입니다(없으면 지금).
   Future<DateTime?> _pickDateTime(DateTime? initial) async {
     final now = DateTime.now();
     final date = await showDatePicker(
@@ -52,6 +69,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
+  /// 현재 입력값으로 일정 생성을 요청합니다.
   void _submit() {
     FocusScope.of(context).unfocus();
     ref
@@ -59,28 +77,33 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
         .submit(
           title: _title.text,
           description: _description.text,
-          startAt: _startAt,
+          startAt: _startAt!,
           endAt: _endAt,
           location: _location.text,
         );
   }
 
+  /// 시작 일시를 고른다. 취소하면 기존 값을 유지합니다
   Future<void> _pickStart() async {
     final picked = await _pickDateTime(_startAt);
     if (picked != null) setState(() => _startAt = picked);
   }
 
+  /// 종료 일시를 고릅니다. 시작 일시가 있으면 그 날짜를 처음 위치로 보여줍니다. 취소하면 기존 값을 유지합니다.
   Future<void> _pickEnd() async {
     final picked = await _pickDateTime(_endAt ?? _startAt);
     if (picked != null) setState(() => _endAt = picked);
   }
 
-  /// 제출 결과 처리: 성공하면 화면을 닫고, 입력 문제가 아닌 실패는 안내한다.
-  void _onSubmitResult(AsyncValue<int?> next) {
-    // 오류/로딩 상태도 이전 성공 값을 들고 있을 수 있어서 AsyncData 일 때만 성공으로 본다.
-    if (next case AsyncData(value: final _?)) {
+  /// 제출 상태가 바뀌면: 성공이면 화면을 닫고, 실패하면 안내합니다.
+  void _onStateChanged(
+    ScheduleCreateState? previous,
+    ScheduleCreateState next,
+  ) {
+    if (previous?.status == next.status) return;
+    if (next.status == ScheduleCreateStatus.success) {
       context.pop();
-    } else if (next.hasError && next.error is! ScheduleValidationException) {
+    } else if (next.status == ScheduleCreateStatus.failure) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('일정을 만들지 못했어요')));
@@ -90,13 +113,12 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   @override
   Widget build(BuildContext context) {
     final provider = scheduleCreateProvider(widget.meetingId);
-    ref.listen(provider, (_, next) => _onSubmitResult(next));
+    ref.listen(provider, _onStateChanged);
     final state = ref.watch(provider);
-    final error = state.error;
 
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: const MoaAppBar(),
+      appBar: MoaAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -107,14 +129,18 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
                 descriptionController: _description,
                 startAt: _startAt,
                 endAt: _endAt,
-                errors: error is ScheduleValidationException
-                    ? error.errors
-                    : const <ScheduleValidationError>{},
                 onPickStart: _pickStart,
                 onPickEnd: _pickEnd,
               ),
             ),
-            _SubmitButton(onPressed: state.isLoading ? null : _submit),
+            _SubmitButton(
+              onPressed:
+                  state.status == ScheduleCreateStatus.submitting ||
+                      _title.text.trim().isEmpty ||
+                      _startAt == null
+                  ? null
+                  : _submit,
+            ),
           ],
         ),
       ),
@@ -122,7 +148,10 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   }
 }
 
-/// 입력 영역: 이름, 시작/종료 일시, 장소, 설명
+/// 입력 영역: 이름, 시작/종료 일시, 장소, 설명. 길어질 수 있어서 스크롤됩니다.
+///
+/// 값은 직접 들고 있지 않고, 글자 입력은 컨트롤러로, 일시는 [startAt]/[endAt] 로 받아 보여줍니다.
+/// 일시 칸을 누르면 [onPickStart]/[onPickEnd] 가 호출됩니다.
 class _CreateForm extends StatelessWidget {
   const _CreateForm({
     required this.titleController,
@@ -130,7 +159,6 @@ class _CreateForm extends StatelessWidget {
     required this.descriptionController,
     required this.startAt,
     required this.endAt,
-    required this.errors,
     required this.onPickStart,
     required this.onPickEnd,
   });
@@ -140,7 +168,6 @@ class _CreateForm extends StatelessWidget {
   final TextEditingController descriptionController;
   final DateTime? startAt;
   final DateTime? endAt;
-  final Set<ScheduleValidationError> errors;
   final VoidCallback onPickStart;
   final VoidCallback onPickEnd;
 
@@ -157,26 +184,9 @@ class _CreateForm extends StatelessWidget {
             label: '일정 이름',
             controller: titleController,
             hint: '일정 이름을 입력해 주세요',
-            error: errors.contains(ScheduleValidationError.titleRequired)
-                ? '일정 이름을 입력해 주세요.'
-                : null,
           ),
-          _PickerField(
-            label: '시작 일시',
-            value: startAt,
-            error: errors.contains(ScheduleValidationError.startAtRequired)
-                ? '시작 일시를 선택해 주세요.'
-                : null,
-            onTap: onPickStart,
-          ),
-          _PickerField(
-            label: '종료 일시 (선택)',
-            value: endAt,
-            error: errors.contains(ScheduleValidationError.endBeforeStart)
-                ? '종료 일시는 시작 일시 이후여야 해요.'
-                : null,
-            onTap: onPickEnd,
-          ),
+          _PickerField(label: '시작 일시', value: startAt, onTap: onPickStart),
+          _PickerField(label: '종료 일시 (선택)', value: endAt, onTap: onPickEnd),
           _TextFormField(
             label: '장소 (선택)',
             controller: locationController,
@@ -195,7 +205,7 @@ class _CreateForm extends StatelessWidget {
   }
 }
 
-/// 라벨 + 글자 입력 상자
+/// 라벨과 글자 입력 상자입니다.
 class _TextFormField extends StatelessWidget {
   const _TextFormField({
     required this.label,
@@ -203,7 +213,6 @@ class _TextFormField extends StatelessWidget {
     required this.hint,
     this.icon,
     this.maxLines = 1,
-    this.error,
   });
 
   final String label;
@@ -211,13 +220,11 @@ class _TextFormField extends StatelessWidget {
   final String hint;
   final String? icon;
   final int maxLines;
-  final String? error;
 
   @override
   Widget build(BuildContext context) {
     return _Field(
       label,
-      error: error,
       child: _InputBox(
         icon: icon,
         child: _TextInput(
@@ -230,31 +237,26 @@ class _TextFormField extends StatelessWidget {
   }
 }
 
-/// 라벨 + 날짜/시간 선택 상자
+/// 라벨과 날짜/시간 선택 상자입니다.
 class _PickerField extends StatelessWidget {
   const _PickerField({
     required this.label,
     required this.value,
     required this.onTap,
-    this.error,
   });
 
   final String label;
   final DateTime? value;
   final VoidCallback onTap;
-  final String? error;
 
   @override
   Widget build(BuildContext context) {
-    return _Field(
-      label,
-      error: error,
-      child: _PickerBox(value, '날짜와 시간을 선택해 주세요', onTap),
-    );
+    return _Field(label, child: _PickerBox(value, '날짜와 시간을 선택해 주세요', onTap));
   }
 }
 
-/// 하단 "일정 만들기" 버튼. [onPressed] 가 null 이면(제출 중) 비활성화된다.
+/// 하단 "일정 만들기" 버튼입니다. [onPressed] 가 null 이면 비활성화됩니다.
+/// (이름이나 시작 일시가 비어 있거나 제출 중일 때)
 class _SubmitButton extends StatelessWidget {
   const _SubmitButton({required this.onPressed});
 
@@ -284,13 +286,12 @@ class _SubmitButton extends StatelessWidget {
   }
 }
 
-/// 라벨 + 입력 상자 + (있다면) 오류 문구
+/// 라벨과 입력 상자입니다.
 class _Field extends StatelessWidget {
-  const _Field(this.label, {required this.child, this.error});
+  const _Field(this.label, {required this.child});
 
   final String label;
   final Widget child;
-  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -306,20 +307,12 @@ class _Field extends StatelessWidget {
           ),
         ),
         child,
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              error!,
-              style: MoaText.caption.copyWith(color: MoaColors.error),
-            ),
-          ),
       ],
     );
   }
 }
 
-/// 회색 둥근 입력 상자 (Figma "Input")
+/// 회색 둥근 입력 상자입니다. (Figma "Input")
 class _InputBox extends StatelessWidget {
   const _InputBox({required this.child, this.icon, this.showCaret = false});
 
@@ -348,7 +341,7 @@ class _InputBox extends StatelessWidget {
   }
 }
 
-/// 날짜/시간을 눌러서 고르는 입력 상자
+/// 눌러서 날짜/시간을 고르는 입력 상자입니다.
 class _PickerBox extends StatelessWidget {
   const _PickerBox(this.value, this.placeholder, this.onTap);
 
@@ -377,7 +370,7 @@ class _PickerBox extends StatelessWidget {
   }
 }
 
-/// 입력 상자 안의 글자 입력창
+/// 입력 상자 안의 글자 입력창입니다.
 class _TextInput extends StatelessWidget {
   const _TextInput({
     required this.controller,
