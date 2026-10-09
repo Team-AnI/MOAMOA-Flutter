@@ -36,20 +36,6 @@ class _PlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('MOAMOA'),
-            // TODO: 홈 화면이 생기면 제거합니다. (일정 화면 확인용 임시 진입점)
-            TextButton(
-              onPressed: () => context.push('/meetings/1/schedules'),
-              child: const Text('일정'),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const Scaffold(body: Center(child: Text('MOAMOA')));
   }
 }
