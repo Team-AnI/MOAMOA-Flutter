@@ -87,6 +87,9 @@ void main() {
     repository.pendingCreate.complete(makeGroup(MemberRole.admin));
     await tester.pumpAndSettle();
     expect(find.text('모임이 만들어졌어요'), findsOneWidget);
+    expect(find.text('링크 공유'), findsOneWidget);
+    expect(find.text('첫 공지 쓰기'), findsOneWidget);
+    expect(find.text('첫 일정 만들기'), findsOneWidget);
     expect(find.text('CODE'), findsOneWidget);
     String? copiedText;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(

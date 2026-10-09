@@ -8,6 +8,8 @@ import '../widgets/group_icon.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 import '../widgets/group_primary_button.dart';
+import '../widgets/group_created_actions.dart';
+import '../widgets/group_created_title.dart';
 
 class GroupInvitePage extends ConsumerStatefulWidget {
   const GroupInvitePage({super.key, this.created = false});
@@ -73,14 +75,14 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
                   color: GroupDesign.tint,
                   borderRadius: BorderRadius.circular(36),
                 ),
-                child: const GroupIcon('check'),
+                child: const GroupIcon('check', size: 34),
               ),
             ),
             const SizedBox(height: 10),
           ],
           GroupPageTitle(
             title: widget.created
-                ? '${current?.group.name ?? '모임'}이 만들어졌어요'
+                ? groupCreatedTitle(current?.group.name ?? '모임')
                 : '구성원 초대',
             subtitle: '구성원에게 초대 코드를 보내면 바로 함께할 수 있어요.',
           ),
@@ -95,6 +97,10 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
           else ...[
             Text(_error!, style: GroupDesign.body),
             TextButton(onPressed: _load, child: const Text('다시 시도')),
+          ],
+          if (widget.created && allowed) ...[
+            const SizedBox(height: 16),
+            const GroupCreatedActions(),
           ],
         ],
       ),

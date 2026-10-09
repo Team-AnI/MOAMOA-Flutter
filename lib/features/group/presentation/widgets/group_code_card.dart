@@ -51,25 +51,55 @@ class GroupCodeCard extends StatelessWidget {
           style: GroupDesign.caption.copyWith(color: const Color(0xffcccccc)),
         ),
         const SizedBox(height: 20),
-        SizedBox(
-          height: 48,
-          child: FilledButton(
-            onPressed: () => _copy(context),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xff38383a),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: () => _copy(context),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xff38383a),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    '코드 복사',
+                    style: GroupDesign.body.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ),
-            child: const Text(
-              '코드 복사',
-              style: TextStyle(
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Tooltip(
+                message: '초대 링크 형식 확정 후 연결됩니다.',
+                child: SizedBox(
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: null,
+                    style: FilledButton.styleFrom(
+                      disabledBackgroundColor: Colors.white,
+                      disabledForegroundColor: GroupDesign.ink,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      '링크 공유',
+                      style: GroupDesign.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ],
     ),

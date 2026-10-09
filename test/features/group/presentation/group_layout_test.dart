@@ -32,6 +32,8 @@ void main() {
       'chevron',
       'ticket',
       'check',
+      'megaphone',
+      'calendar',
       'camera',
       'photo_album',
       'photo_camera',
