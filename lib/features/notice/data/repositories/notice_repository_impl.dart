@@ -92,6 +92,25 @@ class NoticeRepositoryImpl implements NoticeRepository {
     });
   }
 
+  @override
+  Future<void> setPinned({
+    required int meetingId,
+    required int noticeId,
+    required bool pinned,
+  }) {
+    return _guard(
+      () => pinned
+          ? _remoteDataSource.pinNotice(
+              meetingId: meetingId,
+              noticeId: noticeId,
+            )
+          : _remoteDataSource.unpinNotice(
+              meetingId: meetingId,
+              noticeId: noticeId,
+            ),
+    );
+  }
+
   Future<T> _guard<T>(Future<T> Function() request) async {
     try {
       return await request();

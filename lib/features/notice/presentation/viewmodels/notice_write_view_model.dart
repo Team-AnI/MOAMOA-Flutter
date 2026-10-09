@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/usecases/create_notice.dart';
+import '../../domain/usecases/set_notice_pinned.dart';
 import '../../domain/usecases/update_notice.dart';
 import '../providers/notice_providers.dart';
 
@@ -19,25 +20,50 @@ class NoticeWriteViewModel extends AsyncNotifier<void> {
 
   /// [noticeId] 가 없으면 작성, 있으면 수정합니다.
   ///
+  /// 작성일 때 [pinToTop] 이면 새 공지를 목록 맨 위에 고정합니다.
   /// 성공하면 true 를 반환하고 목록(수정이면 상세도)을 다시 불러옵니다.
   /// 실패하면 false 를 반환하고, 상태의 error 에 원인이 담깁니다.
+  ///
+  /// 요청 중에 화면을 닫아도 provider 를 살려 두어, 서버에 등록된 공지가
+  /// 목록에 바로 보이도록 끝까지 처리합니다.
   Future<bool> submit({
     int? noticeId,
     required String title,
     required String content,
+    bool pinToTop = false,
   }) async {
     if (state.isLoading) return false;
 
+    final keepAlive = ref.keepAlive();
+    try {
+      return await _submit(
+        noticeId: noticeId,
+        title: title,
+        content: content,
+        pinToTop: pinToTop,
+      );
+    } finally {
+      keepAlive.close();
+    }
+  }
+
+  Future<bool> _submit({
+    int? noticeId,
+    required String title,
+    required String content,
+    required bool pinToTop,
+  }) async {
     state = const AsyncLoading();
     final result = await AsyncValue.guard(() async {
       if (noticeId == null) {
-        await ref.read(createNoticeProvider)(
+        final createdId = await ref.read(createNoticeProvider)(
           CreateNoticeParams(
             meetingId: _meetingId,
             title: title,
             content: content,
           ),
         );
+        if (pinToTop) await _pin(createdId);
       } else {
         await ref.read(updateNoticeProvider)(
           UpdateNoticeParams(
@@ -60,5 +86,20 @@ class NoticeWriteViewModel extends AsyncNotifier<void> {
       );
     }
     return true;
+  }
+
+  /// 공지는 이미 등록됐으므로, 고정에 실패해도 작성은 성공으로 처리합니다.
+  Future<void> _pin(int noticeId) async {
+    try {
+      await ref.read(setNoticePinnedProvider)(
+        SetNoticePinnedParams(
+          meetingId: _meetingId,
+          noticeId: noticeId,
+          pinned: true,
+        ),
+      );
+    } catch (_) {
+      // 공지 상세에서 다시 고정할 수 있습니다.
+    }
   }
 }

@@ -79,6 +79,26 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
     return _data(response)['myRole'] as String;
   }
 
+  @override
+  Future<void> pinNotice({
+    required int meetingId,
+    required int noticeId,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      '/v1/meetings/$meetingId/notices/$noticeId/pin',
+    );
+  }
+
+  @override
+  Future<void> unpinNotice({
+    required int meetingId,
+    required int noticeId,
+  }) async {
+    await _dio.delete<Map<String, dynamic>>(
+      '/v1/meetings/$meetingId/notices/$noticeId/pin',
+    );
+  }
+
   /// 공통 응답 { success, data, error, timestamp } 에서 data 를 꺼냅니다.
   ///
   /// 응답 형식이 다르면 크래시 대신 DioException 을 던져 Repository 에서 처리되게 합니다.

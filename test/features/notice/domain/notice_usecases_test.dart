@@ -6,6 +6,7 @@ import 'package:moamoa/features/notice/domain/usecases/delete_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_my_role.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notice_detail.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notices.dart';
+import 'package:moamoa/features/notice/domain/usecases/set_notice_pinned.dart';
 import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
 
 import '../fakes/fake_notice_repository.dart';
@@ -175,6 +176,34 @@ void main() {
 
       expect(role, MemberRole.admin);
       expect(role.isAdmin, isTrue);
+    });
+  });
+
+  group('SetNoticePinned', () {
+    late FakeNoticeRepository repository;
+    late SetNoticePinned setNoticePinned;
+
+    setUp(() {
+      repository = FakeNoticeRepository(notices: [buildNotice(1)]);
+      setNoticePinned = SetNoticePinnedImpl(repository: repository);
+    });
+
+    test('공지를 고정한다', () async {
+      await setNoticePinned(
+        const SetNoticePinnedParams(meetingId: 1, noticeId: 1, pinned: true),
+      );
+
+      expect(repository.notices.single.isPinned, isTrue);
+    });
+
+    test('공지 고정을 해제한다', () async {
+      repository.notices[0] = buildNotice(1, isPinned: true);
+
+      await setNoticePinned(
+        const SetNoticePinnedParams(meetingId: 1, noticeId: 1, pinned: false),
+      );
+
+      expect(repository.notices.single.isPinned, isFalse);
     });
   });
 }

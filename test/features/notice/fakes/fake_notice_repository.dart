@@ -7,11 +7,19 @@ import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
 import 'package:moamoa/features/notice/domain/repositories/notice_repository.dart';
 
 /// 테스트용 공지 생성 헬퍼
-Notice buildNotice(int id, {String? title, String? content}) {
+Notice buildNotice(
+  int id, {
+  String? title,
+  String? content,
+  String? authorName,
+  bool isPinned = false,
+}) {
   return Notice(
     id: id,
     title: title ?? '공지 $id',
     content: content,
+    authorName: authorName,
+    isPinned: isPinned,
     createdAt: DateTime(2026, 10, 1).add(Duration(days: id)),
   );
 }
@@ -39,6 +47,12 @@ class FakeNoticeRepository implements NoticeRepository {
   /// 값이 있으면 getNoticeDetail 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? detailGate;
 
+  /// 값이 있으면 createNotice 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? createGate;
+
+  /// 값이 있으면 getMyRole 만 이 예외를 던집니다. (역할 조회만 실패하는 상황)
+  NoticeException? myRoleError;
+
   int _nextId = 1000;
 
   void _throwIfError() {
@@ -51,6 +65,18 @@ class FakeNoticeRepository implements NoticeRepository {
       throw const NoticeException('공지를 찾을 수 없습니다.', code: 'NOT_FOUND');
     }
     return index;
+  }
+
+  Notice _copy(Notice old, {String? title, String? content, bool? isPinned}) {
+    return Notice(
+      id: old.id,
+      title: title ?? old.title,
+      content: content ?? old.content,
+      createdAt: old.createdAt,
+      authorName: old.authorName,
+      isPinned: isPinned ?? old.isPinned,
+      account: old.account,
+    );
   }
 
   @override
@@ -96,6 +122,7 @@ class FakeNoticeRepository implements NoticeRepository {
       0,
       Notice(id: id, title: title, content: content, createdAt: DateTime.now()),
     );
+    await createGate?.future;
     return id;
   }
 
@@ -108,13 +135,7 @@ class FakeNoticeRepository implements NoticeRepository {
   }) async {
     _throwIfError();
     final index = _indexOf(noticeId);
-    final old = notices[index];
-    notices[index] = Notice(
-      id: old.id,
-      title: title ?? old.title,
-      content: content ?? old.content,
-      createdAt: old.createdAt,
-    );
+    notices[index] = _copy(notices[index], title: title, content: content);
   }
 
   @override
@@ -128,7 +149,19 @@ class FakeNoticeRepository implements NoticeRepository {
 
   @override
   Future<MemberRole> getMyRole({required int meetingId}) async {
+    if (myRoleError != null) throw myRoleError!;
     _throwIfError();
     return myRole;
+  }
+
+  @override
+  Future<void> setPinned({
+    required int meetingId,
+    required int noticeId,
+    required bool pinned,
+  }) async {
+    _throwIfError();
+    final index = _indexOf(noticeId);
+    notices[index] = _copy(notices[index], isPinned: pinned);
   }
 }

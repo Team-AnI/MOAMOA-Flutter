@@ -53,4 +53,23 @@ void main() {
       throwsA(isA<NoticeException>()),
     );
   });
+
+  test('togglePin 을 하면 고정 상태를 바꾸고 상세를 다시 불러온다', () async {
+    await container.read(noticeDetailProvider(args).future);
+
+    await container.read(noticeDetailProvider(args).notifier).togglePin();
+
+    final notice = await container.read(noticeDetailProvider(args).future);
+    expect(notice.isPinned, isTrue);
+  });
+
+  test('고정 변경에 실패하면 NoticeException 을 던진다', () async {
+    await container.read(noticeDetailProvider(args).future);
+    repository.error = const NoticeException('ADMIN 이 아닙니다.');
+
+    await expectLater(
+      container.read(noticeDetailProvider(args).notifier).togglePin(),
+      throwsA(isA<NoticeException>()),
+    );
+  });
 }

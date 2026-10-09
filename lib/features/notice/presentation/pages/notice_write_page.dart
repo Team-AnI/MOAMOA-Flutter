@@ -85,6 +85,9 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
   /// 등록을 한 번 누른 뒤부터 빠진 항목 안내를 보여줍니다. (예외처리 4-1)
   bool _showMissing = false;
 
+  /// 목록 맨 위에 고정 (새 공지를 등록할 때만 선택)
+  bool _pinToTop = false;
+
   bool get _isEdit => widget.initialNotice != null;
 
   @override
@@ -110,6 +113,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
           noticeId: widget.initialNotice?.id,
           title: _titleController.text,
           content: _contentController.text,
+          pinToTop: _pinToTop,
         );
     if (!mounted) return;
     if (success) {
@@ -173,6 +177,13 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
                     : null,
                 onChanged: _onChanged,
               ),
+              if (!_isEdit) ...[
+                const SizedBox(height: 24),
+                _PinToggle(
+                  value: _pinToTop,
+                  onChanged: (value) => setState(() => _pinToTop = value),
+                ),
+              ],
             ],
           ),
         ),
@@ -254,6 +265,47 @@ class _InputField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 목록 맨 위에 고정 토글
+class _PinToggle extends StatelessWidget {
+  const _PinToggle({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: NoticeColors.gray,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              '목록 맨 위에 고정',
+              style: TextStyle(fontSize: 15, color: NoticeColors.bodyText),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            thumbColor: const WidgetStatePropertyAll(Colors.white),
+            trackColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? NoticeColors.text
+                  : NoticeColors.switchOff,
+            ),
+            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+          ),
+        ],
+      ),
     );
   }
 }

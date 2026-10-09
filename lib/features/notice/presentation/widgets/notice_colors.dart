@@ -11,4 +11,8 @@ abstract final class NoticeColors {
   static const gray = Color(0xFFF2F4F6);
   static const divider = Color(0xFFE5E8EB);
   static const error = Color(0xFFF04452);
+  static const switchOff = Color(0xFFD1D6DB);
+
+  static const blue = Color(0xFF3182F6);
+  static const lightBlue = Color(0xFFE8F3FF);
 }

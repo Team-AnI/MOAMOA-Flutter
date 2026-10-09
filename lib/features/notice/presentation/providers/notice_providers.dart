@@ -12,6 +12,7 @@ import '../../domain/usecases/delete_notice.dart';
 import '../../domain/usecases/get_my_role.dart';
 import '../../domain/usecases/get_notice_detail.dart';
 import '../../domain/usecases/get_notices.dart';
+import '../../domain/usecases/set_notice_pinned.dart';
 import '../../domain/usecases/update_notice.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../viewmodels/notice_list_state.dart';
@@ -54,6 +55,10 @@ final deleteNoticeProvider = Provider<DeleteNotice>(
 
 final getMyRoleProvider = Provider<GetMyRole>(
   (ref) => GetMyRoleImpl(repository: ref.watch(noticeRepositoryProvider)),
+);
+
+final setNoticePinnedProvider = Provider<SetNoticePinned>(
+  (ref) => SetNoticePinnedImpl(repository: ref.watch(noticeRepositoryProvider)),
 );
 
 // ViewModel / 화면 상태 (family 인자: meetingId)

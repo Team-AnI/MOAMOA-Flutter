@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
@@ -69,5 +71,47 @@ void main() {
       container.read(noticeWriteProvider(meetingId)).error,
       isA<NoticeException>(),
     );
+  });
+
+  test('맨 위 고정을 켜고 작성하면 새 공지를 고정한다', () async {
+    final success = await container
+        .read(noticeWriteProvider(meetingId).notifier)
+        .submit(title: '제목', content: '내용', pinToTop: true);
+
+    expect(success, isTrue);
+    expect(repository.notices.first.isPinned, isTrue);
+  });
+
+  test('맨 위 고정을 끄고 작성하면 고정하지 않는다', () async {
+    await container
+        .read(noticeWriteProvider(meetingId).notifier)
+        .submit(title: '제목', content: '내용');
+
+    expect(repository.notices.first.isPinned, isFalse);
+  });
+
+  test('등록 요청 중에 화면을 닫아도 등록이 끝나면 목록을 새로고침한다', () async {
+    final gate = Completer<void>();
+    repository.createGate = gate;
+    final container = ProviderContainer.test(
+      overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+      retry: (_, _) => null,
+    );
+    container.listen(noticeListProvider(meetingId), (_, _) {});
+    await container.read(noticeListProvider(meetingId).future);
+    // 작성 화면을 연 상태에서 등록을 누른 뒤
+    final screen = container.listen(noticeWriteProvider(meetingId), (_, _) {});
+    final submit = container
+        .read(noticeWriteProvider(meetingId).notifier)
+        .submit(title: '새 공지', content: '내용');
+
+    // 응답이 오기 전에 화면을 닫는다. (구독이 끊겨 provider 가 dispose 대상이 됨)
+    screen.close();
+    await Future<void>.delayed(Duration.zero);
+    gate.complete();
+
+    expect(await submit, isTrue);
+    final list = await container.read(noticeListProvider(meetingId).future);
+    expect(list.notices.first.title, '새 공지');
   });
 }

@@ -39,4 +39,11 @@ abstract interface class NoticeRepository {
 
   /// 1-4 모임 상세의 myRole. 작성·수정·삭제 버튼 노출에 사용합니다.
   Future<MemberRole> getMyRole({required int meetingId});
+
+  /// 공지 고정 / 고정 해제 (후순위 API: POST·DELETE .../notices/{noticeId}/pin)
+  Future<void> setPinned({
+    required int meetingId,
+    required int noticeId,
+    required bool pinned,
+  });
 }

@@ -35,4 +35,10 @@ abstract interface class NoticeRemoteDataSource {
 
   /// GET /v1/meetings/{meetingId} 의 myRole ("ADMIN" / "MEMBER")
   Future<String> fetchMyRole({required int meetingId});
+
+  /// POST /v1/meetings/{meetingId}/notices/{noticeId}/pin
+  Future<void> pinNotice({required int meetingId, required int noticeId});
+
+  /// DELETE /v1/meetings/{meetingId}/notices/{noticeId}/pin
+  Future<void> unpinNotice({required int meetingId, required int noticeId});
 }

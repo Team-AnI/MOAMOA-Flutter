@@ -3,10 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:moamoa/features/notice/domain/entities/member_role.dart';
+import 'package:moamoa/features/notice/domain/entities/notice.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_account.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_detail_page.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_list_page.dart';
+import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_write_page.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 
@@ -39,6 +43,41 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('10월 회비 안내'), findsOneWidget);
+    });
+
+    testWidgets('작성자와 작성 시간을 함께 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(notices: [buildNotice(1, authorName: '김도윤')]),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('김도윤 · '), findsOneWidget);
+    });
+
+    testWidgets('고정된 공지를 따로 보여주고 탭에 개수를 표시한다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            buildNotice(1, title: '회식 정산 안내', isPinned: true),
+            buildNotice(2, title: '장소 변경'),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('전체 2'), findsOneWidget);
+      expect(find.text('고정 1'), findsOneWidget);
+      expect(find.text('고정된 공지'), findsOneWidget);
+
+      await tester.tap(find.text('고정 1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('회식 정산 안내'), findsOneWidget);
+      expect(find.text('장소 변경'), findsNothing);
     });
 
     // 예외처리 4-2
@@ -109,6 +148,12 @@ void main() {
       expect(find.text('10월 회비 안내'), findsOneWidget);
       expect(find.text('10일까지 납부'), findsOneWidget);
     });
+
+    testWidgets('작성 화면에는 맨 위 고정 토글이 있다', (tester) async {
+      await pumpPage(tester, FakeNoticeRepository(), page);
+
+      expect(find.text('목록 맨 위에 고정'), findsOneWidget);
+    });
   });
 
   group('공지 수정', () {
@@ -125,6 +170,7 @@ void main() {
       expect(find.text('공지 수정'), findsOneWidget);
       expect(find.text('10월 회비 안내'), findsOneWidget);
       expect(find.text('10일까지 납부'), findsOneWidget);
+      expect(find.text('목록 맨 위에 고정'), findsNothing);
     });
 
     testWidgets('기존 내용을 불러오는 동안에는 로딩을 보여주고 입력·저장을 막는다', (tester) async {
@@ -192,6 +238,57 @@ void main() {
 
       expect(find.byTooltip('공지 수정'), findsNothing);
       expect(find.byTooltip('공지 삭제'), findsNothing);
+      expect(find.text('고정하기'), findsNothing);
+    });
+
+    testWidgets('고정 뱃지 · 작성자 · 계좌를 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 1,
+              title: '회식 정산 안내',
+              content: '아래 계좌로 보내 주세요.',
+              createdAt: DateTime(2026, 9, 12),
+              authorName: '김도윤',
+              isPinned: true,
+              account: const NoticeAccount(
+                bankName: '카카오뱅크',
+                accountNumber: '3333-01-1234567',
+                holderName: '김도윤',
+              ),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('고정된 공지'), findsOneWidget);
+      expect(find.text('김도윤 · 9월 12일'), findsOneWidget);
+      expect(find.text('카카오뱅크 3333-01-1234567'), findsOneWidget);
+      expect(find.text('예금주 김도윤'), findsOneWidget);
+      expect(find.text('복사'), findsOneWidget);
+    });
+
+    testWidgets('관리자에게는 고정 상태에 맞는 고정 버튼을 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, isPinned: true)],
+          myRole: MemberRole.admin,
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('고정 해제'), findsOneWidget);
+
+      await tester.tap(find.text('고정 해제'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('고정하기'), findsOneWidget);
     });
 
     // 예외처리 4-6
@@ -205,6 +302,126 @@ void main() {
 
       expect(find.text('삭제되었거나 존재하지 않는 공지입니다.'), findsOneWidget);
       expect(find.text('목록으로'), findsOneWidget);
+    });
+  });
+
+  group('내 역할 조회 실패', () {
+    const roleError = NoticeException('권한을 확인하지 못했어요');
+
+    testWidgets('공지가 있어도 다시 시도 버튼을 보여주고, 성공하면 작성 버튼이 나타난다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      )..myRoleError = roleError;
+      await pumpPage(tester, repository, const NoticeListPage(meetingId: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('권한 확인 다시 시도'), findsOneWidget);
+      expect(find.byTooltip('공지 작성'), findsNothing);
+
+      repository.myRoleError = null;
+      await tester.tap(find.byTooltip('권한 확인 다시 시도'));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('권한 확인 다시 시도'), findsNothing);
+      expect(find.byTooltip('공지 작성'), findsOneWidget);
+    });
+
+    testWidgets('공지가 없을 때도 관리자 확인을 다시 시도할 수 있다', (tester) async {
+      final repository = FakeNoticeRepository(myRole: MemberRole.admin)
+        ..myRoleError = roleError;
+      await pumpPage(tester, repository, const NoticeListPage(meetingId: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('아직 등록된 공지가 없어요'), findsOneWidget);
+      expect(find.text('권한 다시 확인'), findsOneWidget);
+      expect(find.text('공지 작성하기'), findsNothing);
+    });
+
+    testWidgets('상세 화면에서도 다시 시도 버튼을 보여준다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      )..myRoleError = roleError;
+      await pumpPage(
+        tester,
+        repository,
+        const NoticeDetailPage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('권한 확인 다시 시도'), findsOneWidget);
+      expect(find.byTooltip('공지 삭제'), findsNothing);
+    });
+  });
+
+  group('작성·수정 화면 진입 권한', () {
+    Future<void> openByUrl(
+      WidgetTester tester,
+      FakeNoticeRepository repository,
+      String location,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          retry: (_, _) => null,
+          child: MaterialApp.router(
+            routerConfig: GoRouter(
+              initialLocation: location,
+              routes: noticeRoutes,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final notices = [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')];
+
+    testWidgets('일반 구성원이 주소로 작성 화면에 들어오면 목록으로 보낸다', (tester) async {
+      await openByUrl(
+        tester,
+        FakeNoticeRepository(notices: notices),
+        '/meetings/1/notices/new',
+      );
+
+      expect(find.text('공지 작성'), findsNothing);
+      expect(find.text('10월 회비 안내'), findsOneWidget);
+    });
+
+    testWidgets('일반 구성원이 주소로 수정 화면에 들어오면 목록으로 보낸다', (tester) async {
+      await openByUrl(
+        tester,
+        FakeNoticeRepository(notices: notices),
+        '/meetings/1/notices/1/edit',
+      );
+
+      expect(find.text('공지 수정'), findsNothing);
+      expect(find.text('10월 회비 안내'), findsOneWidget);
+    });
+
+    testWidgets('관리자는 작성·수정 화면에 들어갈 수 있다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: notices,
+        myRole: MemberRole.admin,
+      );
+
+      await openByUrl(tester, repository, '/meetings/1/notices/new');
+      expect(find.text('공지 작성'), findsOneWidget);
+
+      await openByUrl(tester, repository, '/meetings/1/notices/1/edit');
+      expect(find.text('공지 수정'), findsOneWidget);
+    });
+
+    testWidgets('관리자 여부를 확인하지 못하면 작성 화면에 들여보내지 않는다', (tester) async {
+      await openByUrl(
+        tester,
+        FakeNoticeRepository(notices: notices, myRole: MemberRole.admin)
+          ..myRoleError = const NoticeException('권한을 확인하지 못했어요'),
+        '/meetings/1/notices/new',
+      );
+
+      expect(find.text('공지 작성'), findsNothing);
     });
   });
 }

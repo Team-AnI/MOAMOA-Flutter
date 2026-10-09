@@ -8,6 +8,8 @@ import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
 import '../widgets/notice_error_view.dart';
 
+enum _NoticeTab { all, pinned }
+
 /// 공지 목록 화면
 class NoticeListPage extends ConsumerStatefulWidget {
   const NoticeListPage({super.key, required this.meetingId});
@@ -20,6 +22,7 @@ class NoticeListPage extends ConsumerStatefulWidget {
 
 class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   final _scrollController = ScrollController();
+  _NoticeTab _tab = _NoticeTab.all;
 
   @override
   void initState() {
@@ -58,9 +61,12 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   @override
   Widget build(BuildContext context) {
     final notices = ref.watch(noticeListProvider(widget.meetingId));
-    final isAdmin =
-        ref.watch(noticeMyRoleProvider(widget.meetingId)).value?.isAdmin ??
-        false;
+    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
+    final isAdmin = role.value?.isAdmin ?? false;
+    // 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
+    final VoidCallback? retryRole = role.hasError
+        ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
+        : null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -68,13 +74,18 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(onWrite: isAdmin ? _goWrite : null),
+            _Header(onWrite: isAdmin ? _goWrite : null, onRetryRole: retryRole),
             Expanded(
               child: notices.when(
                 data: (state) => state.isEmpty
-                    ? _EmptyView(onWrite: isAdmin ? _goWrite : null)
-                    : _NoticeListView(
+                    ? _EmptyView(
+                        onWrite: isAdmin ? _goWrite : null,
+                        onRetryRole: retryRole,
+                      )
+                    : _NoticeListBody(
                         state: state,
+                        tab: _tab,
+                        onTabChanged: (tab) => setState(() => _tab = tab),
                         controller: _scrollController,
                         onRefresh: () => ref
                             .read(noticeListProvider(widget.meetingId).notifier)
@@ -96,11 +107,12 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   }
 }
 
-/// "공지" 제목 + (관리자만) 작성 버튼
+/// "공지" 제목 + (관리자만) 작성 버튼 / (역할 조회 실패 시) 다시 시도 버튼
 class _Header extends StatelessWidget {
-  const _Header({this.onWrite});
+  const _Header({this.onWrite, this.onRetryRole});
 
   final VoidCallback? onWrite;
+  final VoidCallback? onRetryRole;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +132,8 @@ class _Header extends StatelessWidget {
                 ),
               ),
             ),
+            if (onRetryRole != null)
+              NoticeRoleRetryButton(onPressed: onRetryRole!),
             if (onWrite != null)
               IconButton.filled(
                 onPressed: onWrite,
@@ -143,46 +157,230 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// 공지들을 하나의 회색 박스 안에 구분선으로 나눠 보여줍니다.
-class _NoticeListView extends StatelessWidget {
-  const _NoticeListView({
+/// 전체 / 고정 탭 + 공지 목록
+class _NoticeListBody extends StatelessWidget {
+  const _NoticeListBody({
     required this.state,
+    required this.tab,
+    required this.onTabChanged,
     required this.controller,
     required this.onRefresh,
     required this.onTapNotice,
   });
 
   final NoticeListState state;
+  final _NoticeTab tab;
+  final ValueChanged<_NoticeTab> onTabChanged;
   final ScrollController controller;
   final Future<void> Function() onRefresh;
   final ValueChanged<Notice> onTapNotice;
 
   @override
   Widget build(BuildContext context) {
-    final notices = state.notices;
+    final pinned = state.notices.where((notice) => notice.isPinned).toList();
+    final others = state.notices.where((notice) => !notice.isPinned).toList();
+    final showOthers = tab == _NoticeTab.all;
 
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView.builder(
-        controller: controller,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-        itemCount: notices.length + (state.isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == notices.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-          final notice = notices[index];
-          return _NoticeTile(
-            notice: notice,
-            isFirst: index == 0,
-            isLast: index == notices.length - 1,
-            onTap: () => onTapNotice(notice),
-          );
-        },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: _FilterTabs(
+            allCount: state.notices.length,
+            pinnedCount: pinned.length,
+            selected: tab,
+            onChanged: onTabChanged,
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: onRefresh,
+            child: ListView(
+              controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              children: [
+                if (!showOthers && pinned.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 80),
+                    child: Center(
+                      child: Text(
+                        '고정된 공지가 없어요',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: NoticeColors.subText,
+                        ),
+                      ),
+                    ),
+                  ),
+                for (final notice in pinned) ...[
+                  _PinnedNoticeCard(
+                    notice: notice,
+                    onTap: () => onTapNotice(notice),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (showOthers)
+                  for (var i = 0; i < others.length; i++)
+                    _NoticeTile(
+                      notice: others[i],
+                      isFirst: i == 0,
+                      isLast: i == others.length - 1,
+                      onTap: () => onTapNotice(others[i]),
+                    ),
+                if (state.isLoadingMore)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 회색 배경 위에 선택된 탭만 흰색으로 떠 있는 탭
+class _FilterTabs extends StatelessWidget {
+  const _FilterTabs({
+    required this.allCount,
+    required this.pinnedCount,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final int allCount;
+  final int pinnedCount;
+  final _NoticeTab selected;
+  final ValueChanged<_NoticeTab> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: NoticeColors.gray,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        children: [
+          _TabButton(
+            label: '전체 $allCount',
+            isSelected: selected == _NoticeTab.all,
+            onTap: () => onChanged(_NoticeTab.all),
+          ),
+          _TabButton(
+            label: '고정 $pinnedCount',
+            isSelected: selected == _NoticeTab.pinned,
+            onTap: () => onChanged(_NoticeTab.pinned),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: isSelected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 6,
+                      offset: Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? NoticeColors.text : NoticeColors.icon,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 고정된 공지 (파란 카드)
+class _PinnedNoticeCard extends StatelessWidget {
+  const _PinnedNoticeCard({required this.notice, required this.onTap});
+
+  final Notice notice;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: NoticeColors.lightBlue,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.push_pin, size: 14, color: NoticeColors.blue),
+                  SizedBox(width: 4),
+                  Text(
+                    '고정된 공지',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: NoticeColors.blue,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                notice.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: NoticeColors.text,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _MetaText(notice: notice),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -238,13 +436,7 @@ class _NoticeTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  _formatRelative(notice.createdAt),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: NoticeColors.subText,
-                  ),
-                ),
+                _MetaText(notice: notice),
               ],
             ),
           ),
@@ -254,11 +446,30 @@ class _NoticeTile extends StatelessWidget {
   }
 }
 
+/// "김도윤 · 1일 전". 작성자가 없으면 시간만 보여줍니다.
+class _MetaText extends StatelessWidget {
+  const _MetaText({required this.notice});
+
+  final Notice notice;
+
+  @override
+  Widget build(BuildContext context) {
+    final time = _formatRelative(notice.createdAt);
+    final author = notice.authorName;
+
+    return Text(
+      author == null ? time : '$author · $time',
+      style: const TextStyle(fontSize: 13, color: NoticeColors.subText),
+    );
+  }
+}
+
 /// 공지가 없을 때. 관리자에게는 작성 버튼을 보여줍니다.
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({this.onWrite});
+  const _EmptyView({this.onWrite, this.onRetryRole});
 
   final VoidCallback? onWrite;
+  final VoidCallback? onRetryRole;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +481,13 @@ class _EmptyView extends StatelessWidget {
             '아직 등록된 공지가 없어요',
             style: TextStyle(fontSize: 15, color: NoticeColors.subText),
           ),
+          if (onRetryRole != null) ...[
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: onRetryRole,
+              child: const Text('권한 다시 확인'),
+            ),
+          ],
           if (onWrite != null) ...[
             const SizedBox(height: 16),
             FilledButton(
