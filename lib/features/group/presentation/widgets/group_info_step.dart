@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'group_design.dart';
 import 'group_field.dart';
@@ -12,8 +13,10 @@ class GroupInfoStep extends StatelessWidget {
     required this.onEdit,
     required this.enabled,
     this.adminName,
+    this.photo,
   });
   final String name;
+  final Uint8List? photo;
   final String? adminName;
   final TextEditingController description;
   final VoidCallback? onEdit;
@@ -31,7 +34,18 @@ class GroupInfoStep extends StatelessWidget {
         ),
         child: Row(
           children: [
-            GroupMark(name: name, size: 56),
+            if (photo == null)
+              GroupMark(name: name, size: 56)
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.memory(
+                  photo!,
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.cover,
+                ),
+              ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'group_field.dart';
 import 'group_icon.dart';
@@ -10,8 +11,14 @@ class GroupProfileStep extends StatelessWidget {
     super.key,
     required this.name,
     required this.onChanged,
+    required this.onPhotoAction,
+    this.photo,
+    this.pickingPhoto = false,
   });
   final TextEditingController name;
+  final Uint8List? photo;
+  final bool pickingPhoto;
+  final ValueChanged<GroupPhotoAction> onPhotoAction;
   final ValueChanged<String> onChanged;
   @override
   Widget build(BuildContext context) => Column(
@@ -27,7 +34,18 @@ class GroupProfileStep extends StatelessWidget {
           height: 120,
           child: Stack(
             children: [
-              GroupMark(name: name.text, size: 112),
+              if (photo == null)
+                GroupMark(name: name.text, size: 112)
+              else
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(36),
+                  child: Image.memory(
+                    photo!,
+                    width: 112,
+                    height: 112,
+                    fit: BoxFit.cover,
+                  ),
+                ),
               Positioned(
                 left: 80,
                 top: 80,
@@ -48,17 +66,21 @@ class GroupProfileStep extends StatelessWidget {
                   child: IconButton(
                     tooltip: '모임 사진 선택',
                     padding: EdgeInsets.zero,
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                      showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.white,
-                        barrierColor: const Color(0x8f000000),
-                        shape: const RoundedRectangleBorder(),
-                        builder: (_) => const GroupPhotoSheet(),
-                      );
-                    },
+                    onPressed: pickingPhoto
+                        ? null
+                        : () async {
+                            FocusScope.of(context).unfocus();
+                            final action =
+                                await showModalBottomSheet<GroupPhotoAction>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.white,
+                                  barrierColor: const Color(0x8f000000),
+                                  shape: const RoundedRectangleBorder(),
+                                  builder: (_) => const GroupPhotoSheet(),
+                                );
+                            if (action != null) onPhotoAction(action);
+                          },
                     icon: const GroupIcon('camera', size: 20),
                   ),
                 ),

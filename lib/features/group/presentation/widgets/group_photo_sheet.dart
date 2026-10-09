@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 
+enum GroupPhotoAction { gallery, camera, reset }
+
 class GroupPhotoSheet extends StatelessWidget {
   const GroupPhotoSheet({super.key});
 
@@ -41,12 +43,22 @@ class GroupPhotoSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Column(
                   children: [
-                    const _PhotoOption(title: '앨범에서 선택', icon: 'photo_album'),
+                    _PhotoOption(
+                      title: '앨범에서 선택',
+                      icon: 'photo_album',
+                      onTap: () =>
+                          Navigator.pop(context, GroupPhotoAction.gallery),
+                    ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Divider(height: 1, color: Colors.white),
                     ),
-                    const _PhotoOption(title: '사진 찍기', icon: 'photo_camera'),
+                    _PhotoOption(
+                      title: '사진 찍기',
+                      icon: 'photo_camera',
+                      onTap: () =>
+                          Navigator.pop(context, GroupPhotoAction.camera),
+                    ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Divider(height: 1, color: Colors.white),
@@ -54,7 +66,8 @@ class GroupPhotoSheet extends StatelessWidget {
                     _PhotoOption(
                       title: '기본 이미지로 바꾸기',
                       icon: 'photo_reset',
-                      onTap: () => Navigator.pop(context),
+                      onTap: () =>
+                          Navigator.pop(context, GroupPhotoAction.reset),
                     ),
                   ],
                 ),

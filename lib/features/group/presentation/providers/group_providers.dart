@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/group_remote_data_source.dart';
@@ -18,6 +19,8 @@ import '../../domain/usecases/get_group.dart';
 import '../../domain/usecases/get_group_impl.dart';
 import '../../domain/usecases/get_my_groups.dart';
 import '../../domain/usecases/get_my_groups_impl.dart';
+
+final groupImagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 
 /// 로그인 기능에서 현재 계정의 표시 이름을 주입합니다.
 final groupUseMockProvider = Provider<bool>(

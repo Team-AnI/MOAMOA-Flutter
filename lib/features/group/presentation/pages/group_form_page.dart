@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import '../widgets/group_photo_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/repositories/group_repository.dart';
@@ -22,6 +25,8 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameOrCode = TextEditingController();
   final _description = TextEditingController();
+  Uint8List? _photo;
+  bool _pickingPhoto = false;
   int _step = 1;
   String? _error;
   bool _alreadyJoined = false;
@@ -32,8 +37,53 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
     super.dispose();
   }
 
+  Future<void> _pickPhoto(GroupPhotoAction action) async {
+    if (!mounted || _pickingPhoto) return;
+    if (action == GroupPhotoAction.reset) {
+      setState(() => _photo = null);
+      return;
+    }
+    setState(() => _pickingPhoto = true);
+    try {
+      final file = await ref
+          .read(groupImagePickerProvider)
+          .pickImage(
+            source: action == GroupPhotoAction.gallery
+                ? ImageSource.gallery
+                : ImageSource.camera,
+            maxWidth: 1200,
+            maxHeight: 1200,
+            imageQuality: 85,
+            requestFullMetadata: false,
+          );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      if (mounted) setState(() => _photo = bytes);
+    } on PlatformException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error.code.contains('denied') || error.code.contains('restricted')
+                  ? '사진 또는 카메라 권한을 설정에서 허용해주세요.'
+                  : '사진을 가져오지 못했습니다. 카메라는 실제 기기에서 확인해주세요.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('사진을 가져오지 못했습니다. 다시 시도해주세요.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pickingPhoto = false);
+    }
+  }
+
   Future<void> _submit() async {
-    if (ref.read(groupProvider).isSubmitting) return;
+    if (_pickingPhoto || ref.read(groupProvider).isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (!widget.isJoining && _step == 1) {
       FocusScope.of(context).unfocus();
@@ -87,7 +137,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
               : _step == 1
               ? '다음'
               : '모임 만들기',
-          onPressed: submitting ? null : _submit,
+          onPressed: submitting || _pickingPhoto ? null : _submit,
         ),
         child: Form(
           key: _formKey,
@@ -109,12 +159,16 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
               ] else if (_step == 1)
                 GroupProfileStep(
                   name: _nameOrCode,
+                  photo: _photo,
+                  pickingPhoto: _pickingPhoto,
+                  onPhotoAction: _pickPhoto,
                   onChanged: (_) => setState(() {}),
                 )
               else
                 GroupInfoStep(
                   name: _nameOrCode.text.trim(),
                   description: _description,
+                  photo: _photo,
                   adminName: ref.watch(groupCurrentUserNameProvider),
                   enabled: !submitting,
                   onEdit: submitting ? null : () => setState(() => _step = 1),
