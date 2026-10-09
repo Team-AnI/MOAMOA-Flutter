@@ -225,8 +225,8 @@ return $default(_that.group,_that.membership);case _:
 /// @nodoc
 
 
-class _CurrentGroup extends CurrentGroup {
-   _CurrentGroup({required this.group, required this.membership}): assert(group.id == membership.groupId, '모임과 구성원 정보의 모임 ID가 일치해야 합니다.'),super._();
+class _CurrentGroup implements CurrentGroup {
+   _CurrentGroup({required this.group, required this.membership}): assert(group.id == membership.groupId, '모임과 구성원 정보의 모임 ID가 일치해야 합니다.');
   
 
 @override final  Group group;
