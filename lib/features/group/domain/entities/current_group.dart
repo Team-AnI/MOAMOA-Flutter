@@ -1,25 +1,23 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'group.dart';
 import 'group_member.dart';
 
-/// 선택한 모임과 해당 모임에서 로그인 사용자가 가진 권한입니다.
-class CurrentGroup {
-  CurrentGroup({required this.group, required this.membership})
-    : assert(group.id == membership.groupId, '모임과 구성원 정보의 모임 ID가 일치해야 합니다.');
+part 'current_group.freezed.dart';
 
-  final Group group;
-  final GroupMember membership;
+/// 선택한 모임과 해당 모임에서 로그인 사용자가 가진 권한입니다.
+@freezed
+abstract class CurrentGroup with _$CurrentGroup {
+  const CurrentGroup._();
+
+  @Assert('group.id == membership.groupId', '모임과 구성원 정보의 모임 ID가 일치해야 합니다.')
+  factory CurrentGroup({
+    required Group group,
+    required GroupMember membership,
+  }) = _CurrentGroup;
 
   bool get canWriteNotices => membership.role.canWriteNotices;
   bool get canCreateSchedules => membership.role.canCreateSchedules;
   bool get canConfirmSchedules => membership.role.canConfirmSchedules;
-
   bool get canViewInviteCode => membership.role.canViewInviteCode;
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CurrentGroup &&
-          group == other.group &&
-          membership == other.membership;
-  @override
-  int get hashCode => Object.hash(group, membership);
 }

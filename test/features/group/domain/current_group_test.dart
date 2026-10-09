@@ -38,6 +38,31 @@ void main() {
     );
   });
 
+  test('copyWith로 역할을 변경하면 위임 권한을 갱신하고 원본을 보존한다', () {
+    final original = CurrentGroup(
+      group: group,
+      membership: const GroupMember(
+        groupId: 1,
+        userId: 11,
+        role: MemberRole.admin,
+      ),
+    );
+    final updated = original.copyWith(
+      membership: original.membership.copyWith(role: MemberRole.member),
+    );
+
+    expect(original.canViewInviteCode, isTrue);
+    expect(updated.canViewInviteCode, isFalse);
+    expect(updated.canWriteNotices, isFalse);
+    expect(updated.membership.userId, 11);
+    expect(
+      () => original.copyWith(
+        membership: original.membership.copyWith(groupId: 2),
+      ),
+      throwsAssertionError,
+    );
+  });
+
   test('공지와 일정 관리 기능은 관리자에게만 허용된다', () {
     expect(MemberRole.admin.canWriteNotices, isTrue);
     expect(MemberRole.admin.canCreateSchedules, isTrue);
