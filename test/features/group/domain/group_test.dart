@@ -20,7 +20,7 @@ void main() {
     );
     expect(() => original.copyWith(memberCount: -1), throwsAssertionError);
   });
-  test('구성원 수가 없거나 0 이상이면 모임을 생성한다', () {
+  test('구성원 수가 null이거나 0 이상이면 입력한 구성원 수를 유지한다', () {
     for (final count in <int?>[null, 0, 1]) {
       final group = Group(
         id: 1,
@@ -31,7 +31,7 @@ void main() {
       expect(group.memberCount, count);
     }
   });
-  test('음수 구성원 수는 허용하지 않는다', () {
+  test('구성원 수가 음수이면 assertion 오류가 발생한다', () {
     final count = -1;
     expect(
       () => Group(id: 1, name: '모임', description: '', memberCount: count),

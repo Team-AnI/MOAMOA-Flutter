@@ -7,7 +7,7 @@ import 'package:moamoa/features/group/domain/entities/member_role.dart';
 void main() {
   const group = Group(id: 1, name: '모아모아', description: '우리 모임');
 
-  test('내용이 같은 현재 모임과 구성원은 동등하다', () {
+  test('현재 모임과 구성원 정보가 같으면 동등하게 비교되고 hashCode가 같다', () {
     final first = CurrentGroup(
       group: const Group(id: 1, name: '모임'),
       membership: const GroupMember(
@@ -63,7 +63,7 @@ void main() {
     );
   });
 
-  test('공지와 일정 관리 기능은 관리자에게만 허용된다', () {
+  test('역할이 관리자이면 공지·일정 관리 권한을 허용하고 구성원이면 거부한다', () {
     expect(MemberRole.admin.canWriteNotices, isTrue);
     expect(MemberRole.admin.canCreateSchedules, isTrue);
     expect(MemberRole.admin.canConfirmSchedules, isTrue);
@@ -72,7 +72,7 @@ void main() {
     expect(MemberRole.member.canConfirmSchedules, isFalse);
   });
 
-  test('관리자는 초대 코드를 확인할 권한이 있다', () {
+  test('현재 모임의 역할이 관리자이면 초대 코드·공지·일정 관리 권한을 허용한다', () {
     final current = CurrentGroup(
       group: group,
       membership: const GroupMember(
@@ -87,7 +87,7 @@ void main() {
     expect(current.canConfirmSchedules, isTrue);
   });
 
-  test('일반 구성원은 초대 코드를 확인할 권한이 없다', () {
+  test('현재 모임의 역할이 구성원이면 초대 코드·공지·일정 관리 권한을 거부한다', () {
     final current = CurrentGroup(
       group: group,
       membership: const GroupMember(
@@ -102,7 +102,7 @@ void main() {
     expect(current.canConfirmSchedules, isFalse);
   });
 
-  test('다른 모임의 구성원 정보를 현재 모임에 연결할 수 없다', () {
+  test('모임 ID와 구성원의 모임 ID가 다르면 assertion 오류가 발생한다', () {
     expect(
       () => CurrentGroup(
         group: group,
