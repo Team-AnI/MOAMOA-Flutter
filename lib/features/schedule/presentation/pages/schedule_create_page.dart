@@ -47,7 +47,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(initial ?? now),
     );
-    if (time == null) return null;
+    if (time == null || !mounted) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
