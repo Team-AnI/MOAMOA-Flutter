@@ -1,5 +1,5 @@
 /// 모임 안에서 구성원이 가진 권한입니다.
-enum GroupRole {
+enum MemberRole {
   admin,
   member;
 
