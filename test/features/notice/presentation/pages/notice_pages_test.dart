@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -123,6 +125,41 @@ void main() {
       expect(find.text('공지 수정'), findsOneWidget);
       expect(find.text('10월 회비 안내'), findsOneWidget);
       expect(find.text('10일까지 납부'), findsOneWidget);
+    });
+
+    testWidgets('기존 내용을 불러오는 동안에는 로딩을 보여주고 입력·저장을 막는다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+      )..detailGate = Completer<void>();
+      await pumpPage(
+        tester,
+        repository,
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('수정 완료'), findsNothing);
+
+      repository.detailGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('10월 회비 안내'), findsOneWidget);
+      expect(find.text('수정 완료'), findsOneWidget);
+    });
+
+    testWidgets('기존 내용을 불러오지 못하면 입력칸 대신 오류를 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(),
+        const NoticeWritePage(meetingId: 1, noticeId: 999),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('삭제되었거나 존재하지 않는 공지입니다.'), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('수정 완료'), findsNothing);
     });
   });
 

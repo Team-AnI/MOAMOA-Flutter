@@ -8,49 +8,84 @@ import '../widgets/notice_colors.dart';
 import '../widgets/notice_error_view.dart';
 
 /// 공지 작성 화면. [noticeId] 가 있으면 수정 화면으로 동작합니다.
-class NoticeWritePage extends ConsumerStatefulWidget {
+///
+/// 수정일 때는 기존 공지를 다 불러온 뒤에 입력칸을 만듭니다.
+/// 불러오는 동안 입력하면 늦게 도착한 응답이 입력을 덮어쓸 수 있기 때문입니다.
+class NoticeWritePage extends ConsumerWidget {
   const NoticeWritePage({super.key, required this.meetingId, this.noticeId});
 
   final int meetingId;
   final int? noticeId;
 
   @override
-  ConsumerState<NoticeWritePage> createState() => _NoticeWritePageState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          tooltip: '닫기',
+          icon: const Icon(Icons.close, color: NoticeColors.text),
+        ),
+      ),
+      body: _buildBody(context, ref),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref) {
+    final noticeId = this.noticeId;
+    if (noticeId == null) return _NoticeForm(meetingId: meetingId);
+
+    final args = (meetingId: meetingId, noticeId: noticeId);
+    return ref
+        .watch(noticeDetailProvider(args))
+        .when(
+          data: (notice) =>
+              _NoticeForm(meetingId: meetingId, initialNotice: notice),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => isNoticeNotFound(error)
+              ? NoticeErrorView(
+                  error: error,
+                  message: '삭제되었거나 존재하지 않는 공지입니다.',
+                  actionLabel: '목록으로',
+                  onAction: () => context.go('/meetings/$meetingId/notices'),
+                )
+              : NoticeErrorView(
+                  error: error,
+                  onAction: () => ref.invalidate(noticeDetailProvider(args)),
+                ),
+        );
+  }
 }
 
-class _NoticeWritePageState extends ConsumerState<NoticeWritePage> {
-  final _titleController = TextEditingController();
-  final _contentController = TextEditingController();
-  bool _prefilled = false;
+/// 제목·내용 입력칸과 등록 버튼
+///
+/// [initialNotice] 가 있으면 수정 모드이며, 처음 만들어질 때 한 번만 기존 내용을 채웁니다.
+class _NoticeForm extends ConsumerStatefulWidget {
+  const _NoticeForm({required this.meetingId, this.initialNotice});
+
+  final int meetingId;
+  final Notice? initialNotice;
+
+  @override
+  ConsumerState<_NoticeForm> createState() => _NoticeFormState();
+}
+
+class _NoticeFormState extends ConsumerState<_NoticeForm> {
+  late final _titleController = TextEditingController(
+    text: widget.initialNotice?.title,
+  );
+  late final _contentController = TextEditingController(
+    text: widget.initialNotice?.content,
+  );
 
   /// 등록을 한 번 누른 뒤부터 빠진 항목 안내를 보여줍니다. (예외처리 4-1)
   bool _showMissing = false;
 
-  bool get _isEdit => widget.noticeId != null;
-
-  @override
-  void initState() {
-    super.initState();
-    final noticeId = widget.noticeId;
-    if (noticeId == null) return;
-
-    // 수정이면 기존 공지 내용을 채웁니다.
-    ref.listenManual(
-      noticeDetailProvider((meetingId: widget.meetingId, noticeId: noticeId)),
-      (_, next) {
-        final notice = next.value;
-        if (notice != null) _prefill(notice);
-      },
-      fireImmediately: true,
-    );
-  }
-
-  void _prefill(Notice notice) {
-    if (_prefilled) return;
-    _prefilled = true;
-    _titleController.text = notice.title;
-    _contentController.text = notice.content ?? '';
-  }
+  bool get _isEdit => widget.initialNotice != null;
 
   @override
   void dispose() {
@@ -72,7 +107,7 @@ class _NoticeWritePageState extends ConsumerState<NoticeWritePage> {
     final success = await ref
         .read(noticeWriteProvider(widget.meetingId).notifier)
         .submit(
-          noticeId: widget.noticeId,
+          noticeId: widget.initialNotice?.id,
           title: _titleController.text,
           content: _contentController.text,
         );
@@ -102,60 +137,57 @@ class _NoticeWritePageState extends ConsumerState<NoticeWritePage> {
         .watch(noticeWriteProvider(widget.meetingId))
         .isLoading;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          tooltip: '닫기',
-          icon: const Icon(Icons.close, color: NoticeColors.text),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            children: [
+              Text(
+                _isEdit ? '공지 수정' : '공지 작성',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: NoticeColors.text,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _InputField(
+                label: '제목',
+                hintText: '공지 제목을 입력하세요',
+                controller: _titleController,
+                errorText: _showMissing && _isTitleMissing
+                    ? '공지 제목을 입력해주세요'
+                    : null,
+                onChanged: _onChanged,
+              ),
+              const SizedBox(height: 20),
+              _InputField(
+                label: '내용',
+                hintText: '구성원에게 전할 내용을 입력하세요',
+                controller: _contentController,
+                minLines: 8,
+                errorText: _showMissing && _isContentMissing
+                    ? '공지 내용을 입력해주세요'
+                    : null,
+                onChanged: _onChanged,
+              ),
+            ],
+          ),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        children: [
-          Text(
-            _isEdit ? '공지 수정' : '공지 작성',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: NoticeColors.text,
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: _SubmitButton(
+              label: _isEdit ? '수정 완료' : '공지 등록',
+              isLoading: isSubmitting,
+              onPressed: isSubmitting ? null : _submit,
             ),
           ),
-          const SizedBox(height: 24),
-          _InputField(
-            label: '제목',
-            hintText: '공지 제목을 입력하세요',
-            controller: _titleController,
-            errorText: _showMissing && _isTitleMissing ? '공지 제목을 입력해주세요' : null,
-            onChanged: _onChanged,
-          ),
-          const SizedBox(height: 20),
-          _InputField(
-            label: '내용',
-            hintText: '구성원에게 전할 내용을 입력하세요',
-            controller: _contentController,
-            minLines: 8,
-            errorText: _showMissing && _isContentMissing
-                ? '공지 내용을 입력해주세요'
-                : null,
-            onChanged: _onChanged,
-          ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: _SubmitButton(
-            label: _isEdit ? '수정 완료' : '공지 등록',
-            isLoading: isSubmitting,
-            onPressed: isSubmitting ? null : _submit,
-          ),
         ),
-      ),
+      ],
     );
   }
 }
