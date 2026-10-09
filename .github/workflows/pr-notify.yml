@@ -1,12 +1,14 @@
 # PR 상태 전환 시 Discord 알림
-# - Draft → Open (ready_for_review)   : @here 리뷰 요청
 # - Open → Draft (converted_to_draft) : @here 드래프트 전환 안내
+# - 리뷰 요청은 PR 별로 보내지 않고 A-AND-I-DISCORD-UTIL 의 리뷰 리마인드가 평일 10시(KST)에 한 번에 모아 보냅니다.
 # - 설정: 레포 시크릿 DISCORD_GITHUB_WEBHOOK 에 Discord 웹훅 URL 등록
+# - fork PR 에도 시크릿이 전달되도록 pull_request_target 을 사용합니다.
+#   PR 코드를 checkout / 실행하지 않으므로 안전합니다. (checkout 스텝 추가 금지)
 name: PR Notify
 
 on:
-  pull_request:
-    types: [ready_for_review, converted_to_draft]
+  pull_request_target:
+    types: [converted_to_draft]
 
 permissions:
   contents: read
@@ -20,7 +22,6 @@ jobs:
       - name: Send Discord message
         env:
           DISCORD_GITHUB_WEBHOOK: ${{ secrets.DISCORD_GITHUB_WEBHOOK }}
-          ACTION: ${{ github.event.action }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_URL: ${{ github.event.pull_request.html_url }}
@@ -32,13 +33,8 @@ jobs:
             exit 1
           fi
 
-          if [[ "$ACTION" == "ready_for_review" ]]; then
-            message="리뷰 부탁드립니다."
-            color=3066993   # 초록
-          else
-            message="Open된 PR이 다시 드래프트로 전환되었습니다."
-            color=10070709  # 회색
-          fi
+          message="Open된 PR이 다시 드래프트로 전환되었습니다."
+          color=10070709  # 회색
 
           payload=$(jq -n \
             --arg content "@here $message" \
