@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Schedule {
 
- int get id; String get title; String? get description; DateTime get startAt; DateTime? get endAt; String? get location;
+ int get id; String get title; String get description; DateTime get startAt; DateTime? get endAt; String get location;
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,7 +46,7 @@ abstract mixin class $ScheduleCopyWith<$Res>  {
   factory $ScheduleCopyWith(Schedule value, $Res Function(Schedule) _then) = _$ScheduleCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, String? description, DateTime startAt, DateTime? endAt, String? location
+ int id, String title, String description, DateTime startAt, DateTime? endAt, String location
 });
 
 
@@ -63,15 +63,15 @@ class _$ScheduleCopyWithImpl<$Res>
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = freezed,Object? startAt = null,Object? endAt = freezed,Object? location = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
   return _then(Schedule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -156,7 +156,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Schedule() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -177,7 +177,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)  $default,) {final _that = this;
 switch (_that) {
 case _Schedule():
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -197,7 +197,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,) {final _that = this;
 switch (_that) {
 case _Schedule() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -212,15 +212,15 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 
 
 class _Schedule implements Schedule {
-  const _Schedule({required this.id, required this.title, this.description, required this.startAt, this.endAt, this.location});
+  const _Schedule({required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = ''});
   
 
 @override final  int id;
 @override final  String title;
-@override final  String? description;
+@override@JsonKey() final  String description;
 @override final  DateTime startAt;
 @override final  DateTime? endAt;
-@override final  String? location;
+@override@JsonKey() final  String location;
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
@@ -252,7 +252,7 @@ abstract mixin class _$ScheduleCopyWith<$Res> implements $ScheduleCopyWith<$Res>
   factory _$ScheduleCopyWith(_Schedule value, $Res Function(_Schedule) _then) = __$ScheduleCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, String? description, DateTime startAt, DateTime? endAt, String? location
+ int id, String title, String description, DateTime startAt, DateTime? endAt, String location
 });
 
 
@@ -269,15 +269,15 @@ class __$ScheduleCopyWithImpl<$Res>
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = freezed,Object? startAt = null,Object? endAt = freezed,Object? location = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
   return _then(_Schedule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

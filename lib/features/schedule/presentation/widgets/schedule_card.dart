@@ -46,7 +46,7 @@ class ScheduleCard extends StatelessWidget {
                       ),
                     ),
                     _Meta('clock', '${start.weekdayKo} ${start.hhmm}'),
-                    if (location != null) _Meta('map_pin', location),
+                    if (location.isNotEmpty) _Meta('map_pin', location),
                   ],
                 ),
               ),

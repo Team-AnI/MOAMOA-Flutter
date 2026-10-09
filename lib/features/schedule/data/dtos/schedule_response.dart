@@ -8,20 +8,21 @@ part 'schedule_response.g.dart';
 /// 목록 응답에는 description이 없습니다
 @freezed
 abstract class ScheduleResponse with _$ScheduleResponse {
-  const ScheduleResponse._();
-
   const factory ScheduleResponse({
     @JsonKey(name: 'scheduleId') required int id,
     required String title,
-    String? description,
+    @Default('') String description,
     required DateTime startAt,
     DateTime? endAt,
-    String? location,
+    @Default('') String location,
   }) = _ScheduleResponse;
 
   factory ScheduleResponse.fromJson(Map<String, dynamic> json) =>
       _$ScheduleResponseFromJson(json);
+}
 
+/// 응답 DTO 를 도메인 Entity 로 변환합니다.
+extension ScheduleResponseX on ScheduleResponse {
   Schedule toEntity() => Schedule(
     id: id,
     title: title,

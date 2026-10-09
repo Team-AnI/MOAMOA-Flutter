@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ScheduleResponse {
 
-@JsonKey(name: 'scheduleId') int get id; String get title; String? get description; DateTime get startAt; DateTime? get endAt; String? get location;
+@JsonKey(name: 'scheduleId') int get id; String get title; String get description; DateTime get startAt; DateTime? get endAt; String get location;
 /// Create a copy of ScheduleResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -49,7 +49,7 @@ abstract mixin class $ScheduleResponseCopyWith<$Res>  {
   factory $ScheduleResponseCopyWith(ScheduleResponse value, $Res Function(ScheduleResponse) _then) = _$ScheduleResponseCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'scheduleId') int id, String title, String? description, DateTime startAt, DateTime? endAt, String? location
+@JsonKey(name: 'scheduleId') int id, String title, String description, DateTime startAt, DateTime? endAt, String location
 });
 
 
@@ -66,15 +66,15 @@ class _$ScheduleResponseCopyWithImpl<$Res>
 
 /// Create a copy of ScheduleResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = freezed,Object? startAt = null,Object? endAt = freezed,Object? location = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
   return _then(ScheduleResponse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ScheduleResponse() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -180,7 +180,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)  $default,) {final _that = this;
 switch (_that) {
 case _ScheduleResponse():
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -200,7 +200,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String? description,  DateTime startAt,  DateTime? endAt,  String? location)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,) {final _that = this;
 switch (_that) {
 case _ScheduleResponse() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
@@ -214,16 +214,16 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// @nodoc
 @JsonSerializable()
 
-class _ScheduleResponse extends ScheduleResponse {
-  const _ScheduleResponse({@JsonKey(name: 'scheduleId') required this.id, required this.title, this.description, required this.startAt, this.endAt, this.location}): super._();
+class _ScheduleResponse implements ScheduleResponse {
+  const _ScheduleResponse({@JsonKey(name: 'scheduleId') required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = ''});
   factory _ScheduleResponse.fromJson(Map<String, dynamic> json) => _$ScheduleResponseFromJson(json);
 
 @override@JsonKey(name: 'scheduleId') final  int id;
 @override final  String title;
-@override final  String? description;
+@override@JsonKey() final  String description;
 @override final  DateTime startAt;
 @override final  DateTime? endAt;
-@override final  String? location;
+@override@JsonKey() final  String location;
 
 /// Create a copy of ScheduleResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -258,7 +258,7 @@ abstract mixin class _$ScheduleResponseCopyWith<$Res> implements $ScheduleRespon
   factory _$ScheduleResponseCopyWith(_ScheduleResponse value, $Res Function(_ScheduleResponse) _then) = __$ScheduleResponseCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'scheduleId') int id, String title, String? description, DateTime startAt, DateTime? endAt, String? location
+@JsonKey(name: 'scheduleId') int id, String title, String description, DateTime startAt, DateTime? endAt, String location
 });
 
 
@@ -275,15 +275,15 @@ class __$ScheduleResponseCopyWithImpl<$Res>
 
 /// Create a copy of ScheduleResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = freezed,Object? startAt = null,Object? endAt = freezed,Object? location = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
   return _then(_ScheduleResponse(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
-as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
+as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,
+as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

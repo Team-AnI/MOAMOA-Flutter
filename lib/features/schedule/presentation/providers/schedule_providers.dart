@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
+import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_detail_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_view_model.dart';
@@ -9,6 +10,11 @@ import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_v
 /// 그 전까지는 override 하지 않으면 읽을 수 없습니다. (테스트는 Fake 를 주입)
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => throw UnimplementedError('API 연동 시 구현체를 연결합니다.'),
+);
+
+final createScheduleProvider = Provider<CreateSchedule>(
+  (ref) =>
+      CreateScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
 );
 
 /// 현재 사용자가 이 모임의 관리자인지.

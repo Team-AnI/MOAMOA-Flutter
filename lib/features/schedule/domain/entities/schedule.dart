@@ -7,9 +7,9 @@ abstract class Schedule with _$Schedule {
   const factory Schedule({
     required int id,
     required String title,
-    String? description,
+    @Default('') String description,
     required DateTime startAt,
     DateTime? endAt,
-    String? location,
+    @Default('') String location,
   }) = _Schedule;
 }

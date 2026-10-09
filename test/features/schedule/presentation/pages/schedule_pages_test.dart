@@ -126,9 +126,31 @@ void main() {
       // 이번 달로 돌아오면 오늘이 선택된다.
       expect(find.textContaining('${now.month}월 ${now.day}일 '), findsOneWidget);
     });
+    testWidgets('목록과 캘린더를 오가도 보던 달과 선택 날짜가 유지된다', (tester) async {
+      await pumpPage(tester, const ScheduleListPage(meetingId: 1));
+      final next = DateTime(now.year, now.month + 1);
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('calendar-next-month')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('목록'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('${next.year}년 ${next.month}월'), findsOneWidget);
+      expect(find.textContaining('${next.month}월 1일 '), findsOneWidget);
+    });
   });
 
   group('일정 만들기', () {
+    testWidgets('상단 바는 AppBar 를 사용한다', (tester) async {
+      await pumpPage(tester, const ScheduleCreatePage(meetingId: 1));
+
+      expect(find.byType(AppBar), findsOneWidget);
+    });
+
     testWidgets('필수 입력 없이 만들면 저장하지 않고 오류 문구를 보여준다', (tester) async {
       await pumpPage(tester, const ScheduleCreatePage(meetingId: 1));
 
@@ -206,6 +228,7 @@ void main() {
       const ScheduleDetailPage(meetingId: 1, scheduleId: 20),
     );
 
+    expect(find.byType(AppBar), findsOneWidget);
     expect(find.text('10월 정기 러닝'), findsOneWidget);
     expect(find.textContaining('19:00 ~ 21:00'), findsOneWidget);
     expect(find.text('반포 한강공원'), findsOneWidget);

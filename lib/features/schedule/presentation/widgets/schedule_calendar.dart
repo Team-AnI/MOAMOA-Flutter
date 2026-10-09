@@ -44,54 +44,139 @@ class ScheduleCalendar extends StatelessWidget {
       child: Column(
         spacing: 2,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _MonthButton(
-                  'caret_left_calendar',
-                  () => onMonthChanged(DateTime(month.year, month.month - 1)),
-                  key: const Key('calendar-prev-month'),
-                ),
-                Text('${month.year}년 ${month.month}월', style: MoaText.titleM),
-                _MonthButton(
-                  'caret_right_calendar',
-                  () => onMonthChanged(DateTime(month.year, month.month + 1)),
-                  key: const Key('calendar-next-month'),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            children: [
-              for (final w in ['일', '월', '화', '수', '목', '금', '토'])
-                Expanded(
-                  child: Text(
-                    w,
-                    textAlign: TextAlign.center,
-                    style: MoaText.captionStrong.copyWith(
-                      color: MoaColors.textTertiary,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          _MonthHeader(month: month, onMonthChanged: onMonthChanged),
+          const _WeekdayRow(),
           for (var i = 0; i < cells.length; i += 7)
             Row(
               children: [
                 for (final day in cells.sublist(i, i + 7))
-                  Expanded(child: _buildDay(day)),
+                  Expanded(
+                    child: day == null
+                        ? const SizedBox(height: 44)
+                        : _DayCell(
+                            date: DateTime(month.year, month.month, day),
+                            selected: selected,
+                            marked: markedDays.contains(
+                              DateTime(month.year, month.month, day),
+                            ),
+                            onTap: onSelected,
+                          ),
+                  ),
               ],
             ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildDay(int? day) {
-    if (day == null) return const SizedBox(height: 44);
-    final date = DateTime(month.year, month.month, day);
+/// 달력 상단: 이전 달 / 연월 / 다음 달
+class _MonthHeader extends StatelessWidget {
+  const _MonthHeader({required this.month, required this.onMonthChanged});
+
+  final DateTime month;
+  final ValueChanged<DateTime> onMonthChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _MonthButton(
+            'caret_left_calendar',
+            () => onMonthChanged(DateTime(month.year, month.month - 1)),
+            key: const Key('calendar-prev-month'),
+          ),
+          Text('${month.year}년 ${month.month}월', style: MoaText.titleM),
+          _MonthButton(
+            'caret_right_calendar',
+            () => onMonthChanged(DateTime(month.year, month.month + 1)),
+            key: const Key('calendar-next-month'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 요일 줄 (일 ~ 토)
+class _WeekdayRow extends StatelessWidget {
+  const _WeekdayRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final w in ['일', '월', '화', '수', '목', '금', '토'])
+          Expanded(
+            child: Text(
+              w,
+              textAlign: TextAlign.center,
+              style: MoaText.captionStrong.copyWith(
+                color: MoaColors.textTertiary,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// 달력의 하루. 숫자 아래에 일정이 있으면 점이 붙는다.
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.date,
+    required this.selected,
+    required this.marked,
+    required this.onTap,
+  });
+
+  final DateTime date;
+  final DateTime selected;
+  final bool marked;
+  final ValueChanged<DateTime> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onTap(date),
+      child: SizedBox(
+        height: 44,
+        child: Column(
+          spacing: 1,
+          children: [
+            _DayNumber(date: date, selected: selected),
+            SizedBox(
+              width: 5,
+              height: 5,
+              child: marked
+                  ? const DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: MoaColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 날짜 숫자. 선택/오늘/지난 날짜에 따라 배경과 글자색이 달라진다.
+class _DayNumber extends StatelessWidget {
+  const _DayNumber({required this.date, required this.selected});
+
+  final DateTime date;
+  final DateTime selected;
+
+  @override
+  Widget build(BuildContext context) {
     final today = DateUtils.dateOnly(DateTime.now());
     final isSelected = DateUtils.isSameDay(date, selected);
     final isToday = DateUtils.isSameDay(date, today);
@@ -113,39 +198,12 @@ class ScheduleCalendar extends StatelessWidget {
               : MoaColors.textPrimary,
         );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => onSelected(date),
-      child: SizedBox(
-        height: 44,
-        child: Column(
-          spacing: 1,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: background,
-                shape: BoxShape.circle,
-              ),
-              child: Text('$day', style: textStyle),
-            ),
-            SizedBox(
-              width: 5,
-              height: 5,
-              child: markedDays.contains(date)
-                  ? const DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: MoaColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                  : null,
-            ),
-          ],
-        ),
-      ),
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+      child: Text('${date.day}', style: textStyle),
     );
   }
 }

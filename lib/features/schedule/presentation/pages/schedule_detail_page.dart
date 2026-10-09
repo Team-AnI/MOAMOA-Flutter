@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
-import 'package:moamoa/core/widgets/moa_back_bar.dart';
+import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 
 import '../providers/schedule_providers.dart';
@@ -28,10 +28,10 @@ class ScheduleDetailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: MoaColors.page,
+      appBar: const MoaAppBar(),
       body: SafeArea(
         child: Column(
           children: [
-            const MoaBackBar(),
             Expanded(
               child: schedule.when(
                 data: (s) => _Body(s),
@@ -79,8 +79,8 @@ class _Body extends StatelessWidget {
             child: Text(schedule.title, style: MoaText.titleXl),
           ),
           _InfoRow('clock_field', '${start.fieldLabel}$endLabel'),
-          if (location != null) _InfoRow('map_pin_field', location),
-          if (description != null)
+          if (location.isNotEmpty) _InfoRow('map_pin_field', location),
+          if (description.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(

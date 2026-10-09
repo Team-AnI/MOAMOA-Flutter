@@ -16,21 +16,23 @@ class ScheduleCreateViewModel extends AsyncNotifier<int?> {
 
   Future<void> submit({
     required String title,
-    String? description,
+    String description = '',
     DateTime? startAt,
     DateTime? endAt,
-    String? location,
+    String location = '',
   }) async {
     if (state.isLoading) return; // 중복 탭 방지
     state = const AsyncLoading();
     final result = await AsyncValue.guard(
-      () => CreateSchedule(ref.read(scheduleRepositoryProvider))(
-        meetingId: meetingId,
-        title: title,
-        description: description,
-        startAt: startAt,
-        endAt: endAt,
-        location: location,
+      () => ref.read(createScheduleProvider)(
+        CreateScheduleParams(
+          meetingId: meetingId,
+          title: title,
+          description: description,
+          startAt: startAt,
+          endAt: endAt,
+          location: location,
+        ),
       ),
     );
     if (!ref.mounted) return; // 제출 중에 화면이 닫힌 경우

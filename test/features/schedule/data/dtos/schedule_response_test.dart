@@ -34,8 +34,21 @@ void main() {
       'endAt': null,
     }).toEntity();
 
-    expect(entity.description, isNull);
+    expect(entity.description, '');
     expect(entity.endAt, isNull);
-    expect(entity.location, isNull);
+    expect(entity.location, '');
+  });
+
+  test('서버가 설명과 장소를 null 로 내려줘도 빈 문자열로 변환한다', () {
+    final entity = ScheduleResponse.fromJson(const {
+      'scheduleId': 22,
+      'title': '정모',
+      'description': null,
+      'startAt': '2026-10-11T07:00:00+09:00',
+      'location': null,
+    }).toEntity();
+
+    expect(entity.description, '');
+    expect(entity.location, '');
   });
 }
