@@ -112,6 +112,8 @@ void main() {
     expect(copiedText, 'CODE');
     await tester.tap(find.text('모임 홈으로'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('모임 설정'));
+    await tester.pumpAndSettle();
     expect(find.text('초대 코드 확인'), findsOneWidget);
     await tester.tap(find.text('초대 코드 확인'));
     await tester.pumpAndSettle();
@@ -142,7 +144,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('내 모임 목록'), findsOneWidget);
+    expect(find.byTooltip('내 모임 목록'), findsOneWidget);
     expect(find.text('초대 코드 확인'), findsNothing);
   });
 

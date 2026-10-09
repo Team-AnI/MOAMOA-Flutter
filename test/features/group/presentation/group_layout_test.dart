@@ -34,6 +34,11 @@ void main() {
       'ticket',
       'check',
       'shield',
+      'home',
+      'home_calendar',
+      'home_megaphone',
+      'wallet',
+      'gear',
       'megaphone',
       'calendar',
       'camera',
@@ -45,6 +50,42 @@ void main() {
     }
   });
   for (final size in [const Size(393, 852), const Size(320, 568)]) {
+    for (final role in MemberRole.values) {
+      testWidgets('모임 홈 ${role.name} ${size.width} 레이아웃', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = size;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final repository = FakeGroupRepository()..groups = [makeGroup(role)];
+        final router = GoRouter(
+          initialLocation: '/groups/home',
+          routes: groupRoutes,
+        );
+        addTearDown(router.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            groupRepositoryProvider.overrideWithValue(repository),
+            appRouterProvider.overrideWithValue(router),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(groupProvider.notifier).selectGroup(1);
+        final boundary = GlobalKey();
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: RepaintBoundary(key: boundary, child: const App()),
+          ),
+        );
+        await _capture(tester, boundary, 'home-${role.name}', size);
+        expect(find.text('구성원'), findsNWidgets(2));
+        expect(find.text('홈'), findsOneWidget);
+        expect(
+          find.byTooltip('모임 설정'),
+          role == MemberRole.admin ? findsOneWidget : findsNothing,
+        );
+      });
+    }
     testWidgets('가입 확인·완료 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = size;
