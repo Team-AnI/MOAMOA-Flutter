@@ -1,10 +1,12 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+
 import 'group_field.dart';
 import 'group_icon.dart';
-import 'group_photo_sheet.dart';
 import 'group_mark.dart';
 import 'group_page_title.dart';
+import 'group_photo_sheet.dart';
 
 class GroupProfileStep extends StatelessWidget {
   const GroupProfileStep({

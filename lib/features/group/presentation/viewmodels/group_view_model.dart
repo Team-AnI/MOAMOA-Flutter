@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/usecases/no_params.dart';
 import '../../domain/entities/current_group.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/usecases/params/create_group_params.dart';
-import '../../domain/usecases/params/join_group_params.dart';
-import '../../domain/usecases/params/get_group_params.dart';
 import '../../domain/usecases/params/get_group_invite_code_params.dart';
-import '../../../../core/usecases/no_params.dart';
+import '../../domain/usecases/params/get_group_params.dart';
+import '../../domain/usecases/params/join_group_params.dart';
 import '../providers/group_providers.dart';
 import 'group_state.dart';
 
@@ -27,7 +28,19 @@ class GroupViewModel extends Notifier<GroupState> {
       if (!ref.mounted) return;
       CurrentGroup? selected;
       for (final group in groups) {
-        if (group.group.id == previous.currentGroup?.group.id) selected = group;
+        if (group.group.id == previous.currentGroup?.group.id) {
+          selected = CurrentGroup(
+            group: Group(
+              id: group.group.id,
+              name: group.group.name,
+              description:
+                  group.group.description ??
+                  previous.currentGroup!.group.description,
+              memberCount: group.group.memberCount,
+            ),
+            membership: group.membership,
+          );
+        }
       }
       state = GroupState(
         groups: List.unmodifiable(groups),

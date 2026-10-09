@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
+import 'package:moamoa/features/group/presentation/pages/group_form_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +32,39 @@ Future<void> openGroups(
   await tester.pumpAndSettle();
 }
 
+class LoadingRepository extends FakeGroupRepository {
+  final pending = Completer<List<CurrentGroup>>();
+  @override
+  Future<List<CurrentGroup>> getMyGroups() => pending.future;
+}
+
 void main() {
+  testWidgets('목록 로딩 중 가입 제출이 비활성화되고 완료 후 활성화된다', (tester) async {
+    final repo = LoadingRepository();
+    final container = ProviderContainer(
+      overrides: [groupRepositoryProvider.overrideWithValue(repo)],
+    );
+    addTearDown(container.dispose);
+    final loading = container.read(groupProvider.notifier).loadGroups();
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: GroupFormPage(isJoining: true)),
+      ),
+    );
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+    repo.pending.complete([]);
+    await loading;
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+    );
+  });
+
   testWidgets('생성 안내와 계정 이름을 표시하고 미지원 가입 방식은 선택할 수 없다', (tester) async {
     await openGroups(tester, FakeGroupRepository(), userName: '조성은');
     await tester.tap(find.text('모임 만들기'));

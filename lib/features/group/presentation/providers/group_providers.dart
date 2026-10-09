@@ -1,5 +1,4 @@
-import '../../domain/entities/group.dart';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -8,25 +7,26 @@ import '../../data/datasources/group_remote_data_source.dart';
 import '../../data/datasources/group_remote_data_source_impl.dart';
 import '../../data/repositories/group_repository_impl.dart';
 import '../../data/repositories/memory_group_repository.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
-import '../viewmodels/group_state.dart';
-import '../viewmodels/group_view_model.dart';
 import '../../domain/usecases/create_group.dart';
 import '../../domain/usecases/create_group_impl.dart';
-import '../../domain/usecases/join_group.dart';
-import '../../domain/usecases/join_group_impl.dart';
-import '../../domain/usecases/get_group_invite_code.dart';
-import '../../domain/usecases/get_group_invite_code_impl.dart';
 import '../../domain/usecases/get_group.dart';
 import '../../domain/usecases/get_group_impl.dart';
+import '../../domain/usecases/get_group_invite_code.dart';
+import '../../domain/usecases/get_group_invite_code_impl.dart';
 import '../../domain/usecases/get_my_groups.dart';
 import '../../domain/usecases/get_my_groups_impl.dart';
+import '../../domain/usecases/join_group.dart';
+import '../../domain/usecases/join_group_impl.dart';
+import '../viewmodels/group_state.dart';
+import '../viewmodels/group_view_model.dart';
 
 final groupImagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 
 /// 로그인 기능에서 현재 계정의 표시 이름을 주입합니다.
 final groupUseMockProvider = Provider<bool>(
-  (ref) => const bool.fromEnvironment('GROUP_USE_MOCK'),
+  (ref) => !kReleaseMode && const bool.fromEnvironment('GROUP_USE_MOCK'),
 );
 final groupCurrentUserNameProvider = Provider<String?>(
   (ref) => ref.watch(groupUseMockProvider) ? '테스트 사용자' : null,

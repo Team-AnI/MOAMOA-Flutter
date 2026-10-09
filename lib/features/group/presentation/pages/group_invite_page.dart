@@ -1,16 +1,17 @@
-import '../../data/repositories/memory_group_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../data/repositories/memory_group_repository.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_code_card.dart';
+import '../widgets/group_created_actions.dart';
+import '../widgets/group_created_title.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 import '../widgets/group_primary_button.dart';
-import '../widgets/group_created_actions.dart';
-import '../widgets/group_created_title.dart';
 
 class GroupInvitePage extends ConsumerStatefulWidget {
   const GroupInvitePage({super.key, this.created = false});

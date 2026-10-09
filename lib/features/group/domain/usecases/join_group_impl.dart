@@ -1,7 +1,7 @@
+import '../entities/current_group.dart';
 import '../repositories/group_repository.dart';
 import 'join_group.dart';
 import 'params/join_group_params.dart';
-import '../entities/current_group.dart';
 
 final class JoinGroupImpl implements JoinGroup {
   const JoinGroupImpl({required this.repository});

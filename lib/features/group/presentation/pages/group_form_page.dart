@@ -1,19 +1,20 @@
-import '../../data/repositories/memory_group_repository.dart';
-import '../../domain/entities/group.dart';
-import '../widgets/group_join_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import '../widgets/group_photo_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../data/repositories/memory_group_repository.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_field.dart';
 import '../widgets/group_info_step.dart';
+import '../widgets/group_join_summary.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
+import '../widgets/group_photo_sheet.dart';
 import '../widgets/group_primary_button.dart';
 import '../widgets/group_profile_step.dart';
 
@@ -90,7 +91,10 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   }
 
   Future<void> _submit() async {
-    if (_previewing || _pickingPhoto || ref.read(groupProvider).isSubmitting) {
+    if (_previewing ||
+        _pickingPhoto ||
+        ref.read(groupProvider).isSubmitting ||
+        ref.read(groupProvider).isLoading) {
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -188,7 +192,10 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
     final submitting = ref.watch(
       groupProvider.select((state) => state.isSubmitting),
     );
-    final busy = submitting || _previewing;
+    final busy =
+        submitting ||
+        _previewing ||
+        ref.watch(groupProvider.select((state) => state.isLoading));
     return PopScope(
       canPop: _step == 1 && !busy,
       onPopInvokedWithResult: (didPop, result) {

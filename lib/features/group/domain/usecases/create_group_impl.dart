@@ -1,7 +1,7 @@
+import '../entities/current_group.dart';
 import '../repositories/group_repository.dart';
 import 'create_group.dart';
 import 'params/create_group_params.dart';
-import '../entities/current_group.dart';
 
 final class CreateGroupImpl implements CreateGroup {
   const CreateGroupImpl({required this.repository});

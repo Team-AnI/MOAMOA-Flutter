@@ -52,7 +52,15 @@ class GroupRepositoryImpl implements GroupRepository {
     if (meetings is! List) {
       throw const GroupFailure(GroupFailureReason.unavailable);
     }
+    // 확장된 역할의 항목은 권한을 추측하지 않고 목록에서 제외합니다.
     return meetings
+        .where(
+          (entry) =>
+              entry is! Map<String, dynamic> ||
+              entry['myRole'] is! String ||
+              entry['myRole'] == 'ADMIN' ||
+              entry['myRole'] == 'MEMBER',
+        )
         .map((entry) {
           if (entry is! Map<String, dynamic>) {
             throw const GroupFailure(GroupFailureReason.unavailable);

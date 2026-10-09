@@ -1,7 +1,8 @@
-import 'group_icon.dart';
 import 'package:flutter/material.dart';
+
 import '../../domain/entities/group.dart';
 import 'group_design.dart';
+import 'group_icon.dart';
 import 'group_mark.dart';
 
 class GroupJoinSummary extends StatelessWidget {

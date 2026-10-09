@@ -1,9 +1,9 @@
-import 'pages/group_joined_page.dart';
 import 'package:go_router/go_router.dart';
 
 import 'pages/group_form_page.dart';
-import 'pages/group_invite_page.dart';
 import 'pages/group_home_page.dart';
+import 'pages/group_invite_page.dart';
+import 'pages/group_joined_page.dart';
 import 'pages/group_list_page.dart';
 
 final List<RouteBase> groupRoutes = [

@@ -1,6 +1,5 @@
-import '../entities/group_failure.dart';
-
 import '../entities/current_group.dart';
+import '../entities/group_failure.dart';
 
 export '../entities/group_failure.dart';
 export '../entities/group_failure_reason.dart';

@@ -45,10 +45,18 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     } on DioException catch (error) {
       final payload = error.response?.data;
       if (payload is Map<String, dynamic> &&
-          payload['error'] is Map<String, dynamic>) {
+          payload['error'] is Map<String, dynamic> &&
+          (payload['error'] as Map<String, dynamic>)['code'] is String) {
         throw _failure((payload['error'] as Map<String, dynamic>)['code']);
       }
-      throw const GroupApiFailure('UNAVAILABLE');
+      throw GroupApiFailure(switch (error.response?.statusCode) {
+        401 => 'UNAUTHORIZED',
+        403 => 'FORBIDDEN',
+        404 => 'NOT_FOUND',
+        409 => 'CONFLICT',
+        400 => 'VALIDATION_ERROR',
+        _ => 'UNAVAILABLE',
+      });
     } on FormatException {
       throw const GroupApiFailure('UNAVAILABLE');
     } on TypeError {

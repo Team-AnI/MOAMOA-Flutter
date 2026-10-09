@@ -1,7 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/group_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../domain/entities/current_group.dart';
+import '../providers/group_providers.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';

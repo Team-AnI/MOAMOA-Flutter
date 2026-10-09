@@ -1,9 +1,10 @@
-import '../widgets/group_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../providers/group_providers.dart';
 import '../widgets/group_design.dart';
+import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_primary_button.dart';

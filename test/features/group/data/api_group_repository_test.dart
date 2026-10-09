@@ -52,6 +52,37 @@ void main() {
   });
   tearDown(() => dio.close());
 
+  test('알 수 없는 역할 항목을 제외해도 정상 모임은 조회된다', () async {
+    adapter.response = {
+      'success': true,
+      'data': {
+        'meetings': [
+          {'meetingId': 1, 'name': '정상', 'myRole': 'ADMIN'},
+          {'meetingId': 2, 'name': '확장 역할', 'myRole': 'OWNER'},
+        ],
+      },
+    };
+    final groups = await repository.getMyGroups();
+    expect(groups.map((e) => e.group.id), [1]);
+  });
+  for (final entry in {
+    401: GroupFailureReason.unauthorized,
+    403: GroupFailureReason.forbidden,
+    404: GroupFailureReason.invalidCode,
+    409: GroupFailureReason.alreadyJoined,
+    502: GroupFailureReason.unavailable,
+  }.entries) {
+    test('오류 코드 없는 HTTP ${entry.key}도 상태 코드로 분류한다', () async {
+      adapter.status = entry.key;
+      adapter.response = '';
+      await expectLater(
+        repository.joinGroup(inviteCode: 'CODE'),
+        throwsA(
+          isA<GroupFailure>().having((e) => e.reason, 'reason', entry.value),
+        ),
+      );
+    });
+  }
   for (final base in [
     'https://example.test',
     'https://example.test/',

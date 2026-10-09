@@ -1,3 +1,5 @@
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
+import 'package:moamoa/features/group/domain/entities/group.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
@@ -17,6 +19,28 @@ void main() {
   });
   tearDown(() => container.dispose());
 
+  test('소개 없는 목록 응답이 선택된 모임 상세 소개를 지우지 않는다', () async {
+    final detail = makeGroup(MemberRole.admin);
+    repository.groups = [detail];
+    final vm = container.read(groupProvider.notifier);
+    await vm.selectGroup(1);
+    repository.groups = [
+      CurrentGroup(
+        group: const Group(
+          id: 1,
+          name: '변경된 이름',
+          description: null,
+          memberCount: 5,
+        ),
+        membership: detail.membership,
+      ),
+    ];
+    await vm.loadGroups();
+    final selected = container.read(groupProvider).currentGroup!;
+    expect(selected.group.description, '소개');
+    expect(selected.group.name, '변경된 이름');
+    expect(selected.group.memberCount, 5);
+  });
   test('내 모임 목록을 불러오고 선택한 모임이 삭제되면 선택을 해제한다', () async {
     final group = makeGroup(MemberRole.admin);
     repository.groups = [group];
