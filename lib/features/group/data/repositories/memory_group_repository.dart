@@ -9,9 +9,35 @@ import '../../domain/repositories/group_repository.dart';
 class MemoryGroupRepository implements GroupRepository {
   MemoryGroupRepository({this.userId = 1});
 
+  final Set<int> _approvalGroups = {-1};
+  final Map<int, Group> _pending = {};
+  List<Group> get pendingRequests => List.unmodifiable(_pending.values);
+  bool requiresApproval(int id) => _approvalGroups.contains(id);
+  void setApprovalRequired(int id) {
+    if (!_current(id).canViewInviteCode) {
+      throw const GroupFailure(GroupFailureReason.forbidden);
+    }
+    _approvalGroups.add(id);
+  }
+
+  Future<Group> requestJoin(String code) async {
+    final group = await previewInviteCode(code);
+    if (!requiresApproval(group.id)) {
+      throw const GroupFailure(GroupFailureReason.validation);
+    }
+    _pending[group.id] = group;
+    return group;
+  }
+
   final int userId;
   int _nextId = 2;
   final Map<int, Group> _groups = {
+    -1: const Group(
+      id: -1,
+      name: '승인 대기 스터디',
+      description: '관리자 승인 후 참여하는 Mock 모임',
+      memberCount: 3,
+    ),
     1: const Group(
       id: 1,
       name: '초대받은 스터디',
@@ -19,7 +45,7 @@ class MemoryGroupRepository implements GroupRepository {
       memberCount: 1,
     ),
   };
-  final Map<String, int> _codes = {'MOA-JOIN': 1};
+  final Map<String, int> _codes = {'MOA-JOIN': 1, 'MOA-WAIT': -1};
   final Map<int, MemberRole> _memberships = {};
 
   CurrentGroup _current(int id) {
@@ -75,6 +101,9 @@ class MemoryGroupRepository implements GroupRepository {
     if (id == null) throw const GroupFailure(GroupFailureReason.invalidCode);
     if (_memberships.containsKey(id)) {
       throw const GroupFailure(GroupFailureReason.alreadyJoined);
+    }
+    if (requiresApproval(id)) {
+      throw const GroupFailure(GroupFailureReason.forbidden);
     }
     _memberships[id] = MemberRole.member;
     final group = _groups[id]!;

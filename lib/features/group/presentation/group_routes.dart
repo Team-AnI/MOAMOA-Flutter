@@ -8,6 +8,10 @@ import 'pages/group_list_page.dart';
 
 final List<RouteBase> groupRoutes = [
   GoRoute(
+    path: '/groups/requested',
+    builder: (context, state) => const GroupJoinedPage(requested: true),
+  ),
+  GoRoute(
     path: '/groups/joined',
     builder: (context, state) => const GroupJoinedPage(),
   ),

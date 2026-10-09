@@ -144,4 +144,66 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('초대받은 스터디'), findsOneWidget);
   });
+  testWidgets('Mock 승인 요청은 구성원이 되지 않고 대기 목록에 남는다', (tester) async {
+    final repository = MemoryGroupRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupUseMockProvider.overrideWithValue(true),
+          groupRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 모임'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('초대 코드로 가입'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'MOA-WAIT');
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    expect(find.text('승인 후 가입'), findsOneWidget);
+    await tester.tap(find.text('가입 요청 보내기'));
+    await tester.pumpAndSettle();
+    expect(find.text('가입 요청을 보냈어요'), findsOneWidget);
+    expect(await repository.getMyGroups(), isEmpty);
+    expect((await repository.previewInviteCode('MOA-WAIT')).memberCount, 3);
+    expect(repository.pendingRequests, hasLength(1));
+    await repository.requestJoin('MOA-WAIT');
+    expect(repository.pendingRequests, hasLength(1));
+    await expectLater(repository.getGroup(-1), throwsA(isA<GroupFailure>()));
+    await tester.tap(find.text('내 모임으로'));
+    await tester.pumpAndSettle();
+    expect(find.text('승인 대기 스터디'), findsOneWidget);
+    expect(find.text('승인 대기'), findsNWidgets(2));
+  });
+
+  testWidgets('Mock 생성에서 승인 후 가입 설정을 보관한다', (tester) async {
+    final repository = MemoryGroupRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupUseMockProvider.overrideWithValue(true),
+          groupRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 모임'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('모임 만들기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '승인 모임');
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('승인 후 가입'));
+    await tester.pumpAndSettle();
+    expect(find.text('가입 요청을 관리자가 확인한 뒤에 들어올 수 있어요.'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, '모임 만들기'));
+    await tester.pumpAndSettle();
+    expect(find.text('승인 후 가입'), findsOneWidget);
+    expect(repository.requiresApproval(2), isTrue);
+  });
 }

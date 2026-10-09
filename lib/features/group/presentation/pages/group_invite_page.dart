@@ -1,3 +1,4 @@
+import '../../data/repositories/memory_group_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -104,7 +105,14 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
               child: CircularProgressIndicator(color: GroupDesign.ink),
             )
           else if (_code != null)
-            GroupCodeCard(code: _code!)
+            GroupCodeCard(
+              code: _code!,
+              approval:
+                  ref.read(groupUseMockProvider) &&
+                  ref.read(groupRepositoryProvider) is MemoryGroupRepository &&
+                  (ref.read(groupRepositoryProvider) as MemoryGroupRepository)
+                      .requiresApproval(current!.group.id),
+            )
           else ...[
             Text(_error!, style: GroupDesign.body),
             TextButton(onPressed: _load, child: const Text('다시 시도')),

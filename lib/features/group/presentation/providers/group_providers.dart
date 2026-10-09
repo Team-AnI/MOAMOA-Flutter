@@ -1,3 +1,4 @@
+import '../../domain/entities/group.dart';
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -85,4 +86,18 @@ class GroupMockPhotos extends Notifier<Map<int, Uint8List>> {
     if (!ref.read(groupUseMockProvider)) return;
     state = Map.unmodifiable({...state, groupId: Uint8List.fromList(photo)});
   }
+}
+
+// 승인 요청 결과는 Mock UI에서만 사용하며 정식 API 상태와 분리합니다.
+final groupMockPendingProvider =
+    NotifierProvider<GroupMockPending, List<Group>>(GroupMockPending.new);
+
+class GroupMockPending extends Notifier<List<Group>> {
+  @override
+  List<Group> build() {
+    ref.watch(groupRepositoryProvider);
+    return const [];
+  }
+
+  void update(List<Group> groups) => state = List.unmodifiable(groups);
 }

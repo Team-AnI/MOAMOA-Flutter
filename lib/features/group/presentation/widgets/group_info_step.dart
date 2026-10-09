@@ -14,7 +14,11 @@ class GroupInfoStep extends StatelessWidget {
     required this.enabled,
     this.adminName,
     this.photo,
+    this.approval = false,
+    this.onApprovalChanged,
   });
+  final bool approval;
+  final ValueChanged<bool>? onApprovalChanged;
   final String name;
   final Uint8List? photo;
   final String? adminName;
@@ -91,41 +95,53 @@ class GroupInfoStep extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x14000000),
-                      offset: Offset(0, 2),
-                      blurRadius: 4,
+            for (final value in [false, true]) ...[
+              if (value) const SizedBox(width: 4),
+              Expanded(
+                child: GestureDetector(
+                  onTap: enabled && onApprovalChanged != null
+                      ? () => onApprovalChanged!(value)
+                      : null,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: approval == value ? Colors.white : null,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: approval == value
+                          ? const [
+                              BoxShadow(
+                                color: Color(0x14000000),
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ]
+                          : null,
                     ),
-                  ],
-                ),
-                child: Text(
-                  '바로 가입',
-                  style: GroupDesign.body.copyWith(
-                    color: GroupDesign.ink,
-                    fontWeight: FontWeight.w600,
+                    child: Text(
+                      value ? '승인 후 가입' : '바로 가입',
+                      style: GroupDesign.body.copyWith(
+                        color: value && onApprovalChanged == null
+                            ? GroupDesign.muted
+                            : GroupDesign.ink,
+                        fontWeight: approval == value
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 4),
-            const Expanded(
-              child: Tooltip(
-                message: '승인 후 가입은 아직 지원되지 않아요.',
-                child: TextButton(onPressed: null, child: Text('승인 후 가입')),
-              ),
-            ),
+            ],
           ],
         ),
       ),
       const SizedBox(height: 8),
-      const Text('초대 코드를 입력하면 바로 들어올 수 있어요.', style: GroupDesign.caption),
+      Text(
+        approval
+            ? '가입 요청을 관리자가 확인한 뒤에 들어올 수 있어요.'
+            : '초대 코드를 입력하면 바로 들어올 수 있어요.',
+        style: GroupDesign.caption,
+      ),
     ],
   );
 }

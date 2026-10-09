@@ -31,6 +31,8 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   Uint8List? _photo;
   bool _pickingPhoto = false;
   bool _previewing = false;
+  bool _approval = false;
+  bool _previewApproval = false;
   Group? _preview;
   int _step = 1;
   String? _error;
@@ -113,6 +115,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
         if (mounted) {
           setState(() {
             _preview = group;
+            _previewApproval = repository.requiresApproval(group.id);
             _step = 2;
           });
         }
@@ -128,6 +131,25 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       }
       return;
     }
+    if (widget.isJoining &&
+        _previewApproval &&
+        repository is MemoryGroupRepository &&
+        ref.read(groupUseMockProvider)) {
+      setState(() => _previewing = true);
+      try {
+        await repository.requestJoin(_nameOrCode.text);
+        if (!mounted) return;
+        ref
+            .read(groupMockPendingProvider.notifier)
+            .update(repository.pendingRequests);
+        context.go('/groups/requested');
+      } on GroupFailure {
+        if (mounted) setState(() => _error = '가입 요청을 보내지 못했습니다.');
+      } finally {
+        if (mounted) setState(() => _previewing = false);
+      }
+      return;
+    }
     final viewModel = ref.read(groupProvider.notifier);
     final result = widget.isJoining
         ? await viewModel.join(_nameOrCode.text)
@@ -137,6 +159,12 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           );
     if (!mounted) return;
     if (result != null) {
+      if (!widget.isJoining &&
+          _approval &&
+          ref.read(groupUseMockProvider) &&
+          repository is MemoryGroupRepository) {
+        repository.setApprovalRequired(result.group.id);
+      }
       if (!widget.isJoining &&
           _photo != null &&
           ref.read(groupUseMockProvider)) {
@@ -186,7 +214,9 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           label: busy
               ? '처리 중…'
               : widget.isJoining
-              ? (_step == 1 && ref.watch(groupUseMockProvider) ? '다음' : '가입하기')
+              ? (_step == 1 && ref.watch(groupUseMockProvider)
+                    ? '다음'
+                    : (_previewApproval ? '가입 요청 보내기' : '가입하기'))
               : _step == 1
               ? '다음'
               : '모임 만들기',
@@ -198,7 +228,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (widget.isJoining && _step == 2 && _preview != null)
-                GroupJoinSummary(group: _preview!)
+                GroupJoinSummary(group: _preview!, approval: _previewApproval)
               else if (widget.isJoining) ...[
                 const GroupPageTitle(
                   title: '초대 코드를 입력해 주세요',
@@ -224,6 +254,10 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
                   name: _nameOrCode.text.trim(),
                   description: _description,
                   photo: _photo,
+                  approval: _approval,
+                  onApprovalChanged: ref.watch(groupUseMockProvider)
+                      ? (value) => setState(() => _approval = value)
+                      : null,
                   adminName: ref.watch(groupCurrentUserNameProvider),
                   enabled: !busy,
                   onEdit: submitting ? null : () => setState(() => _step = 1),

@@ -50,12 +50,10 @@ void main() {
     await tester.tap(find.text('다음'));
     await tester.pumpAndSettle();
     expect(find.text('관리자 · 조성은'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextButton>(find.widgetWithText(TextButton, '승인 후 가입'))
-          .onPressed,
-      isNull,
-    );
+    await tester.tap(find.text('승인 후 가입'));
+    await tester.pumpAndSettle();
+    expect(find.text('초대 코드를 입력하면 바로 들어올 수 있어요.'), findsOneWidget);
+    expect(find.text('가입 요청을 관리자가 확인한 뒤에 들어올 수 있어요.'), findsNothing);
   });
 
   testWidgets('모임이 없으면 생성과 가입 진입 버튼을 표시한다', (tester) async {

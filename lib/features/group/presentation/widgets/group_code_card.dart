@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'group_design.dart';
 
 class GroupCodeCard extends StatelessWidget {
-  const GroupCodeCard({super.key, required this.code});
+  const GroupCodeCard({super.key, required this.code, this.approval = false});
+  final bool approval;
   final String code;
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: code));
@@ -46,7 +47,7 @@ class GroupCodeCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          '바로 가입',
+          approval ? '승인 후 가입' : '바로 가입',
           textAlign: TextAlign.center,
           style: GroupDesign.caption.copyWith(color: const Color(0xffcccccc)),
         ),

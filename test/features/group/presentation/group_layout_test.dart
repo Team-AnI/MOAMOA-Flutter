@@ -34,6 +34,7 @@ void main() {
       'ticket',
       'check',
       'shield',
+      'hourglass',
       'home',
       'home_calendar',
       'home_megaphone',
@@ -115,6 +116,14 @@ void main() {
       await tester.tap(find.text('가입하기'));
       await _capture(tester, boundary, 'join-complete', size);
       expect(find.text('모임에 가입했어요'), findsOneWidget);
+      router.go('/groups/join');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), 'MOA-WAIT');
+      await tester.tap(find.text('다음'));
+      await _capture(tester, boundary, 'approval-confirm', size);
+      await tester.tap(find.text('가입 요청 보내기'));
+      await _capture(tester, boundary, 'approval-pending', size);
+      expect(find.text('가입 요청을 보냈어요'), findsOneWidget);
     });
     testWidgets('생성·가입·목록·초대 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
       tester.view.devicePixelRatio = 1;

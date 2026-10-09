@@ -5,7 +5,12 @@ import 'group_design.dart';
 import 'group_mark.dart';
 
 class GroupJoinSummary extends StatelessWidget {
-  const GroupJoinSummary({super.key, required this.group});
+  const GroupJoinSummary({
+    super.key,
+    required this.group,
+    this.approval = false,
+  });
+  final bool approval;
   final Group group;
 
   @override
@@ -49,7 +54,11 @@ class GroupJoinSummary extends StatelessWidget {
               '가입하면 일반 구성원으로 참여해요.',
             ),
             const SizedBox(height: 16),
-            _row('shield', '바로 가입', '관리자 승인 없이 모임에 들어갈 수 있어요.'),
+            _row(
+              'shield',
+              approval ? '승인 후 가입' : '바로 가입',
+              approval ? '관리자가 승인하면 들어갈 수 있어요.' : '관리자 승인 없이 모임에 들어갈 수 있어요.',
+            ),
           ],
         ),
       ),

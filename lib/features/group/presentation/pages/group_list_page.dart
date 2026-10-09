@@ -53,6 +53,7 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(groupProvider);
+    final pending = ref.watch(groupMockPendingProvider);
     final admins = state.groups
         .where((group) => group.canViewInviteCode)
         .toList();
@@ -110,11 +111,43 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
                     ],
                     if (!state.isLoading &&
                         state.groups.isEmpty &&
+                        pending.isEmpty &&
                         state.errorMessage == null) ...[
                       const GroupEmptyState(),
                       const SizedBox(height: 12),
                     ],
                     if (state.groups.isEmpty) const GroupEntryChoices(),
+                    if (pending.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text('승인 대기', style: GroupDesign.heading),
+                      ),
+                      for (final group in pending)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: GroupDesign.fill,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  group.name,
+                                  style: GroupDesign.strong,
+                                ),
+                              ),
+                              Text(
+                                '승인 대기',
+                                style: GroupDesign.caption.copyWith(
+                                  color: GroupDesign.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                     if (admins.isNotEmpty)
                       GroupListSection(
                         title: '관리 중인 모임',
