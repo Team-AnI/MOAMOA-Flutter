@@ -26,7 +26,13 @@ class GroupHomePage extends ConsumerWidget {
                 children: [
                   _headerButton('back', '내 모임 목록', () => context.go('/groups')),
                   const SizedBox(width: 10),
-                  GroupMark(name: current?.group.name ?? '', size: 36),
+                  GroupMark(
+                    name: current?.group.name ?? '',
+                    size: 36,
+                    photo: ref.watch(groupUseMockProvider)
+                        ? ref.watch(groupMockPhotosProvider)[current?.group.id]
+                        : null,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(

@@ -1,10 +1,12 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/group_providers.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/current_group.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';
 
-class GroupListSection extends StatelessWidget {
+class GroupListSection extends ConsumerWidget {
   const GroupListSection({
     super.key,
     required this.title,
@@ -15,7 +17,7 @@ class GroupListSection extends StatelessWidget {
   final List<CurrentGroup> groups;
   final ValueChanged<int>? onSelect;
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context, WidgetRef ref) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Padding(
@@ -37,7 +39,12 @@ class GroupListSection extends StatelessWidget {
                 padding: const EdgeInsets.all(18),
                 child: Row(
                   children: [
-                    GroupMark(name: current.group.name),
+                    GroupMark(
+                      name: current.group.name,
+                      photo: ref.watch(groupUseMockProvider)
+                          ? ref.watch(groupMockPhotosProvider)[current.group.id]
+                          : null,
+                    ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(

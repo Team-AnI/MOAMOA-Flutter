@@ -137,6 +137,13 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           );
     if (!mounted) return;
     if (result != null) {
+      if (!widget.isJoining &&
+          _photo != null &&
+          ref.read(groupUseMockProvider)) {
+        ref
+            .read(groupMockPhotosProvider.notifier)
+            .save(result.group.id, _photo!);
+      }
       context.go(widget.isJoining ? '/groups/joined' : '/groups/created');
     } else {
       setState(() {

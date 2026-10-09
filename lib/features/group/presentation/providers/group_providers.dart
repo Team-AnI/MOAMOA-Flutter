@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -68,3 +69,20 @@ final getMyGroupsProvider = Provider<GetMyGroups>(
 final groupProvider = NotifierProvider<GroupViewModel, GroupState>(
   GroupViewModel.new,
 );
+
+/// API에 이미지 필드가 없어 Mock 실행에만 사용하는 세션 사진입니다.
+final groupMockPhotosProvider =
+    NotifierProvider<GroupMockPhotos, Map<int, Uint8List>>(GroupMockPhotos.new);
+
+class GroupMockPhotos extends Notifier<Map<int, Uint8List>> {
+  @override
+  Map<int, Uint8List> build() {
+    ref.watch(groupRepositoryProvider);
+    return const {};
+  }
+
+  void save(int groupId, Uint8List photo) {
+    if (!ref.read(groupUseMockProvider)) return;
+    state = Map.unmodifiable({...state, groupId: Uint8List.fromList(photo)});
+  }
+}
