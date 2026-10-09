@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
@@ -30,6 +32,13 @@ class FakeNoticeRepository implements NoticeRepository {
   /// getNotices 호출 횟수
   int getNoticesCallCount = 0;
 
+  /// 페이지별로 응답을 붙잡아 두는 장치. 넣어 둔 Completer 를 complete 해야 응답합니다.
+  /// (요청 완료 순서가 뒤바뀌는 상황을 재현할 때 사용)
+  final Map<int, Completer<void>> pageGates = {};
+
+  /// 값이 있으면 getNoticeDetail 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? detailGate;
+
   int _nextId = 1000;
 
   void _throwIfError() {
@@ -52,14 +61,17 @@ class FakeNoticeRepository implements NoticeRepository {
   }) async {
     getNoticesCallCount++;
     _throwIfError();
+    // 요청한 시점의 데이터로 응답을 만들고, 붙잡아 둔 경우 나중에 돌려줍니다.
     final start = (page * size).clamp(0, notices.length);
     final end = (start + size).clamp(0, notices.length);
-    return NoticeListResult(
+    final result = NoticeListResult(
       notices: notices.sublist(start, end),
       page: page,
       size: size,
       hasNext: end < notices.length,
     );
+    await pageGates[page]?.future;
+    return result;
   }
 
   @override
@@ -67,6 +79,7 @@ class FakeNoticeRepository implements NoticeRepository {
     required int meetingId,
     required int noticeId,
   }) async {
+    await detailGate?.future;
     _throwIfError();
     return notices[_indexOf(noticeId)];
   }

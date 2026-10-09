@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/member_role.dart';
@@ -74,6 +76,47 @@ void main() {
 
     final state = container.read(noticeListProvider(meetingId)).requireValue;
     expect(state.notices.first.title, '새 공지');
+  });
+
+  test('새로고침 전에 시작한 다음 페이지 응답이 늦게 오면 무시한다', () async {
+    await openList();
+    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+
+    // 1. 다음 페이지 요청을 보내고, 응답은 붙잡아 둔다.
+    final page1Gate = Completer<void>();
+    repository.pageGates[1] = page1Gate;
+    final loadMore = viewModel.loadMore();
+
+    // 2. 그사이 새 공지가 등록되고 새로고침이 먼저 끝난다.
+    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+    await viewModel.refresh();
+
+    // 3. 이전 다음 페이지 응답이 늦게 도착한다.
+    page1Gate.complete();
+    await loadMore;
+
+    final state = container.read(noticeListProvider(meetingId)).requireValue;
+    expect(state.notices.first.title, '새 공지');
+    expect(state.notices, hasLength(20));
+    expect(state.page, 0);
+    expect(state.isLoadingMore, isFalse);
+  });
+
+  test('새로고침 뒤에는 다음 페이지를 다시 불러올 수 있다', () async {
+    await openList();
+    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+    final page1Gate = Completer<void>();
+    repository.pageGates[1] = page1Gate;
+    final staleLoadMore = viewModel.loadMore();
+    await viewModel.refresh();
+    page1Gate.complete();
+    await staleLoadMore;
+
+    await viewModel.loadMore();
+
+    final state = container.read(noticeListProvider(meetingId)).requireValue;
+    expect(state.notices, hasLength(25));
+    expect(state.page, 1);
   });
 
   test('조회에 실패하면 에러 상태가 된다', () async {
