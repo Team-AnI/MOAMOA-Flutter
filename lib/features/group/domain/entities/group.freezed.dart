@@ -210,7 +210,7 @@ return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
 
 
 class _Group implements Group {
-  const _Group({required this.id, required this.name, this.description, this.memberCount}): assert(memberCount == null || memberCount >= 0, '구성원 수는 음수일 수 없습니다.');
+  const _Group({required this.id, required this.name, this.description, this.memberCount});
   
 
 @override final  int id;

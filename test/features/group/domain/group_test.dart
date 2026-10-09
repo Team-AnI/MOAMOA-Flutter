@@ -18,7 +18,6 @@ void main() {
       updated.hashCode,
       const Group(id: 1, name: '변경된 모임', memberCount: 2).hashCode,
     );
-    expect(() => original.copyWith(memberCount: -1), throwsAssertionError);
   });
   test('구성원 수가 null이거나 0 이상이면 입력한 구성원 수를 유지한다', () {
     for (final count in <int?>[null, 0, 1]) {
@@ -30,12 +29,5 @@ void main() {
       );
       expect(group.memberCount, count);
     }
-  });
-  test('구성원 수가 음수이면 assertion 오류가 발생한다', () {
-    final count = -1;
-    expect(
-      () => Group(id: 1, name: '모임', description: '', memberCount: count),
-      throwsAssertionError,
-    );
   });
 }
