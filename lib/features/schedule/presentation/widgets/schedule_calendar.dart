@@ -52,11 +52,13 @@ class ScheduleCalendar extends StatelessWidget {
                 _MonthButton(
                   'caret_left_calendar',
                   () => onMonthChanged(DateTime(month.year, month.month - 1)),
+                  key: const Key('calendar-prev-month'),
                 ),
                 Text('${month.year}년 ${month.month}월', style: MoaText.titleM),
                 _MonthButton(
                   'caret_right_calendar',
                   () => onMonthChanged(DateTime(month.year, month.month + 1)),
+                  key: const Key('calendar-next-month'),
                 ),
               ],
             ),
@@ -149,7 +151,7 @@ class ScheduleCalendar extends StatelessWidget {
 }
 
 class _MonthButton extends StatelessWidget {
-  const _MonthButton(this.icon, this.onTap);
+  const _MonthButton(this.icon, this.onTap, {super.key});
 
   final String icon;
   final VoidCallback onTap;

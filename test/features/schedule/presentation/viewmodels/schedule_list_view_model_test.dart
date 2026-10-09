@@ -50,6 +50,16 @@ void main() {
     expect(container.read(scheduleListProvider(args)).value, [run, added]);
   });
 
+  test('refresh 를 연속으로 호출해도 한 번만 조회한다', () async {
+    await container.read(scheduleListProvider(args).future);
+    final notifier = container.read(scheduleListProvider(args).notifier);
+    final before = repository.listCallCount;
+
+    await Future.wait([notifier.refresh(), notifier.refresh()]);
+
+    expect(repository.listCallCount, before + 1);
+  });
+
   test('불러오지 못하면 오류 상태가 된다', () async {
     repository.error = Exception('network');
 

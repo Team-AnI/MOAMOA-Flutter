@@ -93,6 +93,14 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
     );
   }
 
+  /// 월을 바꾸면 선택 날짜도 그 달로 옮긴다. (이번 달이면 오늘, 아니면 1일)
+  void _changeMonth(DateTime month) {
+    setState(() {
+      _month = month;
+      _selected = DateUtils.isSameMonth(month, _today) ? _today : month;
+    });
+  }
+
   /// 달력은 항상 보여주고, 아래 일정 영역에서 로딩/오류/빈 날짜를 처리한다.
   Widget _buildCalendar(AsyncValue<List<Schedule>> state) {
     final schedules = state.value ?? const <Schedule>[];
@@ -110,7 +118,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
           month: _month,
           selected: _selected,
           markedDays: marked,
-          onMonthChanged: (month) => setState(() => _month = month),
+          onMonthChanged: _changeMonth,
           onSelected: (date) => setState(() => _selected = date),
         ),
         const SizedBox(height: 24),

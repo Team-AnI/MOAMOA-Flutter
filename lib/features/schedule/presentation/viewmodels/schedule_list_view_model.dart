@@ -20,6 +20,8 @@ class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
   Future<List<Schedule>> build() => _fetch();
 
   Future<void> refresh() async {
+    // 이미 불러오는 중이면 무시한다. (늦게 끝난 이전 응답이 최신 목록을 덮어쓰는 것을 방지)
+    if (state.isLoading) return;
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetch);
   }

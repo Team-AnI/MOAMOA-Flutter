@@ -108,6 +108,24 @@ void main() {
 
       expect(find.text('선택한 날짜에 일정이 없어요'), findsOneWidget);
     });
+    testWidgets('캘린더에서 월을 바꾸면 선택 날짜도 그 달로 옮긴다', (tester) async {
+      await pumpPage(tester, const ScheduleListPage(meetingId: 1));
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+      final next = DateTime(now.year, now.month + 1);
+
+      await tester.tap(find.byKey(const Key('calendar-next-month')));
+      await tester.pumpAndSettle();
+
+      // 다음 달로 가면 그 달 1일이 선택된다. (이전 달 날짜가 남아 있으면 안 된다)
+      expect(find.textContaining('${next.month}월 1일 '), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('calendar-prev-month')));
+      await tester.pumpAndSettle();
+
+      // 이번 달로 돌아오면 오늘이 선택된다.
+      expect(find.textContaining('${now.month}월 ${now.day}일 '), findsOneWidget);
+    });
   });
 
   group('일정 만들기', () {
