@@ -55,9 +55,20 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
       isBack: !widget.created,
       onClose: () => context.go(widget.created ? '/groups' : '/groups/home'),
       bottom: widget.created
-          ? GroupPrimaryButton(
-              label: '모임 홈으로',
-              onPressed: () => context.go('/groups/home'),
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GroupPrimaryButton(
+                  label: '내 모임으로',
+                  secondary: true,
+                  onPressed: () => context.go('/groups'),
+                ),
+                const SizedBox(height: 10),
+                GroupPrimaryButton(
+                  label: '모임 홈으로',
+                  onPressed: () => context.go('/groups/home'),
+                ),
+              ],
             )
           : null,
       child: Column(

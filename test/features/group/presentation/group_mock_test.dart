@@ -100,6 +100,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('만들어졌어요'), findsOneWidget);
     expect(find.text('MOA-000002'), findsOneWidget);
+    await tester.tap(find.text('내 모임으로'));
+    await tester.pumpAndSettle();
+    expect(find.text('내 모임'), findsOneWidget);
+    expect(find.text('Mock 스터디'), findsOneWidget);
   });
   testWidgets('Mock 미리보기는 가입하지 않고 확인 후에만 가입한다', (tester) async {
     final repository = MemoryGroupRepository();
