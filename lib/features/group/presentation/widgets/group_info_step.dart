@@ -83,6 +83,7 @@ class GroupInfoStep extends StatelessWidget {
       const SizedBox(height: 8),
       Container(
         height: 44,
+        padding: const EdgeInsets.all(4),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: GroupDesign.fill,
@@ -91,13 +92,29 @@ class GroupInfoStep extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Center(
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x14000000),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
                 child: Text(
                   '바로 가입',
-                  style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
+                  style: GroupDesign.body.copyWith(
+                    color: GroupDesign.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
+            const SizedBox(width: 4),
             const Expanded(
               child: Tooltip(
                 message: '승인 후 가입은 아직 지원되지 않아요.',
