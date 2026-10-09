@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
-import 'package:moamoa/features/group/domain/entities/group_role.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
@@ -82,7 +82,7 @@ void main() {
     );
     expect(button.onPressed, isNull);
     expect(repository.createCalls, 1);
-    repository.pendingCreate.complete(makeGroup(GroupRole.admin));
+    repository.pendingCreate.complete(makeGroup(MemberRole.admin));
     await tester.pumpAndSettle();
     expect(find.text('모임이 만들어졌어요'), findsOneWidget);
     expect(find.text('CODE'), findsOneWidget);
@@ -116,7 +116,7 @@ void main() {
   testWidgets('이미 참여 중인 모임이면 기존 모임 목록 이동을 제공한다', (tester) async {
     final repository = FakeGroupRepository()
       ..joinFailure = const GroupFailure(GroupFailureReason.alreadyJoined)
-      ..groups = [makeGroup(GroupRole.member)];
+      ..groups = [makeGroup(MemberRole.member)];
     await openGroups(tester, repository);
     if (repository.groups.isNotEmpty) {
       await tester.tap(find.byTooltip('모임 추가'));

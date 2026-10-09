@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/group/domain/entities/group_role.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/group/domain/usecases/create_group_impl.dart';
 import 'package:moamoa/features/group/domain/usecases/get_group_invite_code_impl.dart';
@@ -25,7 +25,7 @@ void main() {
 
   test('소개 없이도 모임을 생성할 수 있다', () async {
     final repository = FakeGroupRepository();
-    repository.pendingCreate.complete(makeGroup(GroupRole.admin));
+    repository.pendingCreate.complete(makeGroup(MemberRole.admin));
     await CreateGroupImpl(repository: repository)(
       const CreateGroupParams(name: '이름', description: '  '),
     );
@@ -45,7 +45,7 @@ void main() {
   test('일반 구성원은 초대 코드를 요청할 수 없다', () {
     expect(
       () => GetGroupInviteCodeImpl(repository: FakeGroupRepository())(
-        GetGroupInviteCodeParams(currentGroup: makeGroup(GroupRole.member)),
+        GetGroupInviteCodeParams(currentGroup: makeGroup(MemberRole.member)),
       ),
       throwsA(
         isA<GroupFailure>().having(
@@ -60,7 +60,7 @@ void main() {
   test('관리자는 초대 코드를 조회한다', () async {
     expect(
       await GetGroupInviteCodeImpl(repository: FakeGroupRepository())(
-        GetGroupInviteCodeParams(currentGroup: makeGroup(GroupRole.admin)),
+        GetGroupInviteCodeParams(currentGroup: makeGroup(MemberRole.admin)),
       ),
       'CODE',
     );

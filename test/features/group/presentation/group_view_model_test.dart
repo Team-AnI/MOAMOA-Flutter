@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/group/domain/entities/group_role.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
@@ -18,7 +18,7 @@ void main() {
   tearDown(() => container.dispose());
 
   test('내 모임 목록을 불러오고 선택한 모임이 삭제되면 선택을 해제한다', () async {
-    final group = makeGroup(GroupRole.admin);
+    final group = makeGroup(MemberRole.admin);
     repository.groups = [group];
     final notifier = container.read(groupProvider.notifier);
     await notifier.loadGroups();
@@ -31,7 +31,7 @@ void main() {
   });
 
   test('목록 로딩 실패 시 기존 모임 정보를 보존한다', () async {
-    final group = makeGroup(GroupRole.member);
+    final group = makeGroup(MemberRole.member);
     repository.groups = [group];
     final notifier = container.read(groupProvider.notifier);
     await notifier.loadGroups();
@@ -61,7 +61,7 @@ void main() {
     expect(repository.createCalls, 1);
     expect(repository.lastName, '모임');
     expect(repository.lastDescription, '소개');
-    final group = makeGroup(GroupRole.admin);
+    final group = makeGroup(MemberRole.admin);
     repository.pendingCreate.complete(group);
     expect(await first, same(group));
     expect(container.read(groupProvider).currentGroup, same(group));
@@ -90,7 +90,7 @@ void main() {
     );
   });
   test('관리자의 초대 코드를 ViewModel에서 조회한다', () async {
-    final group = makeGroup(GroupRole.admin);
+    final group = makeGroup(MemberRole.admin);
     repository.groups = [group];
     final viewModel = container.read(groupProvider.notifier);
     await viewModel.selectGroup(group.group.id);
@@ -98,7 +98,7 @@ void main() {
   });
 
   test('일반 구성원의 초대 코드 조회는 권한 오류로 처리한다', () async {
-    final group = makeGroup(GroupRole.member);
+    final group = makeGroup(MemberRole.member);
     repository.groups = [group];
     final viewModel = container.read(groupProvider.notifier);
     await viewModel.selectGroup(group.group.id);

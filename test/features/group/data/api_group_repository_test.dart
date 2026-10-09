@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/group/data/repositories/group_repository_impl.dart';
 import 'package:moamoa/features/group/data/datasources/group_remote_data_source_impl.dart';
-import 'package:moamoa/features/group/domain/entities/group_role.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 
 class StubAdapter implements HttpClientAdapter {
@@ -74,15 +74,36 @@ void main() {
     });
   }
 
+  test('목록의 생략된 소개는 null이며 음수 구성원 수는 거부한다', () async {
+    adapter.response = {
+      'success': true,
+      'data': {
+        'meetings': [
+          {'meetingId': 1, 'name': '모임', 'myRole': 'MEMBER'},
+        ],
+      },
+    };
+    expect((await repository.getMyGroups()).single.group.description, isNull);
+    adapter.response = {
+      'success': true,
+      'data': {
+        'meetings': [
+          {'meetingId': 1, 'name': '모임', 'myRole': 'MEMBER', 'memberCount': -1},
+        ],
+      },
+    };
+    await expectLater(repository.getMyGroups(), throwsA(isA<GroupFailure>()));
+  });
+
   test('생성은 선택 소개를 생략하고 ADMIN 응답을 사용한다', () async {
     final current = await repository.createGroup(name: '러닝', description: '');
     expect(adapter.requests.single.path, 'https://example.test/v1/meetings');
     expect(adapter.requests.single.method, 'POST');
     expect(adapter.requests.single.data, {'name': '러닝'});
     expect(adapter.requests.single.headers['Authorization'], 'test-auth');
-    expect(current.group.id, '1');
+    expect(current.group.id, 1);
     expect(current.membership.userId, isNull);
-    expect(current.membership.role, GroupRole.admin);
+    expect(current.membership.role, MemberRole.admin);
   });
 
   test('목록은 data.meetings를 파싱하고 빈 목록도 허용한다', () async {
@@ -101,7 +122,7 @@ void main() {
     };
     expect(
       (await repository.getMyGroups()).single.membership.role,
-      GroupRole.member,
+      MemberRole.member,
     );
   });
 
@@ -128,7 +149,7 @@ void main() {
         'myRole': 'ADMIN',
       },
     };
-    expect((await repository.getGroup('1')).group.description, '주말');
+    expect((await repository.getGroup(1)).group.description, '주말');
     expect(adapter.requests.single.path, 'https://example.test/v1/meetings/1');
   });
 
@@ -137,7 +158,7 @@ void main() {
       'success': true,
       'data': {'inviteCode': 'ABC'},
     };
-    expect(await repository.getInviteCode(groupId: '1'), 'ABC');
+    expect(await repository.getInviteCode(groupId: 1), 'ABC');
     expect(
       adapter.requests.single.path,
       'https://example.test/v1/meetings/1/invite-code',
@@ -180,7 +201,7 @@ void main() {
       'success': true,
       'data': {'meetingId': 1, 'name': '러닝', 'myRole': 'OWNER'},
     };
-    await expectLater(repository.getGroup('1'), throwsA(isA<GroupFailure>()));
+    await expectLater(repository.getGroup(1), throwsA(isA<GroupFailure>()));
   });
 
   test('잘못된 envelope는 오류 처리한다', () async {
@@ -188,7 +209,7 @@ void main() {
       'data': {'inviteCode': 'ABC'},
     };
     await expectLater(
-      repository.getInviteCode(groupId: '1'),
+      repository.getInviteCode(groupId: 1),
       throwsA(isA<GroupFailure>()),
     );
   });

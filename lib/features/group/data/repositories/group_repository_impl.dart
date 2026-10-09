@@ -90,16 +90,12 @@ class GroupRepositoryImpl implements GroupRepository {
   }
 
   @override
-  Future<CurrentGroup> getGroup(String groupId) async => _meeting(
-    await _request('GET', '/v1/meetings/${Uri.encodeComponent(groupId)}'),
-  );
+  Future<CurrentGroup> getGroup(int groupId) async =>
+      _meeting(await _request('GET', '/v1/meetings/$groupId'));
 
   @override
-  Future<String> getInviteCode({required String groupId}) async {
-    final data = await _request(
-      'GET',
-      '/v1/meetings/${Uri.encodeComponent(groupId)}/invite-code',
-    );
+  Future<String> getInviteCode({required int groupId}) async {
+    final data = await _request('GET', '/v1/meetings/$groupId/invite-code');
     final code = data['inviteCode'];
     if (code is! String || code.isEmpty) {
       throw const GroupFailure(GroupFailureReason.unavailable);

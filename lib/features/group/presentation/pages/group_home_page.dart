@@ -36,14 +36,17 @@ class GroupHomePage extends ConsumerWidget {
               style: GroupDesign.sub,
             ),
             const SizedBox(height: 24),
-            if (current.group.description.isNotEmpty)
+            if ((current.group.description ?? '').isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: GroupDesign.fill,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: Text(current.group.description, style: GroupDesign.body),
+                child: Text(
+                  current.group.description!,
+                  style: GroupDesign.body,
+                ),
               ),
             if (current.group.memberCount != null)
               Padding(

@@ -13,7 +13,7 @@ class GroupListSection extends StatelessWidget {
   });
   final String title;
   final List<CurrentGroup> groups;
-  final ValueChanged<String>? onSelect;
+  final ValueChanged<int>? onSelect;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -44,7 +44,7 @@ class GroupViewModel extends Notifier<GroupState> {
     }
   }
 
-  Future<bool> selectGroup(String groupId) async {
+  Future<bool> selectGroup(int groupId) async {
     if (state.isSubmitting || state.isLoading) return false;
     final previous = state;
     state = GroupState(

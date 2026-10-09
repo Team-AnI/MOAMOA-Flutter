@@ -24,7 +24,7 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
     });
   }
 
-  Future<void> _select(String id) async {
+  Future<void> _select(int id) async {
     final selected = await ref.read(groupProvider.notifier).selectGroup(id);
     if (mounted && selected) context.go('/groups/home');
   }

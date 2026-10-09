@@ -26,7 +26,7 @@ flutter run --dart-define=API_BASE_URL=https://your-development-server
 서버 주소가 없으면 네트워크 요청을 보내지 않습니다.
 
 `GroupMember.userId`는 API에서 반환되지 않으므로 nullable입니다.
-숫자 `meetingId`는 domain의 문자열 ID로 변환합니다.
+숫자 `meetingId`와 domain의 모임·사용자 ID는 int로 유지합니다. 역할은 공유 `MemberRole`을 사용합니다.
 목록 응답에는 소개가 없으므로 목록의 소개는 빈 문자열이고 상세에서 보완됩니다.
 
 ## 오류와 요청 중복
@@ -78,3 +78,12 @@ Figma 파일: `dipwukM8kkC96pfOaqHvd3`, 빈 화면 `103:5368`, 프로필 `103:54
 미연결 상태에는 `관리자 · 계정 정보 미연결`을 표시하며 임의의 이름을 쓰지 않습니다.
 앨범 선택과 승인 후 가입은 API 계약이 없어 비활성 상태로 표시합니다.
 모임 이름은 Figma의 20자 카운터와 입력 제한을 적용했습니다.
+
+## 공유 엔티티 리뷰 반영
+
+소개는 nullable이며 목록에서 생략되면 null을 유지합니다. 이미지 URL 필드는 없습니다.
+공유 엔티티는 직접 구현한 값 동등성(`==`/`hashCode`)을 사용합니다.
+엔티티 불변식은 assert로 검사하고 서버의 음수 구성원 수는 MeetingModel.fromJson에서 거부합니다.
+CurrentGroup은 객체 필드 비교를 assert에 사용하므로 const 생성자를 제공하지 않습니다.
+현재 1차 최종안의 생성·가입·목록·상세에는 userId가 없어 GroupMember.userId는 int?로 유지합니다.
+명세서2의 사용자 정보 조회와 groupId/role 계약은 최종 명세 확정 후 반영합니다.
