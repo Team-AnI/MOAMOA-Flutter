@@ -1,3 +1,4 @@
+import 'package:moamoa/features/group/data/repositories/memory_group_repository.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ void main() {
       'chevron',
       'ticket',
       'check',
+      'shield',
       'megaphone',
       'calendar',
       'camera',
@@ -43,6 +45,36 @@ void main() {
     }
   });
   for (final size in [const Size(393, 852), const Size(320, 568)]) {
+    testWidgets('가입 확인·완료 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final router = GoRouter(
+        initialLocation: '/groups/join',
+        routes: groupRoutes,
+      );
+      addTearDown(router.dispose);
+      final boundary = GlobalKey();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            groupUseMockProvider.overrideWithValue(true),
+            groupRepositoryProvider.overrideWithValue(MemoryGroupRepository()),
+            appRouterProvider.overrideWithValue(router),
+          ],
+          child: RepaintBoundary(key: boundary, child: const App()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), 'MOA-JOIN');
+      await tester.tap(find.text('다음'));
+      await _capture(tester, boundary, 'join-confirm', size);
+      expect(find.text('이 모임에 가입할까요?'), findsOneWidget);
+      await tester.tap(find.text('가입하기'));
+      await _capture(tester, boundary, 'join-complete', size);
+      expect(find.text('모임에 가입했어요'), findsOneWidget);
+    });
     testWidgets('생성·가입·목록·초대 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = size;

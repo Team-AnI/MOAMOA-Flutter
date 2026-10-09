@@ -101,4 +101,43 @@ void main() {
     expect(find.textContaining('만들어졌어요'), findsOneWidget);
     expect(find.text('MOA-000002'), findsOneWidget);
   });
+  testWidgets('Mock 미리보기는 가입하지 않고 확인 후에만 가입한다', (tester) async {
+    final repository = MemoryGroupRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupUseMockProvider.overrideWithValue(true),
+          groupRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const App(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('내 모임'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('초대 코드로 가입'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'WRONG');
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    expect(find.text('초대 코드를 확인해주세요.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'MOA-JOIN');
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    expect(find.text('이 모임에 가입할까요?'), findsOneWidget);
+    expect(await repository.getMyGroups(), isEmpty);
+    await tester.tap(find.byTooltip('뒤로'));
+    await tester.pumpAndSettle();
+    expect(find.text('MOA-JOIN'), findsOneWidget);
+    await tester.tap(find.text('다음'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('가입하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('모임에 가입했어요'), findsOneWidget);
+    expect(find.text('가입 완료'), findsOneWidget);
+    expect((await repository.getMyGroups()).single.group.memberCount, 2);
+    await tester.tap(find.text('내 모임으로'));
+    await tester.pumpAndSettle();
+    expect(find.text('초대받은 스터디'), findsOneWidget);
+  });
 }

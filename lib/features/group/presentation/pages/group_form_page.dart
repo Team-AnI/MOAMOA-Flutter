@@ -1,3 +1,6 @@
+import '../../data/repositories/memory_group_repository.dart';
+import '../../domain/entities/group.dart';
+import '../widgets/group_join_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,6 +30,8 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   final _description = TextEditingController();
   Uint8List? _photo;
   bool _pickingPhoto = false;
+  bool _previewing = false;
+  Group? _preview;
   int _step = 1;
   String? _error;
   bool _alreadyJoined = false;
@@ -83,7 +88,9 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   }
 
   Future<void> _submit() async {
-    if (_pickingPhoto || ref.read(groupProvider).isSubmitting) return;
+    if (_previewing || _pickingPhoto || ref.read(groupProvider).isSubmitting) {
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
     if (!widget.isJoining && _step == 1) {
       FocusScope.of(context).unfocus();
@@ -94,6 +101,33 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       _error = null;
       _alreadyJoined = false;
     });
+    final repository = ref.read(groupRepositoryProvider);
+    if (widget.isJoining &&
+        _step == 1 &&
+        ref.read(groupUseMockProvider) &&
+        repository is MemoryGroupRepository) {
+      FocusScope.of(context).unfocus();
+      setState(() => _previewing = true);
+      try {
+        final group = await repository.previewInviteCode(_nameOrCode.text);
+        if (mounted) {
+          setState(() {
+            _preview = group;
+            _step = 2;
+          });
+        }
+      } on GroupFailure catch (failure) {
+        if (mounted) {
+          setState(() {
+            _alreadyJoined = failure.reason == GroupFailureReason.alreadyJoined;
+            _error = _alreadyJoined ? '이미 가입한 모임입니다.' : '초대 코드를 확인해주세요.';
+          });
+        }
+      } finally {
+        if (mounted) setState(() => _previewing = false);
+      }
+      return;
+    }
     final viewModel = ref.read(groupProvider.notifier);
     final result = widget.isJoining
         ? await viewModel.join(_nameOrCode.text)
@@ -103,7 +137,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           );
     if (!mounted) return;
     if (result != null) {
-      context.go(widget.isJoining ? '/groups/home' : '/groups/created');
+      context.go(widget.isJoining ? '/groups/joined' : '/groups/created');
     } else {
       setState(() {
         final state = ref.read(groupProvider);
@@ -119,32 +153,46 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
     final submitting = ref.watch(
       groupProvider.select((state) => state.isSubmitting),
     );
+    final busy = submitting || _previewing;
     return PopScope(
-      canPop: _step == 1 && !submitting,
+      canPop: _step == 1 && !busy,
       onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && !submitting && _step == 2) setState(() => _step = 1);
+        if (!didPop && !busy && _step == 2) setState(() => _step = 1);
       },
       child: GroupPageLayout(
         title: widget.isJoining ? null : '모임 만들기',
         isBack: widget.isJoining,
-        onClose: submitting ? null : () => context.go('/groups'),
+        onClose: busy
+            ? null
+            : () {
+                if (widget.isJoining && _step == 2) {
+                  setState(() {
+                    _step = 1;
+                    _error = null;
+                  });
+                } else {
+                  context.go('/groups');
+                }
+              },
         step: widget.isJoining ? null : _step,
         bottom: GroupPrimaryButton(
-          label: submitting
+          label: busy
               ? '처리 중…'
               : widget.isJoining
-              ? '가입하기'
+              ? (_step == 1 && ref.watch(groupUseMockProvider) ? '다음' : '가입하기')
               : _step == 1
               ? '다음'
               : '모임 만들기',
-          onPressed: submitting || _pickingPhoto ? null : _submit,
+          onPressed: busy || _pickingPhoto ? null : _submit,
         ),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (widget.isJoining) ...[
+              if (widget.isJoining && _step == 2 && _preview != null)
+                GroupJoinSummary(group: _preview!)
+              else if (widget.isJoining) ...[
                 const GroupPageTitle(
                   title: '초대 코드를 입력해 주세요',
                   subtitle: '모임 관리자에게 받은 코드로 가입할 수 있어요.',
@@ -154,7 +202,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
                   label: '초대 코드',
                   hint: '초대 코드를 입력해주세요',
                   requiredValue: true,
-                  enabled: !submitting,
+                  enabled: !busy,
                 ),
               ] else if (_step == 1)
                 GroupProfileStep(
@@ -170,7 +218,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
                   description: _description,
                   photo: _photo,
                   adminName: ref.watch(groupCurrentUserNameProvider),
-                  enabled: !submitting,
+                  enabled: !busy,
                   onEdit: submitting ? null : () => setState(() => _step = 1),
                 ),
               if (_error != null)

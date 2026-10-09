@@ -146,7 +146,7 @@ void main() {
     expect(find.text('초대 코드 확인'), findsNothing);
   });
 
-  testWidgets('유효하지 않은 코드 오류를 표시하고 성공 시 일반 구성원 홈으로 이동', (tester) async {
+  testWidgets('유효하지 않은 코드 오류를 표시하고 성공 시 가입 완료 화면으로 이동', (tester) async {
     final repository = FakeGroupRepository()
       ..joinFailure = const GroupFailure(GroupFailureReason.invalidCode);
     await openGroups(tester, repository);
@@ -163,7 +163,7 @@ void main() {
     repository.joinFailure = null;
     await tester.tap(find.text('가입하기'));
     await tester.pumpAndSettle();
-    expect(find.text('내 모임 목록'), findsOneWidget);
+    expect(find.text('모임에 가입했어요'), findsOneWidget);
     expect(find.text('초대 코드 확인'), findsNothing);
   });
 }

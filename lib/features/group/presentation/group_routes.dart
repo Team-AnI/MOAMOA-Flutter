@@ -1,3 +1,4 @@
+import 'pages/group_joined_page.dart';
 import 'package:go_router/go_router.dart';
 
 import 'pages/group_form_page.dart';
@@ -6,6 +7,11 @@ import 'pages/group_home_page.dart';
 import 'pages/group_list_page.dart';
 
 final List<RouteBase> groupRoutes = [
+  GoRoute(
+    path: '/groups/joined',
+    builder: (context, state) => const GroupJoinedPage(),
+  ),
+
   GoRoute(
     path: '/groups/created',
     builder: (context, state) => const GroupInvitePage(created: true),

@@ -58,6 +58,17 @@ class MemoryGroupRepository implements GroupRepository {
     return _current(id);
   }
 
+  /// 가입 전 조회 API가 없는 동안 Mock 화면에서만 사용하는 미리보기입니다.
+  /// 구성원 정보와 구성원 수를 변경하지 않습니다.
+  Future<Group> previewInviteCode(String inviteCode) async {
+    final id = _codes[inviteCode.trim()];
+    if (id == null) throw const GroupFailure(GroupFailureReason.invalidCode);
+    if (_memberships.containsKey(id)) {
+      throw const GroupFailure(GroupFailureReason.alreadyJoined);
+    }
+    return _groups[id]!;
+  }
+
   @override
   Future<CurrentGroup> joinGroup({required String inviteCode}) async {
     final id = _codes[inviteCode.trim()];
