@@ -63,7 +63,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
             ),
             Expanded(
               child: _calendar
-                  ? _buildCalendar(schedules.value ?? const [])
+                  ? _buildCalendar(schedules)
                   : schedules.when(
                       data: _buildList,
                       error: (_, _) => _Message(
@@ -93,7 +93,9 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
     );
   }
 
-  Widget _buildCalendar(List<Schedule> schedules) {
+  /// 달력은 항상 보여주고, 아래 일정 영역에서 로딩/오류/빈 날짜를 처리한다.
+  Widget _buildCalendar(AsyncValue<List<Schedule>> state) {
+    final schedules = state.value ?? const <Schedule>[];
     final marked = {
       for (final s in schedules) DateUtils.dateOnly(s.startAt.toLocal()),
     };
@@ -117,14 +119,33 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
           style: MoaText.titleM,
         ),
         const SizedBox(height: 12),
-        for (final s in selectedDay)
+        if (state.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (state.hasError)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: ScheduleEventTile(
-              schedule: s,
-              onTap: () => context.push('$_basePath/${s.id}'),
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: _Message(
+              '일정을 불러오지 못했어요',
+              onRetry: () => ref.invalidate(scheduleListProvider),
             ),
-          ),
+          )
+        else if (selectedDay.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: _Message('선택한 날짜에 일정이 없어요'),
+          )
+        else
+          for (final s in selectedDay)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: ScheduleEventTile(
+                schedule: s,
+                onTap: () => context.push('$_basePath/${s.id}'),
+              ),
+            ),
       ],
     );
   }

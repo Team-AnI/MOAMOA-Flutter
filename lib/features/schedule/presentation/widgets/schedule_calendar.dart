@@ -24,7 +24,8 @@ class ScheduleCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leading = month.weekday % 7; // 일요일 시작
+    // month 가 1일이 아니어도 첫 요일이 틀어지지 않게 1일을 직접 만든다.
+    final leading = DateTime(month.year, month.month).weekday % 7; // 일요일 시작
     final daysInMonth = DateUtils.getDaysInMonth(month.year, month.month);
     final cells = <int?>[
       ...List.filled(leading, null),

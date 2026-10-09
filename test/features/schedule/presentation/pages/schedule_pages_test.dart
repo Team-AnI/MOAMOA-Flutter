@@ -6,6 +6,7 @@ import 'package:moamoa/features/schedule/presentation/pages/schedule_create_page
 import 'package:moamoa/features/schedule/presentation/pages/schedule_detail_page.dart';
 import 'package:moamoa/features/schedule/presentation/pages/schedule_list_page.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
+import 'package:moamoa/features/schedule/presentation/widgets/schedule_calendar.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -87,6 +88,26 @@ void main() {
       expect(find.text('2시간'), findsOneWidget);
       expect(find.text('10월 정기 러닝'), findsOneWidget);
     });
+    testWidgets('캘린더 탭에서 불러오지 못하면 오류 문구를 보여준다', (tester) async {
+      repository.error = Exception('network');
+      await pumpPage(tester, const ScheduleListPage(meetingId: 1));
+
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('일정을 불러오지 못했어요'), findsOneWidget);
+      expect(find.text('다시 시도'), findsOneWidget);
+    });
+
+    testWidgets('캘린더 탭에서 선택한 날짜에 일정이 없으면 안내 문구를 보여준다', (tester) async {
+      repository.schedules = [];
+      await pumpPage(tester, const ScheduleListPage(meetingId: 1));
+
+      await tester.tap(find.text('캘린더'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('선택한 날짜에 일정이 없어요'), findsOneWidget);
+    });
   });
 
   group('일정 만들기', () {
@@ -135,6 +156,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('일정 이름을 입력해 주세요.'), findsOneWidget);
+  });
+
+  testWidgets('달력은 month 가 1일이 아니어도 1일의 요일 위치가 같다', (tester) async {
+    Future<Offset> firstDayPosition(DateTime month) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ScheduleCalendar(
+              month: month,
+              selected: DateTime(2026, 10, 20),
+              markedDays: const {},
+              onMonthChanged: (_) {},
+              onSelected: (_) {},
+            ),
+          ),
+        ),
+      );
+      return tester.getTopLeft(find.text('1'));
+    }
+
+    final fromFirst = await firstDayPosition(DateTime(2026, 10));
+    final fromMiddle = await firstDayPosition(DateTime(2026, 10, 16));
+
+    expect(fromMiddle, fromFirst);
   });
 
   testWidgets('일정 상세에 제목, 일시, 장소, 설명을 보여준다', (tester) async {
