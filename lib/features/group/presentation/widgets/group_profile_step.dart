@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'group_design.dart';
 import 'group_field.dart';
+import 'group_icon.dart';
+import 'group_photo_sheet.dart';
 import 'group_mark.dart';
 import 'group_page_title.dart';
 
@@ -24,47 +25,47 @@ class GroupProfileStep extends StatelessWidget {
         child: SizedBox(
           width: 120,
           height: 120,
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: GroupMark(name: name.text, size: 112),
+          child: Stack(
+            children: [
+              GroupMark(name: name.text, size: 112),
+              Positioned(
+                left: 80,
+                top: 80,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x14000000),
+                        offset: Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    tooltip: '모임 사진 선택',
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      showModalBottomSheet<void>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.white,
+                        barrierColor: const Color(0x8f000000),
+                        shape: const RoundedRectangleBorder(),
+                        builder: (_) => const GroupPhotoSheet(),
+                      );
+                    },
+                    icon: const GroupIcon('camera', size: 20),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Tooltip(
-            message: '사진 업로드는 아직 지원되지 않아요.',
-            child: TextButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.photo_outlined, size: 16),
-              label: const Text('앨범에서 선택'),
-              style: TextButton.styleFrom(
-                backgroundColor: GroupDesign.fill,
-                disabledForegroundColor: GroupDesign.muted,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            height: 40,
-            width: 100,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: GroupDesign.tint,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Text(
-              '기본 이미지',
-              style: GroupDesign.body.copyWith(
-                color: GroupDesign.blue,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
       const SizedBox(height: 28),
       GroupField(

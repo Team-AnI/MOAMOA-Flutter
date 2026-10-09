@@ -32,6 +32,10 @@ void main() {
       'chevron',
       'ticket',
       'check',
+      'camera',
+      'photo_album',
+      'photo_camera',
+      'photo_reset',
     ]) {
       await SvgAssetLoader('assets/group/$name.svg').loadBytes(null);
     }
@@ -62,6 +66,11 @@ void main() {
       await tester.pumpAndSettle();
       await _capture(tester, boundary, 'empty', size);
       router.go('/groups/create');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('모임 사진 선택'));
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'photo-sheet', size);
+      await tester.tap(find.text('기본 이미지로 바꾸기'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField), '스터디 모아');
       await _capture(tester, boundary, 'create-profile', size);

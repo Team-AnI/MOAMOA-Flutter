@@ -34,13 +34,15 @@ void main() {
     await openGroups(tester, FakeGroupRepository(), userName: '조성은');
     await tester.tap(find.text('모임 만들기'));
     await tester.pumpAndSettle();
+    expect(find.text('앨범에서 선택'), findsNothing);
+    await tester.tap(find.byTooltip('모임 사진 선택'));
+    await tester.pumpAndSettle();
+    expect(find.text('모임 사진'), findsOneWidget);
     expect(find.text('앨범에서 선택'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextButton>(find.widgetWithText(TextButton, '앨범에서 선택'))
-          .onPressed,
-      isNull,
-    );
+    expect(find.text('사진 찍기'), findsOneWidget);
+    await tester.tap(find.text('기본 이미지로 바꾸기'));
+    await tester.pumpAndSettle();
+    expect(find.text('모임 사진'), findsNothing);
     expect(find.text('나중에 모임 설정에서 바꿀 수 있어요.'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField), '스터디 모아');
     await tester.pump();
