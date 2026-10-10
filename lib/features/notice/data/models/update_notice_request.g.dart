@@ -12,8 +12,13 @@ _UpdateNoticeRequest _$UpdateNoticeRequestFromJson(Map<String, dynamic> json) =>
       noticeId: (json['noticeId'] as num).toInt(),
       title: json['title'] as String?,
       content: json['content'] as String?,
+      isImportant: json['isImportant'] as bool?,
     );
 
 Map<String, dynamic> _$UpdateNoticeRequestToJson(
   _UpdateNoticeRequest instance,
-) => <String, dynamic>{'title': ?instance.title, 'content': ?instance.content};
+) => <String, dynamic>{
+  'title': ?instance.title,
+  'content': ?instance.content,
+  'isImportant': ?instance.isImportant,
+};

@@ -10,14 +10,18 @@ void main() {
     expect(request.toJson(), {'page': 0, 'size': 20});
   });
 
-  test('작성 요청은 meetingId 를 빼고 title, content 만 본문으로 보낸다', () {
+  test('작성 요청은 meetingId 를 빼고 본문(title, content, isImportant)만 보낸다', () {
     const request = CreateNoticeRequest(
       meetingId: 1,
       title: '제목',
       content: '내용',
     );
 
-    expect(request.toJson(), {'title': '제목', 'content': '내용'});
+    expect(request.toJson(), {
+      'title': '제목',
+      'content': '내용',
+      'isImportant': false,
+    });
   });
 
   test('수정 요청은 null 인 필드를 본문에서 뺀다', () {

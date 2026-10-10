@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$CreateNoticeRequest {
 
-@JsonKey(includeToJson: false) int get meetingId; String get title; String get content;
+@JsonKey(includeToJson: false) int get meetingId; String get title; String get content; bool get isImportant;
 /// Create a copy of CreateNoticeRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $CreateNoticeRequestCopyWith<CreateNoticeRequest> get copyWith => _$CreateNotice
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateNoticeRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateNoticeRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isImportant, isImportant) || other.isImportant == isImportant));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,meetingId,title,content);
+int get hashCode => Object.hash(runtimeType,meetingId,title,content,isImportant);
 
 @override
 String toString() {
-  return 'CreateNoticeRequest(meetingId: $meetingId, title: $title, content: $content)';
+  return 'CreateNoticeRequest(meetingId: $meetingId, title: $title, content: $content, isImportant: $isImportant)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $CreateNoticeRequestCopyWith<$Res>  {
   factory $CreateNoticeRequestCopyWith(CreateNoticeRequest value, $Res Function(CreateNoticeRequest) _then) = _$CreateNoticeRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeToJson: false) int meetingId, String title, String content
+@JsonKey(includeToJson: false) int meetingId, String title, String content, bool isImportant
 });
 
 
@@ -66,12 +66,13 @@ class _$CreateNoticeRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateNoticeRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? meetingId = null,Object? title = null,Object? content = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? meetingId = null,Object? title = null,Object? content = null,Object? isImportant = null,}) {
   return _then(CreateNoticeRequest(
 meetingId: null == meetingId ? _self.meetingId : meetingId // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String,
+as String,isImportant: null == isImportant ? _self.isImportant : isImportant // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -156,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content,  bool isImportant)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateNoticeRequest() when $default != null:
-return $default(_that.meetingId,_that.title,_that.content);case _:
+return $default(_that.meetingId,_that.title,_that.content,_that.isImportant);case _:
   return orElse();
 
 }
@@ -177,10 +178,10 @@ return $default(_that.meetingId,_that.title,_that.content);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content,  bool isImportant)  $default,) {final _that = this;
 switch (_that) {
 case _CreateNoticeRequest():
-return $default(_that.meetingId,_that.title,_that.content);case _:
+return $default(_that.meetingId,_that.title,_that.content,_that.isImportant);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +198,10 @@ return $default(_that.meetingId,_that.title,_that.content);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int meetingId,  String title,  String content,  bool isImportant)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateNoticeRequest() when $default != null:
-return $default(_that.meetingId,_that.title,_that.content);case _:
+return $default(_that.meetingId,_that.title,_that.content,_that.isImportant);case _:
   return null;
 
 }
@@ -212,12 +213,13 @@ return $default(_that.meetingId,_that.title,_that.content);case _:
 @JsonSerializable()
 
 class _CreateNoticeRequest implements CreateNoticeRequest {
-  const _CreateNoticeRequest({@JsonKey(includeToJson: false) required this.meetingId, required this.title, required this.content});
+  const _CreateNoticeRequest({@JsonKey(includeToJson: false) required this.meetingId, required this.title, required this.content, this.isImportant = false});
   factory _CreateNoticeRequest.fromJson(Map<String, dynamic> json) => _$CreateNoticeRequestFromJson(json);
 
 @override@JsonKey(includeToJson: false) final  int meetingId;
 @override final  String title;
 @override final  String content;
+@override@JsonKey() final  bool isImportant;
 
 /// Create a copy of CreateNoticeRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -232,16 +234,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateNoticeRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateNoticeRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.title, title) || other.title == title)&&(identical(other.content, content) || other.content == content)&&(identical(other.isImportant, isImportant) || other.isImportant == isImportant));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,meetingId,title,content);
+int get hashCode => Object.hash(runtimeType,meetingId,title,content,isImportant);
 
 @override
 String toString() {
-  return 'CreateNoticeRequest(meetingId: $meetingId, title: $title, content: $content)';
+  return 'CreateNoticeRequest(meetingId: $meetingId, title: $title, content: $content, isImportant: $isImportant)';
 }
 
 
@@ -252,7 +254,7 @@ abstract mixin class _$CreateNoticeRequestCopyWith<$Res> implements $CreateNotic
   factory _$CreateNoticeRequestCopyWith(_CreateNoticeRequest value, $Res Function(_CreateNoticeRequest) _then) = __$CreateNoticeRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeToJson: false) int meetingId, String title, String content
+@JsonKey(includeToJson: false) int meetingId, String title, String content, bool isImportant
 });
 
 
@@ -269,12 +271,13 @@ class __$CreateNoticeRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateNoticeRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? meetingId = null,Object? title = null,Object? content = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? meetingId = null,Object? title = null,Object? content = null,Object? isImportant = null,}) {
   return _then(_CreateNoticeRequest(
 meetingId: null == meetingId ? _self.meetingId : meetingId // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String,
+as String,isImportant: null == isImportant ? _self.isImportant : isImportant // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

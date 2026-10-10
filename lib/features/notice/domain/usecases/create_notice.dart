@@ -8,11 +8,15 @@ final class CreateNoticeParams extends Params {
     required this.meetingId,
     required this.title,
     required this.content,
+    this.isImportant = false,
   });
 
   final int meetingId;
   final String title;
   final String content;
+
+  /// 중요 공지로 표시할지
+  final bool isImportant;
 }
 
 /// 공지 작성 (3-1). 생성된 noticeId 를 반환합니다.
@@ -39,6 +43,7 @@ final class CreateNoticeImpl implements CreateNotice {
       meetingId: params.meetingId,
       title: title,
       content: content,
+      isImportant: params.isImportant,
     );
   }
 }

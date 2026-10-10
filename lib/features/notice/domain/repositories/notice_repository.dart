@@ -24,6 +24,7 @@ abstract interface class NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
+    bool isImportant = false,
   });
 
   /// 3-4 공지 수정. 보낸 필드만 변경됩니다.
@@ -32,6 +33,7 @@ abstract interface class NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
+    bool? isImportant,
   });
 
   /// 3-5 공지 삭제

@@ -90,6 +90,42 @@ void main() {
     expect(repository.notices.first.isPinned, isFalse);
   });
 
+  test('중요 공지로 표시하고 작성하면 중요 공지로 저장한다', () async {
+    await container
+        .read(noticeWriteProvider(meetingId).notifier)
+        .submit(title: '회비 미납 안내', content: '내용', isImportant: true);
+
+    expect(repository.notices.first.isImportant, isTrue);
+  });
+
+  test('수정할 때 고정 여부가 바뀌면 고정 상태를 바꾼다', () async {
+    final notifier = container.read(noticeWriteProvider(meetingId).notifier);
+
+    await notifier.submit(
+      noticeId: 1,
+      title: '기존 제목',
+      content: '기존 내용',
+      pinToTop: true,
+    );
+    expect(repository.notices.first.isPinned, isTrue);
+
+    await notifier.submit(
+      noticeId: 1,
+      title: '기존 제목',
+      content: '기존 내용',
+      wasPinned: true,
+    );
+    expect(repository.notices.first.isPinned, isFalse);
+  });
+
+  test('수정할 때 고정 여부가 같으면 고정 상태를 바꾸지 않는다', () async {
+    await container
+        .read(noticeWriteProvider(meetingId).notifier)
+        .submit(noticeId: 1, title: '기존 제목', content: '새 내용');
+
+    expect(repository.notices.first.isPinned, isFalse);
+  });
+
   test('등록 요청 중에 화면을 닫아도 등록이 끝나면 목록을 새로고침한다', () async {
     final gate = Completer<void>();
     repository.createGate = gate;

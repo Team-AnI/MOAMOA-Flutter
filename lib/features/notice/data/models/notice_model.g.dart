@@ -13,9 +13,8 @@ _NoticeModel _$NoticeModelFromJson(Map<String, dynamic> json) => _NoticeModel(
   content: json['content'] as String?,
   authorNickname: json['authorNickname'] as String?,
   isPinned: json['isPinned'] as bool?,
-  account: json['account'] == null
-      ? null
-      : NoticeAccountModel.fromJson(json['account'] as Map<String, dynamic>),
+  isImportant: json['isImportant'] as bool?,
+  isEdited: json['isEdited'] as bool?,
 );
 
 Map<String, dynamic> _$NoticeModelToJson(_NoticeModel instance) =>
@@ -26,5 +25,6 @@ Map<String, dynamic> _$NoticeModelToJson(_NoticeModel instance) =>
       'content': instance.content,
       'authorNickname': instance.authorNickname,
       'isPinned': instance.isPinned,
-      'account': instance.account,
+      'isImportant': instance.isImportant,
+      'isEdited': instance.isEdited,
     };

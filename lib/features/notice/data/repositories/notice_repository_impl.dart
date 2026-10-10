@@ -54,6 +54,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
+    bool isImportant = false,
   }) {
     return _guard(
       () => _remoteDataSource.createNotice(
@@ -61,6 +62,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
           meetingId: meetingId,
           title: title,
           content: content,
+          isImportant: isImportant,
         ),
       ),
     );
@@ -72,6 +74,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
+    bool? isImportant,
   }) {
     return _guard(
       () => _remoteDataSource.updateNotice(
@@ -80,6 +83,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
           noticeId: noticeId,
           title: title,
           content: content,
+          isImportant: isImportant,
         ),
       ),
     );

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/notice.dart';
-import '../../domain/entities/notice_account.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
@@ -52,15 +50,6 @@ class NoticeDetailPage extends ConsumerWidget {
     }
   }
 
-  Future<void> _togglePin(BuildContext context, WidgetRef ref) async {
-    try {
-      await ref.read(noticeDetailProvider(_args).notifier).togglePin();
-    } catch (error) {
-      if (!context.mounted) return;
-      _showError(context, error);
-    }
-  }
-
   void _showError(BuildContext context, Object error) {
     ScaffoldMessenger.of(
       context,
@@ -79,13 +68,20 @@ class NoticeDetailPage extends ConsumerWidget {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          tooltip: '뒤로',
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 20,
-            color: NoticeColors.text,
+        toolbarHeight: 56,
+        leadingWidth: 56,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: '뒤로',
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+            padding: EdgeInsets.zero,
+            icon: const Icon(
+              Icons.chevron_left,
+              size: 24,
+              color: NoticeColors.text,
+            ),
           ),
         ),
         actions: [
@@ -107,22 +103,12 @@ class NoticeDetailPage extends ConsumerWidget {
               tooltip: '공지 삭제',
               onPressed: () => _delete(context, ref),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
           ],
         ],
       ),
       body: notice.when(
-        data: (notice) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: _NoticeContent(notice: notice)),
-            if (isAdmin)
-              _PinButton(
-                isPinned: notice.isPinned,
-                onPressed: () => _togglePin(context, ref),
-              ),
-          ],
-        ),
+        data: (notice) => _NoticeContent(notice: notice),
         loading: () => const Center(child: CircularProgressIndicator()),
         // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
         error: (error, _) => isNoticeNotFound(error)
@@ -158,58 +144,64 @@ class _CircleIconButton extends StatelessWidget {
     return IconButton.filled(
       onPressed: onPressed,
       tooltip: tooltip,
-      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+      constraints: const BoxConstraints.tightFor(width: 40, height: 40),
       padding: EdgeInsets.zero,
       style: IconButton.styleFrom(backgroundColor: NoticeColors.gray),
-      icon: Icon(icon, size: 20, color: NoticeColors.icon),
+      icon: Icon(icon, size: 20, color: NoticeColors.text),
     );
   }
 }
 
-/// 고정 뱃지 · 제목 · 작성자 · 본문 · 계좌
+/// 고정 뱃지 · 제목 · 작성자 · 본문
 class _NoticeContent extends StatelessWidget {
   const _NoticeContent({required this.notice});
 
   final Notice notice;
 
+  static const _bodyStyle = TextStyle(
+    fontSize: 15,
+    height: 1.47,
+    letterSpacing: -0.2,
+    color: NoticeColors.text,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final account = notice.account;
+    // 줄바꿈으로 나뉜 문단 사이를 14 만큼 띄웁니다.
+    final paragraphs = (notice.content ?? '')
+        .split('\n')
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (notice.isPinned) ...[
             const _PinnedChip(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
           Text(
             notice.title,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 26,
+              height: 1.35,
+              letterSpacing: -0.7,
               fontWeight: FontWeight.w700,
               color: NoticeColors.text,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _AuthorRow(
             authorName: notice.authorName,
             createdAt: notice.createdAt,
+            isEdited: notice.isEdited,
           ),
-          const SizedBox(height: 20),
-          Text(
-            notice.content ?? '',
-            style: const TextStyle(
-              fontSize: 15,
-              height: 1.7,
-              color: NoticeColors.bodyText,
-            ),
-          ),
-          if (account != null) ...[
-            const SizedBox(height: 16),
-            _AccountCard(account: account),
+          const SizedBox(height: 24),
+          for (final paragraph in paragraphs) ...[
+            Text(paragraph, style: _bodyStyle),
+            const SizedBox(height: 14),
           ],
         ],
       ),
@@ -223,41 +215,53 @@ class _PinnedChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      height: 26,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: NoticeColors.lightBlue,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(9999),
       ),
-      child: const Text(
-        '고정된 공지',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: NoticeColors.blue,
+      // 글자 크기만큼만 차지하면서 세로로 가운데 정렬합니다.
+      child: const Center(
+        widthFactor: 1,
+        child: Text(
+          '고정된 공지',
+          style: TextStyle(
+            fontSize: 12,
+            height: 1.33,
+            fontWeight: FontWeight.w600,
+            color: NoticeColors.blue,
+          ),
         ),
       ),
     );
   }
 }
 
-/// (도) 김도윤 · 9월 12일. 작성자가 없으면 날짜만 보여줍니다.
+/// (도) 김도윤 · 9월 12일 · 수정됨. 작성자가 없으면 날짜만 보여줍니다.
 class _AuthorRow extends StatelessWidget {
-  const _AuthorRow({required this.authorName, required this.createdAt});
+  const _AuthorRow({
+    required this.authorName,
+    required this.createdAt,
+    required this.isEdited,
+  });
 
   final String? authorName;
   final DateTime createdAt;
+  final bool isEdited;
 
   @override
   Widget build(BuildContext context) {
     final name = authorName;
     final date = '${createdAt.month}월 ${createdAt.day}일';
+    const style = TextStyle(fontSize: 14, height: 1.43, letterSpacing: -0.1);
 
     return Row(
       children: [
         if (name != null && name.isNotEmpty) ...[
           Container(
-            width: 24,
-            height: 24,
+            width: 28,
+            height: 28,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: NoticeColors.lightBlue,
@@ -266,7 +270,8 @@ class _AuthorRow extends StatelessWidget {
             child: Text(
               name.characters.first,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
+                height: 1.33,
                 fontWeight: FontWeight.w600,
                 color: NoticeColors.blue,
               ),
@@ -276,125 +281,15 @@ class _AuthorRow extends StatelessWidget {
         ],
         Text(
           name == null ? date : '$name · $date',
-          style: const TextStyle(fontSize: 13, color: NoticeColors.subText),
+          style: style.copyWith(color: NoticeColors.bodyText),
         ),
-      ],
-    );
-  }
-}
-
-/// 관리자 계좌 + 복사 버튼
-class _AccountCard extends StatelessWidget {
-  const _AccountCard({required this.account});
-
-  final NoticeAccount account;
-
-  Future<void> _copy(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    await Clipboard.setData(ClipboardData(text: account.accountNumber));
-    messenger.showSnackBar(const SnackBar(content: Text('계좌번호를 복사했어요')));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: NoticeColors.gray,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.account_balance_outlined,
-              size: 22,
-              color: NoticeColors.text,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${account.bankName} ${account.accountNumber}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: NoticeColors.text,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '예금주 ${account.holderName}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: NoticeColors.subText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: () => _copy(context),
-            style: FilledButton.styleFrom(
-              backgroundColor: NoticeColors.lightBlue,
-              foregroundColor: NoticeColors.blue,
-              minimumSize: const Size(56, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-            ),
-            child: const Text(
-              '복사',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-          ),
+        if (isEdited) ...[
+          const SizedBox(width: 6),
+          Text('·', style: style.copyWith(color: NoticeColors.subText)),
+          const SizedBox(width: 6),
+          Text('수정됨', style: style.copyWith(color: NoticeColors.subText)),
         ],
-      ),
-    );
-  }
-}
-
-/// 관리자 하단 버튼: 고정 해제 / 고정하기
-class _PinButton extends StatelessWidget {
-  const _PinButton({required this.isPinned, required this.onPressed});
-
-  final bool isPinned;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-        child: SizedBox(
-          height: 52,
-          child: FilledButton(
-            onPressed: onPressed,
-            style: FilledButton.styleFrom(
-              backgroundColor: NoticeColors.gray,
-              foregroundColor: NoticeColors.text,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              isPinned ? '고정 해제' : '고정하기',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-      ),
+      ],
     );
   }
 }

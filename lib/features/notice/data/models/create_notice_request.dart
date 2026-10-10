@@ -10,6 +10,8 @@ abstract class CreateNoticeRequest with _$CreateNoticeRequest {
     @JsonKey(includeToJson: false) required int meetingId,
     required String title,
     required String content,
+    // TODO: API 명세 확정 시 필드 이름 확인 (임시: isImportant)
+    @Default(false) bool isImportant,
   }) = _CreateNoticeRequest;
 
   factory CreateNoticeRequest.fromJson(Map<String, dynamic> json) =>

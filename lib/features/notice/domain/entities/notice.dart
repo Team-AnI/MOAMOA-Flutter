@@ -1,9 +1,7 @@
-import 'notice_account.dart';
-
 /// 모임 공지
 ///
 /// 목록 조회(3-2)에서는 [content] 가 없고, 상세 조회(3-3)에서만 채워집니다.
-/// [authorName], [isPinned], [account] 는 API 명세에 아직 없어
+/// [authorName], [isPinned], [isImportant], [isEdited] 는 API 명세에 아직 없어
 /// 서버가 보내줄 때만 채워집니다. (지금은 Fake 데이터로 확인)
 class Notice {
   const Notice({
@@ -13,7 +11,8 @@ class Notice {
     this.content,
     this.authorName,
     this.isPinned = false,
-    this.account,
+    this.isImportant = false,
+    this.isEdited = false,
   });
 
   final int id;
@@ -27,6 +26,11 @@ class Notice {
   /// 목록 맨 위 고정 여부
   final bool isPinned;
 
-  /// 함께 보여줄 관리자 계좌
-  final NoticeAccount? account;
+  /// 중요 공지 여부. 목록에 "중요" 뱃지가 붙습니다.
+  // TODO: API 명세 확정 시 필드 이름 확인 (임시: isImportant)
+  final bool isImportant;
+
+  /// 작성 후 수정된 공지인지. 날짜 옆에 "수정됨"이 붙습니다.
+  // TODO: API 명세 확정 시 필드 이름 확인 (임시: isEdited)
+  final bool isEdited;
 }

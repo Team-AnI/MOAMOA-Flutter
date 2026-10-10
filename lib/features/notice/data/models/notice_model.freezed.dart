@@ -17,7 +17,7 @@ T _$identity<T>(T value) => value;
 mixin _$NoticeModel {
 
  int get noticeId; String get title;/// ISO-8601 (KST, 예: 2026-10-07T10:00:00+09:00)
- String get createdAt; String? get content; String? get authorNickname; bool? get isPinned; NoticeAccountModel? get account;
+ String get createdAt; String? get content; String? get authorNickname; bool? get isPinned; bool? get isImportant; bool? get isEdited;
 /// Create a copy of NoticeModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +30,16 @@ $NoticeModelCopyWith<NoticeModel> get copyWith => _$NoticeModelCopyWithImpl<Noti
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeModel&&(identical(other.noticeId, noticeId) || other.noticeId == noticeId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.account, account) || other.account == account));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeModel&&(identical(other.noticeId, noticeId) || other.noticeId == noticeId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isImportant, isImportant) || other.isImportant == isImportant)&&(identical(other.isEdited, isEdited) || other.isEdited == isEdited));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,noticeId,title,createdAt,content,authorNickname,isPinned,account);
+int get hashCode => Object.hash(runtimeType,noticeId,title,createdAt,content,authorNickname,isPinned,isImportant,isEdited);
 
 @override
 String toString() {
-  return 'NoticeModel(noticeId: $noticeId, title: $title, createdAt: $createdAt, content: $content, authorNickname: $authorNickname, isPinned: $isPinned, account: $account)';
+  return 'NoticeModel(noticeId: $noticeId, title: $title, createdAt: $createdAt, content: $content, authorNickname: $authorNickname, isPinned: $isPinned, isImportant: $isImportant, isEdited: $isEdited)';
 }
 
 
@@ -50,11 +50,11 @@ abstract mixin class $NoticeModelCopyWith<$Res>  {
   factory $NoticeModelCopyWith(NoticeModel value, $Res Function(NoticeModel) _then) = _$NoticeModelCopyWithImpl;
 @useResult
 $Res call({
- int noticeId, String title, String createdAt, String? content, String? authorNickname, bool? isPinned, NoticeAccountModel? account
+ int noticeId, String title, String createdAt, String? content, String? authorNickname, bool? isPinned, bool? isImportant, bool? isEdited
 });
 
 
-$NoticeAccountModelCopyWith<$Res>? get account;
+
 
 }
 /// @nodoc
@@ -67,7 +67,7 @@ class _$NoticeModelCopyWithImpl<$Res>
 
 /// Create a copy of NoticeModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? noticeId = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? authorNickname = freezed,Object? isPinned = freezed,Object? account = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? noticeId = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? authorNickname = freezed,Object? isPinned = freezed,Object? isImportant = freezed,Object? isEdited = freezed,}) {
   return _then(NoticeModel(
 noticeId: null == noticeId ? _self.noticeId : noticeId // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -75,23 +75,12 @@ as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: 
 as String,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String?,authorNickname: freezed == authorNickname ? _self.authorNickname : authorNickname // ignore: cast_nullable_to_non_nullable
 as String?,isPinned: freezed == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
-as bool?,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as NoticeAccountModel?,
+as bool?,isImportant: freezed == isImportant ? _self.isImportant : isImportant // ignore: cast_nullable_to_non_nullable
+as bool?,isEdited: freezed == isEdited ? _self.isEdited : isEdited // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
-/// Create a copy of NoticeModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$NoticeAccountModelCopyWith<$Res>? get account {
-    if (_self.account == null) {
-    return null;
-  }
 
-  return $NoticeAccountModelCopyWith<$Res>(_self.account!, (value) {
-    return _then(_self.copyWith(account: value));
-  });
-}
 }
 
 
@@ -173,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  NoticeAccountModel? account)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  bool? isImportant,  bool? isEdited)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NoticeModel() when $default != null:
-return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.account);case _:
+return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.isImportant,_that.isEdited);case _:
   return orElse();
 
 }
@@ -194,10 +183,10 @@ return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  NoticeAccountModel? account)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  bool? isImportant,  bool? isEdited)  $default,) {final _that = this;
 switch (_that) {
 case _NoticeModel():
-return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.account);case _:
+return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.isImportant,_that.isEdited);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -214,10 +203,10 @@ return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  NoticeAccountModel? account)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int noticeId,  String title,  String createdAt,  String? content,  String? authorNickname,  bool? isPinned,  bool? isImportant,  bool? isEdited)?  $default,) {final _that = this;
 switch (_that) {
 case _NoticeModel() when $default != null:
-return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.account);case _:
+return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.authorNickname,_that.isPinned,_that.isImportant,_that.isEdited);case _:
   return null;
 
 }
@@ -229,7 +218,7 @@ return $default(_that.noticeId,_that.title,_that.createdAt,_that.content,_that.a
 @JsonSerializable()
 
 class _NoticeModel extends NoticeModel {
-  const _NoticeModel({required this.noticeId, required this.title, required this.createdAt, this.content, this.authorNickname, this.isPinned, this.account}): super._();
+  const _NoticeModel({required this.noticeId, required this.title, required this.createdAt, this.content, this.authorNickname, this.isPinned, this.isImportant, this.isEdited}): super._();
   factory _NoticeModel.fromJson(Map<String, dynamic> json) => _$NoticeModelFromJson(json);
 
 @override final  int noticeId;
@@ -239,7 +228,8 @@ class _NoticeModel extends NoticeModel {
 @override final  String? content;
 @override final  String? authorNickname;
 @override final  bool? isPinned;
-@override final  NoticeAccountModel? account;
+@override final  bool? isImportant;
+@override final  bool? isEdited;
 
 /// Create a copy of NoticeModel
 /// with the given fields replaced by the non-null parameter values.
@@ -254,16 +244,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeModel&&(identical(other.noticeId, noticeId) || other.noticeId == noticeId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.account, account) || other.account == account));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeModel&&(identical(other.noticeId, noticeId) || other.noticeId == noticeId)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.isPinned, isPinned) || other.isPinned == isPinned)&&(identical(other.isImportant, isImportant) || other.isImportant == isImportant)&&(identical(other.isEdited, isEdited) || other.isEdited == isEdited));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,noticeId,title,createdAt,content,authorNickname,isPinned,account);
+int get hashCode => Object.hash(runtimeType,noticeId,title,createdAt,content,authorNickname,isPinned,isImportant,isEdited);
 
 @override
 String toString() {
-  return 'NoticeModel(noticeId: $noticeId, title: $title, createdAt: $createdAt, content: $content, authorNickname: $authorNickname, isPinned: $isPinned, account: $account)';
+  return 'NoticeModel(noticeId: $noticeId, title: $title, createdAt: $createdAt, content: $content, authorNickname: $authorNickname, isPinned: $isPinned, isImportant: $isImportant, isEdited: $isEdited)';
 }
 
 
@@ -274,11 +264,11 @@ abstract mixin class _$NoticeModelCopyWith<$Res> implements $NoticeModelCopyWith
   factory _$NoticeModelCopyWith(_NoticeModel value, $Res Function(_NoticeModel) _then) = __$NoticeModelCopyWithImpl;
 @override @useResult
 $Res call({
- int noticeId, String title, String createdAt, String? content, String? authorNickname, bool? isPinned, NoticeAccountModel? account
+ int noticeId, String title, String createdAt, String? content, String? authorNickname, bool? isPinned, bool? isImportant, bool? isEdited
 });
 
 
-@override $NoticeAccountModelCopyWith<$Res>? get account;
+
 
 }
 /// @nodoc
@@ -291,7 +281,7 @@ class __$NoticeModelCopyWithImpl<$Res>
 
 /// Create a copy of NoticeModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? noticeId = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? authorNickname = freezed,Object? isPinned = freezed,Object? account = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? noticeId = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? authorNickname = freezed,Object? isPinned = freezed,Object? isImportant = freezed,Object? isEdited = freezed,}) {
   return _then(_NoticeModel(
 noticeId: null == noticeId ? _self.noticeId : noticeId // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -299,24 +289,13 @@ as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: 
 as String,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String?,authorNickname: freezed == authorNickname ? _self.authorNickname : authorNickname // ignore: cast_nullable_to_non_nullable
 as String?,isPinned: freezed == isPinned ? _self.isPinned : isPinned // ignore: cast_nullable_to_non_nullable
-as bool?,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
-as NoticeAccountModel?,
+as bool?,isImportant: freezed == isImportant ? _self.isImportant : isImportant // ignore: cast_nullable_to_non_nullable
+as bool?,isEdited: freezed == isEdited ? _self.isEdited : isEdited // ignore: cast_nullable_to_non_nullable
+as bool?,
   ));
 }
 
-/// Create a copy of NoticeModel
-/// with the given fields replaced by the non-null parameter values.
-@override
-@pragma('vm:prefer-inline')
-$NoticeAccountModelCopyWith<$Res>? get account {
-    if (_self.account == null) {
-    return null;
-  }
 
-  return $NoticeAccountModelCopyWith<$Res>(_self.account!, (value) {
-    return _then(_self.copyWith(account: value));
-  });
-}
 }
 
 // dart format on

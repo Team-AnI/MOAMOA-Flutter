@@ -25,10 +25,31 @@ class NoticeWritePage extends ConsumerWidget {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          tooltip: '닫기',
-          icon: const Icon(Icons.close, color: NoticeColors.text),
+        toolbarHeight: 56,
+        leadingWidth: 56,
+        centerTitle: true,
+        // 수정 화면은 상단 바 가운데에 제목이 있고, 작성 화면은 본문 위에 큰 제목이 있습니다.
+        title: noticeId == null
+            ? null
+            : const Text(
+                '공지 수정',
+                style: TextStyle(
+                  fontSize: 17,
+                  height: 1.41,
+                  letterSpacing: -0.3,
+                  fontWeight: FontWeight.w600,
+                  color: NoticeColors.text,
+                ),
+              ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: IconButton(
+            onPressed: () => context.pop(),
+            tooltip: '닫기',
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+            padding: EdgeInsets.zero,
+            icon: const Icon(Icons.close, size: 20, color: NoticeColors.text),
+          ),
         ),
       ),
       body: _buildBody(context, ref),
@@ -61,7 +82,7 @@ class NoticeWritePage extends ConsumerWidget {
   }
 }
 
-/// 제목·내용 입력칸과 등록 버튼
+/// 제목·내용 입력칸, 중요 공지·고정 설정, 등록 버튼
 ///
 /// [initialNotice] 가 있으면 수정 모드이며, 처음 만들어질 때 한 번만 기존 내용을 채웁니다.
 class _NoticeForm extends ConsumerStatefulWidget {
@@ -85,8 +106,11 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
   /// 등록을 한 번 누른 뒤부터 빠진 항목 안내를 보여줍니다. (예외처리 4-1)
   bool _showMissing = false;
 
-  /// 목록 맨 위에 고정 (새 공지를 등록할 때만 선택)
-  bool _pinToTop = false;
+  /// 목록 맨 위에 고정. 수정일 때는 현재 고정 여부로 시작합니다.
+  late bool _pinToTop = widget.initialNotice?.isPinned ?? false;
+
+  /// 중요 공지로 표시. 수정일 때는 현재 값으로 시작합니다.
+  late bool _isImportant = widget.initialNotice?.isImportant ?? false;
 
   bool get _isEdit => widget.initialNotice != null;
 
@@ -114,6 +138,8 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
           title: _titleController.text,
           content: _contentController.text,
           pinToTop: _pinToTop,
+          wasPinned: widget.initialNotice?.isPinned ?? false,
+          isImportant: _isImportant,
         );
     if (!mounted) return;
     if (success) {
@@ -148,15 +174,22 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             children: [
-              Text(
-                _isEdit ? '공지 수정' : '공지 작성',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: NoticeColors.text,
+              if (_isEdit)
+                const SizedBox(height: 8)
+              else ...[
+                const SizedBox(height: 4),
+                const Text(
+                  '공지 작성',
+                  style: TextStyle(
+                    fontSize: 26,
+                    height: 1.35,
+                    letterSpacing: -0.7,
+                    fontWeight: FontWeight.w700,
+                    color: NoticeColors.text,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ],
               _InputField(
                 label: '제목',
                 hintText: '공지 제목을 입력하세요',
@@ -166,31 +199,35 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
                     : null,
                 onChanged: _onChanged,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               _InputField(
                 label: '내용',
                 hintText: '구성원에게 전할 내용을 입력하세요',
                 controller: _contentController,
-                minLines: 8,
+                minLines: 5,
                 errorText: _showMissing && _isContentMissing
                     ? '공지 내용을 입력해주세요'
                     : null,
                 onChanged: _onChanged,
               ),
-              if (!_isEdit) ...[
-                const SizedBox(height: 24),
-                _PinToggle(
-                  value: _pinToTop,
-                  onChanged: (value) => setState(() => _pinToTop = value),
-                ),
-              ],
+              const SizedBox(height: 16),
+              _ImportantCard(
+                value: _isImportant,
+                onChanged: (value) => setState(() => _isImportant = value),
+              ),
+              const SizedBox(height: 16),
+              _PinToggle(
+                value: _pinToTop,
+                onChanged: (value) => setState(() => _pinToTop = value),
+              ),
+              if (_isEdit) ...[const SizedBox(height: 16), const _EditHint()],
             ],
           ),
         ),
         SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: _SubmitButton(
               label: _isEdit ? '수정 완료' : '공지 등록',
               isLoading: isSubmitting,
@@ -222,22 +259,30 @@ class _InputField extends StatelessWidget {
   /// 값이 있으면 입력칸 아래에 빠진 항목 안내를 보여줍니다.
   final String? errorText;
 
-  static final _errorBorder = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: NoticeColors.error),
+  static OutlineInputBorder _border(BorderSide side) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(16),
+    borderSide: side,
   );
 
   @override
   Widget build(BuildContext context) {
+    final isMultiline = minLines > 1;
+    final errorBorder = _border(const BorderSide(color: NoticeColors.error));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: NoticeColors.bodyText,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.43,
+              letterSpacing: -0.1,
+              fontWeight: FontWeight.w600,
+              color: NoticeColors.bodyText,
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -245,19 +290,30 @@ class _InputField extends StatelessWidget {
           controller: controller,
           onChanged: onChanged,
           minLines: minLines,
-          maxLines: minLines == 1 ? 1 : null,
+          maxLines: isMultiline ? null : 1,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.47,
+            letterSpacing: -0.2,
+            color: NoticeColors.text,
+          ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(color: NoticeColors.hint),
             errorText: errorText,
             filled: true,
             fillColor: NoticeColors.gray,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: isMultiline ? 20 : 16,
             ),
-            errorBorder: _errorBorder,
-            focusedErrorBorder: _errorBorder,
+            border: _border(BorderSide.none),
+            enabledBorder: _border(BorderSide.none),
+            focusedBorder: _border(
+              const BorderSide(color: NoticeColors.text, width: 2),
+            ),
+            errorBorder: errorBorder,
+            focusedErrorBorder: errorBorder,
             errorStyle: const TextStyle(
               fontSize: 12,
               color: NoticeColors.error,
@@ -265,6 +321,97 @@ class _InputField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "중요 공지로 표시" 체크 카드. 체크하면 빨간 테두리가 생깁니다.
+class _ImportantCard extends StatelessWidget {
+  const _ImportantCard({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      checked: value,
+      label: '중요 공지로 표시',
+      child: GestureDetector(
+        onTap: () => onChanged(!value),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: NoticeColors.gray,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: value ? NoticeColors.alert : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: value ? NoticeColors.alertTint : Colors.white,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  size: 20,
+                  color: NoticeColors.alert,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '중요 공지로 표시',
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.47,
+                        letterSpacing: -0.2,
+                        fontWeight: FontWeight.w600,
+                        color: NoticeColors.text,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '중요 표시가 붙고, 안 읽은 사람에게 다시 알려요',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.33,
+                        color: NoticeColors.bodyText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: value ? NoticeColors.text : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: value
+                      ? null
+                      : Border.all(color: NoticeColors.disabled, width: 1.5),
+                ),
+                child: value
+                    ? const Icon(Icons.check, size: 13, color: Colors.white)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -279,30 +426,109 @@ class _PinToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
         color: NoticeColors.gray,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              '목록 맨 위에 고정',
-              style: TextStyle(fontSize: 15, color: NoticeColors.bodyText),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                '목록 맨 위에 고정',
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.47,
+                  letterSpacing: -0.2,
+                  color: NoticeColors.text,
+                ),
+              ),
+            ),
+            _Toggle(value: value, onChanged: onChanged),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 50x30 알약 모양 토글
+class _Toggle extends StatelessWidget {
+  const _Toggle({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      toggled: value,
+      child: GestureDetector(
+        onTap: () => onChanged(!value),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 50,
+          height: 30,
+          padding: const EdgeInsets.all(2),
+          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+          decoration: BoxDecoration(
+            color: value ? NoticeColors.text : NoticeColors.switchOff,
+            borderRadius: BorderRadius.circular(9999),
+          ),
+          child: Container(
+            width: 26,
+            height: 26,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x14000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            thumbColor: const WidgetStatePropertyAll(Colors.white),
-            trackColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.selected)
-                  ? NoticeColors.text
-                  : NoticeColors.switchOff,
+        ),
+      ),
+    );
+  }
+}
+
+/// 수정 화면 안내 문구
+class _EditHint extends StatelessWidget {
+  const _EditHint();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.info_outline,
+              size: 18,
+              color: NoticeColors.bodyText,
             ),
-            trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '저장하면 공지에 수정됨 표시가 붙어요.',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.43,
+                letterSpacing: -0.1,
+                color: NoticeColors.bodyText,
+              ),
+            ),
           ),
         ],
       ),
@@ -324,13 +550,13 @@ class _SubmitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 56,
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: NoticeColors.text,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         child: isLoading
@@ -345,6 +571,8 @@ class _SubmitButton extends StatelessWidget {
                 label,
                 style: const TextStyle(
                   fontSize: 16,
+                  height: 1.25,
+                  letterSpacing: -0.2,
                   fontWeight: FontWeight.w600,
                 ),
               ),

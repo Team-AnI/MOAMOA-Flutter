@@ -9,12 +9,14 @@ final class UpdateNoticeParams extends Params {
     required this.noticeId,
     this.title,
     this.content,
+    this.isImportant,
   });
 
   final int meetingId;
   final int noticeId;
   final String? title;
   final String? content;
+  final bool? isImportant;
 }
 
 /// 공지 수정 (3-4)
@@ -42,6 +44,7 @@ final class UpdateNoticeImpl implements UpdateNotice {
       noticeId: params.noticeId,
       title: title,
       content: content,
+      isImportant: params.isImportant,
     );
   }
 }

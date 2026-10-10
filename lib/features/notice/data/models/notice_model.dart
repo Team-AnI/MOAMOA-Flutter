@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/notice.dart';
-import 'notice_account_model.dart';
 
 part 'notice_model.freezed.dart';
 part 'notice_model.g.dart';
@@ -20,7 +19,8 @@ abstract class NoticeModel with _$NoticeModel {
     String? content,
     String? authorNickname,
     bool? isPinned,
-    NoticeAccountModel? account,
+    bool? isImportant,
+    bool? isEdited,
   }) = _NoticeModel;
 
   factory NoticeModel.fromJson(Map<String, dynamic> json) =>
@@ -33,6 +33,7 @@ abstract class NoticeModel with _$NoticeModel {
     createdAt: DateTime.parse(createdAt).toLocal(),
     authorName: authorNickname,
     isPinned: isPinned ?? false,
-    account: account?.toEntity(),
+    isImportant: isImportant ?? false,
+    isEdited: isEdited ?? false,
   );
 }

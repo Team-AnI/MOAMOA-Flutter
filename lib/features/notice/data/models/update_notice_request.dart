@@ -13,6 +13,8 @@ abstract class UpdateNoticeRequest with _$UpdateNoticeRequest {
     @JsonKey(includeToJson: false) required int noticeId,
     @JsonKey(includeIfNull: false) String? title,
     @JsonKey(includeIfNull: false) String? content,
+    // TODO: API 명세 확정 시 필드 이름 확인 (임시: isImportant)
+    @JsonKey(includeIfNull: false) bool? isImportant,
   }) = _UpdateNoticeRequest;
 
   factory UpdateNoticeRequest.fromJson(Map<String, dynamic> json) =>

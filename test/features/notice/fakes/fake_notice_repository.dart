@@ -13,6 +13,8 @@ Notice buildNotice(
   String? content,
   String? authorName,
   bool isPinned = false,
+  bool isImportant = false,
+  bool isEdited = false,
 }) {
   return Notice(
     id: id,
@@ -20,6 +22,8 @@ Notice buildNotice(
     content: content,
     authorName: authorName,
     isPinned: isPinned,
+    isImportant: isImportant,
+    isEdited: isEdited,
     createdAt: DateTime(2026, 10, 1).add(Duration(days: id)),
   );
 }
@@ -67,7 +71,14 @@ class FakeNoticeRepository implements NoticeRepository {
     return index;
   }
 
-  Notice _copy(Notice old, {String? title, String? content, bool? isPinned}) {
+  Notice _copy(
+    Notice old, {
+    String? title,
+    String? content,
+    bool? isPinned,
+    bool? isImportant,
+    bool? isEdited,
+  }) {
     return Notice(
       id: old.id,
       title: title ?? old.title,
@@ -75,7 +86,8 @@ class FakeNoticeRepository implements NoticeRepository {
       createdAt: old.createdAt,
       authorName: old.authorName,
       isPinned: isPinned ?? old.isPinned,
-      account: old.account,
+      isImportant: isImportant ?? old.isImportant,
+      isEdited: isEdited ?? old.isEdited,
     );
   }
 
@@ -115,12 +127,19 @@ class FakeNoticeRepository implements NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
+    bool isImportant = false,
   }) async {
     _throwIfError();
     final id = _nextId++;
     notices.insert(
       0,
-      Notice(id: id, title: title, content: content, createdAt: DateTime.now()),
+      Notice(
+        id: id,
+        title: title,
+        content: content,
+        createdAt: DateTime.now(),
+        isImportant: isImportant,
+      ),
     );
     await createGate?.future;
     return id;
@@ -132,10 +151,18 @@ class FakeNoticeRepository implements NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
+    bool? isImportant,
   }) async {
     _throwIfError();
     final index = _indexOf(noticeId);
-    notices[index] = _copy(notices[index], title: title, content: content);
+    // 수정하면 공지에 "수정됨"이 붙습니다.
+    notices[index] = _copy(
+      notices[index],
+      title: title,
+      content: content,
+      isImportant: isImportant,
+      isEdited: true,
+    );
   }
 
   @override
