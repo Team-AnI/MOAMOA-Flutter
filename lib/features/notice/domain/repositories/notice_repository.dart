@@ -38,6 +38,7 @@ abstract interface class NoticeRepository {
   Future<void> deleteNotice({required int meetingId, required int noticeId});
 
   /// 1-4 모임 상세의 myRole. 작성·수정·삭제 버튼 노출에 사용합니다.
+  // TODO(#44): 역할 조회는 모임 기능의 책임이므로 group feature 로 이동
   Future<MemberRole> getMyRole({required int meetingId});
 
   /// 공지 고정 / 고정 해제 (후순위 API: POST·DELETE .../notices/{noticeId}/pin)
