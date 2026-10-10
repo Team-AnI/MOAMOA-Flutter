@@ -49,9 +49,9 @@ class GroupPageLayout extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
               child: Row(
                 children: [
-                  Expanded(child: _step(true)),
+                  const Expanded(child: _StepIndicator(active: true)),
                   const SizedBox(width: 6),
-                  Expanded(child: _step(step == 2)),
+                  Expanded(child: _StepIndicator(active: step == 2)),
                 ],
               ),
             ),
@@ -76,8 +76,14 @@ class GroupPageLayout extends StatelessWidget {
       ),
     ),
   );
+}
 
-  Widget _step(bool active) => Container(
+class _StepIndicator extends StatelessWidget {
+  const _StepIndicator({required this.active});
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => Container(
     height: 4,
     decoration: BoxDecoration(
       color: active ? GroupDesign.ink : const Color(0xffd2d2d7),

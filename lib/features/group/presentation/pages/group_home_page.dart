@@ -26,7 +26,11 @@ class GroupHomePage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Row(
                 children: [
-                  _headerButton('back', '내 모임 목록', () => context.go('/groups')),
+                  _HeaderButton(
+                    icon: 'back',
+                    label: '내 모임 목록',
+                    onPressed: () => context.go('/groups'),
+                  ),
                   const SizedBox(width: 10),
                   GroupMark(
                     name: current?.group.name ?? '',
@@ -45,7 +49,7 @@ class GroupHomePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _headerButton('bell', '알림 · 준비 중', null),
+                  const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
                   if (current?.canViewInviteCode ?? false) ...[
                     const SizedBox(width: 8),
                     PopupMenuButton<String>(
@@ -161,23 +165,34 @@ class GroupHomePage extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _headerButton(String icon, String label, VoidCallback? onPressed) =>
-      Tooltip(
-        message: label,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: IconButton(
-            style: IconButton.styleFrom(
-              backgroundColor: GroupDesign.fill,
-              disabledBackgroundColor: GroupDesign.fill,
-            ),
-            onPressed: onPressed,
-            icon: GroupIcon(icon, size: 20),
-          ),
+class _HeaderButton extends StatelessWidget {
+  const _HeaderButton({
+    required this.icon,
+    required this.label,
+    this.onPressed,
+  });
+  final String icon;
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: label,
+    child: SizedBox(
+      width: 40,
+      height: 40,
+      child: IconButton(
+        style: IconButton.styleFrom(
+          backgroundColor: GroupDesign.fill,
+          disabledBackgroundColor: GroupDesign.fill,
         ),
-      );
+        onPressed: onPressed,
+        icon: GroupIcon(icon, size: 20),
+      ),
+    ),
+  );
 }
 
 class _HomeTabs extends StatelessWidget {

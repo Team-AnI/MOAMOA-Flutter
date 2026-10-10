@@ -49,24 +49,38 @@ class GroupJoinSummary extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Divider(height: 1, color: Colors.white),
             ),
-            _row(
-              'users',
-              '구성원 ${group.memberCount ?? 0}명',
-              '가입하면 일반 구성원으로 참여해요.',
+            _SummaryRow(
+              icon: 'users',
+              title: '구성원 ${group.memberCount ?? 0}명',
+              subtitle: '가입하면 일반 구성원으로 참여해요.',
             ),
             const SizedBox(height: 16),
-            _row(
-              'shield',
-              approval ? '승인 후 가입' : '바로 가입',
-              approval ? '관리자가 승인하면 들어갈 수 있어요.' : '관리자 승인 없이 모임에 들어갈 수 있어요.',
+            _SummaryRow(
+              icon: 'shield',
+              title: approval ? '승인 후 가입' : '바로 가입',
+              subtitle: approval
+                  ? '관리자가 승인하면 들어갈 수 있어요.'
+                  : '관리자 승인 없이 모임에 들어갈 수 있어요.',
             ),
           ],
         ),
       ),
     ],
   );
+}
 
-  Widget _row(String icon, String title, String subtitle) => Row(
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+  final String icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
     children: [
       Container(
         width: 36,
