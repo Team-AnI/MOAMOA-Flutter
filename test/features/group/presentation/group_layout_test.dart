@@ -1,0 +1,234 @@
+import 'package:moamoa/features/group/data/repositories/memory_group_repository.dart';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:moamoa/app/app.dart';
+import 'package:moamoa/app/router/app_router.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
+import 'package:moamoa/features/group/presentation/group_routes.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
+import '../fake_group_repository.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() async {
+    final loader = FontLoader('Pretendard')
+      ..addFont(rootBundle.load('assets/fonts/PretendardVariable.ttf'));
+    await loader.load();
+    for (final name in [
+      'close',
+      'back',
+      'users',
+      'groups',
+      'bell',
+      'user',
+      'plus',
+      'header_plus',
+      'chevron',
+      'ticket',
+      'check',
+      'shield',
+      'hourglass',
+      'home',
+      'home_calendar',
+      'home_megaphone',
+      'wallet',
+      'gear',
+      'megaphone',
+      'calendar',
+      'camera',
+      'photo_album',
+      'photo_camera',
+      'photo_reset',
+    ]) {
+      await SvgAssetLoader('assets/group/$name.svg').loadBytes(null);
+    }
+  });
+  for (final size in [const Size(393, 852), const Size(320, 568)]) {
+    for (final role in MemberRole.values) {
+      testWidgets('모임 홈 ${role.name} ${size.width} 레이아웃', (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = size;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final repository = FakeGroupRepository()..groups = [makeGroup(role)];
+        final router = GoRouter(
+          initialLocation: '/groups/home',
+          routes: groupRoutes,
+        );
+        addTearDown(router.dispose);
+        final container = ProviderContainer(
+          overrides: [
+            groupRepositoryProvider.overrideWithValue(repository),
+            appRouterProvider.overrideWithValue(router),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(groupProvider.notifier).selectGroup(1);
+        final boundary = GlobalKey();
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: RepaintBoundary(key: boundary, child: const App()),
+          ),
+        );
+        await _capture(tester, boundary, 'home-${role.name}', size);
+        expect(find.text('구성원'), findsNWidgets(2));
+        expect(find.text('홈'), findsOneWidget);
+        expect(
+          find.byTooltip('모임 설정'),
+          role == MemberRole.admin ? findsOneWidget : findsNothing,
+        );
+      });
+    }
+    testWidgets('가입 확인·완료 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final router = GoRouter(
+        initialLocation: '/groups/join',
+        routes: groupRoutes,
+      );
+      addTearDown(router.dispose);
+      final boundary = GlobalKey();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            groupUseMockProvider.overrideWithValue(true),
+            groupRepositoryProvider.overrideWithValue(MemoryGroupRepository()),
+            appRouterProvider.overrideWithValue(router),
+          ],
+          child: RepaintBoundary(key: boundary, child: const App()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), 'MOA-JOIN');
+      await tester.tap(find.text('다음'));
+      await _capture(tester, boundary, 'join-confirm', size);
+      expect(find.text('이 모임에 가입할까요?'), findsOneWidget);
+      await tester.tap(find.text('가입하기'));
+      await _capture(tester, boundary, 'join-complete', size);
+      expect(find.text('모임에 가입했어요'), findsOneWidget);
+      router.go('/groups/join');
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), 'MOA-WAIT');
+      await tester.tap(find.text('다음'));
+      await _capture(tester, boundary, 'approval-confirm', size);
+      await tester.tap(find.text('가입 요청 보내기'));
+      await _capture(tester, boundary, 'approval-pending', size);
+      expect(find.text('가입 요청을 보냈어요'), findsOneWidget);
+    });
+    testWidgets('생성·가입·목록·초대 화면이 ${size.width} 폭에서 잘리지 않는다', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = FakeGroupRepository();
+      final router = GoRouter(initialLocation: '/groups', routes: groupRoutes);
+      final container = ProviderContainer(
+        overrides: [
+          groupRepositoryProvider.overrideWithValue(repository),
+          appRouterProvider.overrideWithValue(router),
+        ],
+      );
+      addTearDown(container.dispose);
+      addTearDown(router.dispose);
+      final boundary = GlobalKey();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: RepaintBoundary(key: boundary, child: const App()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'empty', size);
+      router.go('/groups/create');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('모임 사진 선택'));
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'photo-sheet', size);
+      await tester.tap(find.text('기본 이미지로 바꾸기'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField), '스터디 모아');
+      await _capture(tester, boundary, 'create-profile', size);
+      await tester.tap(find.text('다음'));
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'create-info', size);
+      await tester.tap(find.text('수정'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextFormField>(find.byType(TextFormField))
+            .controller!
+            .text,
+        '스터디 모아',
+      );
+      router.go('/groups/join');
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'join', size);
+      repository.groups = [makeGroup(MemberRole.admin)];
+      await container.read(groupProvider.notifier).selectGroup(1);
+      router.go('/groups/created');
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'created', size);
+      router.go('/groups/invite');
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'invite', size);
+      router.go('/groups');
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'list', size);
+      await tester.tap(find.byTooltip('모임 추가'));
+      await tester.pumpAndSettle();
+      await _capture(tester, boundary, 'add-sheet', size);
+      for (final entry in {
+        '모임 만들기': '/groups/create',
+        '초대 코드로 가입': '/groups/join',
+      }.entries) {
+        await tester.tap(find.text(entry.key));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            entry.value == '/groups/create' ? '모임 프로필을 정해요' : '초대 코드를 입력해 주세요',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('모임 추가'), findsNothing);
+        expect(tester.takeException(), isNull);
+        router.go('/groups');
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('모임 추가'));
+        await tester.pumpAndSettle();
+      }
+    });
+  }
+}
+
+Future<void> _capture(
+  WidgetTester tester,
+  GlobalKey key,
+  String name,
+  Size size,
+) async {
+  await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull, reason: '$name layout');
+  const directory = String.fromEnvironment('GROUP_SCREENSHOTS');
+  if (directory.isEmpty) return;
+  await tester.runAsync(() async {
+    final boundary =
+        key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+    final image = await boundary.toImage();
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    await Directory(directory).create(recursive: true);
+    await File(
+      '$directory/$name-${size.width.toInt()}.png',
+    ).writeAsBytes(bytes!.buffer.asUint8List());
+    image.dispose();
+  });
+}
