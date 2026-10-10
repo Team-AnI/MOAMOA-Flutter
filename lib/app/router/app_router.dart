@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/features/schedule/presentation/schedule_routes.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
@@ -13,7 +14,7 @@ part 'app_router.g.dart';
 final List<RouteBase> _featureRoutes = [
   // ...authRoutes,
   // ...groupRoutes,
-  // ...scheduleRoutes,
+  ...scheduleRoutes,
   // ...noticeRoutes,
   // ...settlementRoutes,
 ];
