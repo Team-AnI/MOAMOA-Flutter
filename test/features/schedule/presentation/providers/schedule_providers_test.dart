@@ -19,4 +19,11 @@ void main() {
       ),
     );
   });
+
+  test('권한 정보가 연동되기 전에는 관리자가 아니다 (일정 만들기 버튼 숨김)', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(scheduleAdminProvider), isFalse);
+  });
 }

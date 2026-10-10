@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_status.dart';
@@ -74,7 +75,7 @@ void main() {
   });
 
   test('생성에 성공하면 일정 목록을 다시 불러온다', () async {
-    final args = (
+    final args = ScheduleListRequest(
       meetingId: 1,
       startDate: DateTime(2026, 10),
       endDate: DateTime(2026, 10, 31),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
@@ -14,7 +15,7 @@ void main() {
     title: '10월 정기 러닝',
     startAt: DateTime(2026, 10, 11, 7),
   );
-  final args = (
+  final args = ScheduleListRequest(
     meetingId: 1,
     startDate: DateTime(2026, 10),
     endDate: DateTime(2026, 10, 31),

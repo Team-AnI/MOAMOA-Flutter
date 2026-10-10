@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_create_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 
 /// 테스트용 Fake Repository. mocktail 대신 직접 구현합니다.
@@ -32,22 +34,15 @@ class FakeScheduleRepository implements ScheduleRepository {
   }
 
   @override
-  Future<List<Schedule>> getSchedules({
-    required int meetingId,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
+  Future<List<Schedule>> getSchedules(ScheduleListRequest request) async {
     listCallCount++;
     if (error != null) throw error!;
     return schedules;
   }
 
   @override
-  Future<Schedule> getSchedule({
-    required int meetingId,
-    required int scheduleId,
-  }) async {
+  Future<Schedule> getSchedule(ScheduleDetailRequest request) async {
     if (error != null) throw error!;
-    return schedules.firstWhere((s) => s.id == scheduleId);
+    return schedules.firstWhere((s) => s.id == request.scheduleId);
   }
 }
