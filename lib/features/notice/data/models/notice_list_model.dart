@@ -1,30 +1,25 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../../domain/entities/notice_list_result.dart';
 import 'notice_model.dart';
 
+part 'notice_list_model.freezed.dart';
+part 'notice_list_model.g.dart';
+
 /// 공지 목록 응답 모델 (3-2)
-class NoticeListModel {
-  const NoticeListModel({
-    required this.notices,
-    required this.page,
-    required this.size,
-    required this.hasNext,
-  });
+@freezed
+abstract class NoticeListModel with _$NoticeListModel {
+  const NoticeListModel._();
 
-  factory NoticeListModel.fromJson(Map<String, dynamic> json) {
-    return NoticeListModel(
-      notices: (json['notices'] as List<dynamic>)
-          .map((item) => NoticeModel.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      page: json['page'] as int,
-      size: json['size'] as int,
-      hasNext: json['hasNext'] as bool,
-    );
-  }
+  const factory NoticeListModel({
+    required List<NoticeModel> notices,
+    required int page,
+    required int size,
+    required bool hasNext,
+  }) = _NoticeListModel;
 
-  final List<NoticeModel> notices;
-  final int page;
-  final int size;
-  final bool hasNext;
+  factory NoticeListModel.fromJson(Map<String, dynamic> json) =>
+      _$NoticeListModelFromJson(json);
 
   NoticeListResult toEntity() => NoticeListResult(
     notices: notices.map((model) => model.toEntity()).toList(),
