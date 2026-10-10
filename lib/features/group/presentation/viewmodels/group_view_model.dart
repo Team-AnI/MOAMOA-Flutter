@@ -4,7 +4,6 @@ import '../../../../core/usecases/no_params.dart';
 import '../../domain/entities/current_group.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
-import '../../domain/usecases/params/create_group_params.dart';
 import '../../domain/usecases/params/get_group_invite_code_params.dart';
 import '../../domain/usecases/params/get_group_params.dart';
 import '../../domain/usecases/params/join_group_params.dart';

@@ -71,10 +71,9 @@ class GroupRepositoryImpl implements GroupRepository {
   }
 
   @override
-  Future<CurrentGroup> createGroup({
-    required String name,
-    required String description,
-  }) async {
+  Future<CurrentGroup> createGroup(CreateGroupParams params) async {
+    final name = params.name;
+    final description = params.description;
     final data = await _request(
       'POST',
       '/v1/meetings',

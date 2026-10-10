@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'group_photo_action.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 
-enum GroupPhotoAction { gallery, camera, reset }
+export 'group_photo_action.dart';
 
 class GroupPhotoSheet extends StatelessWidget {
   const GroupPhotoSheet({super.key});

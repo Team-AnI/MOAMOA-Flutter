@@ -76,7 +76,9 @@ void main() {
 
   test('새 Mock Repository는 초기 상태로 돌아간다', () async {
     final repository = MemoryGroupRepository();
-    await repository.createGroup(name: '모임', description: '');
+    await repository.createGroup(
+      const CreateGroupParams(name: '모임', description: ''),
+    );
     expect(await MemoryGroupRepository().getMyGroups(), isEmpty);
   });
 

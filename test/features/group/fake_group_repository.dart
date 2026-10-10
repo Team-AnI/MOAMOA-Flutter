@@ -22,10 +22,9 @@ class FakeGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<CurrentGroup> createGroup({
-    required String name,
-    required String description,
-  }) {
+  Future<CurrentGroup> createGroup(CreateGroupParams params) {
+    final name = params.name;
+    final description = params.description;
     createCalls++;
     lastName = name;
     lastDescription = description;

@@ -1,6 +1,8 @@
+import '../usecases/params/create_group_params.dart';
 import '../entities/current_group.dart';
 import '../entities/group_failure.dart';
 
+export '../usecases/params/create_group_params.dart';
 export '../entities/group_failure.dart';
 export '../entities/group_failure_reason.dart';
 
@@ -8,10 +10,7 @@ export '../entities/group_failure_reason.dart';
 abstract interface class GroupRepository {
   Future<List<CurrentGroup>> getMyGroups();
   Future<CurrentGroup> getGroup(int groupId);
-  Future<CurrentGroup> createGroup({
-    required String name,
-    required String description,
-  });
+  Future<CurrentGroup> createGroup(CreateGroupParams params);
 
   /// 유효하지 않은 코드, 이미 가입한 모임은 [GroupFailure]로 구분합니다.
   Future<CurrentGroup> joinGroup({required String inviteCode});

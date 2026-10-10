@@ -3,16 +3,20 @@ import '../../domain/entities/group.dart';
 import '../../domain/entities/group_member.dart';
 import '../../domain/entities/member_role.dart';
 import '../../domain/repositories/group_repository.dart';
+import '../../domain/repositories/group_join_flow.dart';
 
 /// 서버 없이 화면과 도메인 흐름을 검증하는 개발용 데이터입니다.
 /// 앱을 다시 실행하면 초기화되며 실제 서버에는 요청하지 않습니다.
-class MemoryGroupRepository implements GroupRepository {
+class MemoryGroupRepository implements GroupRepository, GroupJoinFlow {
   MemoryGroupRepository({this.userId = 1});
 
   final Set<int> _approvalGroups = {-1};
   final Map<int, Group> _pending = {};
+  @override
   List<Group> get pendingRequests => List.unmodifiable(_pending.values);
+  @override
   bool requiresApproval(int id) => _approvalGroups.contains(id);
+  @override
   void setApprovalRequired(int id) {
     if (!_current(id).canViewInviteCode) {
       throw const GroupFailure(GroupFailureReason.forbidden);
@@ -20,6 +24,7 @@ class MemoryGroupRepository implements GroupRepository {
     _approvalGroups.add(id);
   }
 
+  @override
   Future<Group> requestJoin(String code) async {
     final group = await previewInviteCode(code);
     if (!requiresApproval(group.id)) {
@@ -65,10 +70,9 @@ class MemoryGroupRepository implements GroupRepository {
   Future<CurrentGroup> getGroup(int groupId) async => _current(groupId);
 
   @override
-  Future<CurrentGroup> createGroup({
-    required String name,
-    required String description,
-  }) async {
+  Future<CurrentGroup> createGroup(CreateGroupParams params) async {
+    final name = params.name;
+    final description = params.description;
     if (name.trim().isEmpty) {
       throw const GroupFailure(GroupFailureReason.validation);
     }
@@ -86,6 +90,7 @@ class MemoryGroupRepository implements GroupRepository {
 
   /// 가입 전 조회 API가 없는 동안 Mock 화면에서만 사용하는 미리보기입니다.
   /// 구성원 정보와 구성원 수를 변경하지 않습니다.
+  @override
   Future<Group> previewInviteCode(String inviteCode) async {
     final id = _codes[inviteCode.trim()];
     if (id == null) throw const GroupFailure(GroupFailureReason.invalidCode);

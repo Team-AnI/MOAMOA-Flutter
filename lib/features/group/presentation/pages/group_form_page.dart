@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../data/repositories/memory_group_repository.dart';
+import '../../domain/repositories/group_join_flow.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../providers/group_providers.dart';
@@ -108,18 +108,21 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       _alreadyJoined = false;
     });
     final repository = ref.read(groupRepositoryProvider);
+    final joinFlow = repository is GroupJoinFlow
+        ? repository as GroupJoinFlow
+        : null;
     if (widget.isJoining &&
         _step == 1 &&
         ref.read(groupUseMockProvider) &&
-        repository is MemoryGroupRepository) {
+        joinFlow != null) {
       FocusScope.of(context).unfocus();
       setState(() => _previewing = true);
       try {
-        final group = await repository.previewInviteCode(_nameOrCode.text);
+        final group = await joinFlow.previewInviteCode(_nameOrCode.text);
         if (mounted) {
           setState(() {
             _preview = group;
-            _previewApproval = repository.requiresApproval(group.id);
+            _previewApproval = joinFlow.requiresApproval(group.id);
             _step = 2;
           });
         }
@@ -137,15 +140,15 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
     }
     if (widget.isJoining &&
         _previewApproval &&
-        repository is MemoryGroupRepository &&
+        joinFlow != null &&
         ref.read(groupUseMockProvider)) {
       setState(() => _previewing = true);
       try {
-        await repository.requestJoin(_nameOrCode.text);
+        await joinFlow.requestJoin(_nameOrCode.text);
         if (!mounted) return;
         ref
             .read(groupMockPendingProvider.notifier)
-            .update(repository.pendingRequests);
+            .update(joinFlow.pendingRequests);
         context.go('/groups/requested');
       } on GroupFailure {
         if (mounted) setState(() => _error = '가입 요청을 보내지 못했습니다.');
@@ -166,8 +169,8 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       if (!widget.isJoining &&
           _approval &&
           ref.read(groupUseMockProvider) &&
-          repository is MemoryGroupRepository) {
-        repository.setApprovalRequired(result.group.id);
+          joinFlow != null) {
+        joinFlow.setApprovalRequired(result.group.id);
       }
       if (!widget.isJoining &&
           _photo != null &&
@@ -229,66 +232,124 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
               : '모임 만들기',
           onPressed: busy || _pickingPhoto ? null : _submit,
         ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.isJoining && _step == 2 && _preview != null)
-                GroupJoinSummary(group: _preview!, approval: _previewApproval)
-              else if (widget.isJoining) ...[
-                const GroupPageTitle(
-                  title: '초대 코드를 입력해 주세요',
-                  subtitle: '모임 관리자에게 받은 코드로 가입할 수 있어요.',
-                ),
-                GroupField(
-                  controller: _nameOrCode,
-                  label: '초대 코드',
-                  hint: '초대 코드를 입력해주세요',
-                  requiredValue: true,
-                  enabled: !busy,
-                ),
-              ] else if (_step == 1)
-                GroupProfileStep(
-                  name: _nameOrCode,
-                  photo: _photo,
-                  pickingPhoto: _pickingPhoto,
-                  onPhotoAction: _pickPhoto,
-                  onChanged: (_) => setState(() {}),
-                )
-              else
-                GroupInfoStep(
-                  name: _nameOrCode.text.trim(),
-                  description: _description,
-                  photo: _photo,
-                  approval: _approval,
-                  onApprovalChanged: ref.watch(groupUseMockProvider)
-                      ? (value) => setState(() => _approval = value)
-                      : null,
-                  adminName: ref.watch(groupCurrentUserNameProvider),
-                  enabled: !busy,
-                  onEdit: submitting ? null : () => setState(() => _step = 1),
-                ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    _error!,
-                    style: GroupDesign.body.copyWith(
-                      color: const Color(0xffe30000),
-                    ),
-                  ),
-                ),
-              if (_alreadyJoined)
-                TextButton(
-                  onPressed: () => context.go('/groups'),
-                  child: const Text('기존 모임 목록으로 이동'),
-                ),
-              const SizedBox(height: 24),
-            ],
-          ),
+        child: _GroupFormContent(
+          formKey: _formKey,
+          joining: widget.isJoining,
+          step: _step,
+          preview: _preview,
+          previewApproval: _previewApproval,
+          nameOrCode: _nameOrCode,
+          description: _description,
+          photo: _photo,
+          pickingPhoto: _pickingPhoto,
+          busy: busy,
+          approval: _approval,
+          error: _error,
+          alreadyJoined: _alreadyJoined,
+          onPhotoAction: _pickPhoto,
+          onChanged: (_) => setState(() {}),
+          onApprovalChanged: ref.watch(groupUseMockProvider)
+              ? (value) => setState(() => _approval = value)
+              : null,
+          onEdit: busy ? null : () => setState(() => _step = 1),
         ),
       ),
     );
   }
+}
+
+/// 입력 단계와 결과 안내를 렌더링합니다. 제출·사진 선택 상태는 페이지가 소유합니다.
+class _GroupFormContent extends ConsumerWidget {
+  const _GroupFormContent({
+    required this.formKey,
+    required this.joining,
+    required this.step,
+    this.preview,
+    required this.previewApproval,
+    required this.nameOrCode,
+    required this.description,
+    this.photo,
+    required this.pickingPhoto,
+    required this.busy,
+    required this.approval,
+    this.error,
+    required this.alreadyJoined,
+    required this.onPhotoAction,
+    required this.onChanged,
+    this.onApprovalChanged,
+    this.onEdit,
+  });
+  final GlobalKey<FormState> formKey;
+  final bool joining,
+      previewApproval,
+      pickingPhoto,
+      busy,
+      approval,
+      alreadyJoined;
+  final int step;
+  final Group? preview;
+  final TextEditingController nameOrCode, description;
+  final Uint8List? photo;
+  final String? error;
+  final ValueChanged<GroupPhotoAction> onPhotoAction;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<bool>? onApprovalChanged;
+  final VoidCallback? onEdit;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Form(
+    key: formKey,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (joining && step == 2 && preview != null)
+          GroupJoinSummary(group: preview!, approval: previewApproval)
+        else if (joining) ...[
+          const GroupPageTitle(
+            title: '초대 코드를 입력해 주세요',
+            subtitle: '모임 관리자에게 받은 코드로 가입할 수 있어요.',
+          ),
+          GroupField(
+            controller: nameOrCode,
+            label: '초대 코드',
+            hint: '초대 코드를 입력해주세요',
+            requiredValue: true,
+            enabled: !busy,
+          ),
+        ] else if (step == 1)
+          GroupProfileStep(
+            name: nameOrCode,
+            photo: photo,
+            pickingPhoto: pickingPhoto,
+            onPhotoAction: onPhotoAction,
+            onChanged: onChanged,
+          )
+        else
+          GroupInfoStep(
+            name: nameOrCode.text.trim(),
+            description: description,
+            photo: photo,
+            approval: approval,
+            onApprovalChanged: onApprovalChanged,
+            adminName: ref.watch(groupCurrentUserNameProvider),
+            enabled: !busy,
+            onEdit: onEdit,
+          ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(
+              error!,
+              style: GroupDesign.body.copyWith(color: const Color(0xffe30000)),
+            ),
+          ),
+        if (alreadyJoined)
+          TextButton(
+            onPressed: () => context.go('/groups'),
+            child: const Text('기존 모임 목록으로 이동'),
+          ),
+        const SizedBox(height: 24),
+      ],
+    ),
+  );
 }

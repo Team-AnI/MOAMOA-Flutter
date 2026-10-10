@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
-import '../../data/repositories/memory_group_repository.dart';
+import '../../domain/repositories/group_join_flow.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_code_card.dart';
 import '../widgets/group_created_actions.dart';
@@ -111,8 +111,8 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
               code: _code!,
               approval:
                   ref.read(groupUseMockProvider) &&
-                  ref.read(groupRepositoryProvider) is MemoryGroupRepository &&
-                  (ref.read(groupRepositoryProvider) as MemoryGroupRepository)
+                  ref.read(groupRepositoryProvider) is GroupJoinFlow &&
+                  (ref.read(groupRepositoryProvider) as GroupJoinFlow)
                       .requiresApproval(current!.group.id),
             )
           else ...[

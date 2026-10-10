@@ -128,7 +128,9 @@ void main() {
   });
 
   test('생성은 선택 소개를 생략하고 ADMIN 응답을 사용한다', () async {
-    final current = await repository.createGroup(name: '러닝', description: '');
+    final current = await repository.createGroup(
+      const CreateGroupParams(name: '러닝', description: ''),
+    );
     expect(adapter.requests.single.path, 'https://example.test/v1/meetings');
     expect(adapter.requests.single.method, 'POST');
     expect(adapter.requests.single.data, {'name': '러닝'});
