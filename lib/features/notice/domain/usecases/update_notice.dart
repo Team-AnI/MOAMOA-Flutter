@@ -21,7 +21,8 @@ final class UpdateNoticeParams extends Params {
 abstract class UpdateNotice extends Usecase<void, UpdateNoticeParams> {}
 
 final class UpdateNoticeImpl implements UpdateNotice {
-  UpdateNoticeImpl({required this._repository});
+  UpdateNoticeImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 

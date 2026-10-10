@@ -13,7 +13,8 @@ final class GetMyRoleParams extends Params {
 abstract class GetMyRole extends Usecase<MemberRole, GetMyRoleParams> {}
 
 final class GetMyRoleImpl implements GetMyRole {
-  GetMyRoleImpl({required this._repository});
+  GetMyRoleImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 

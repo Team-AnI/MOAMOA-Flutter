@@ -20,7 +20,8 @@ final class SetNoticePinnedParams extends Params {
 abstract class SetNoticePinned extends Usecase<void, SetNoticePinnedParams> {}
 
 final class SetNoticePinnedImpl implements SetNoticePinned {
-  SetNoticePinnedImpl({required this._repository});
+  SetNoticePinnedImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 

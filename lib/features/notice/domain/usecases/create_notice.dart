@@ -19,7 +19,8 @@ final class CreateNoticeParams extends Params {
 abstract class CreateNotice extends Usecase<int, CreateNoticeParams> {}
 
 final class CreateNoticeImpl implements CreateNotice {
-  CreateNoticeImpl({required this._repository});
+  CreateNoticeImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 

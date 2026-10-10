@@ -13,7 +13,8 @@ final class DeleteNoticeParams extends Params {
 abstract class DeleteNotice extends Usecase<void, DeleteNoticeParams> {}
 
 final class DeleteNoticeImpl implements DeleteNotice {
-  DeleteNoticeImpl({required this._repository});
+  DeleteNoticeImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 

@@ -17,7 +17,8 @@ final class GetNoticeDetailParams extends Params {
 abstract class GetNoticeDetail extends Usecase<Notice, GetNoticeDetailParams> {}
 
 final class GetNoticeDetailImpl implements GetNoticeDetail {
-  GetNoticeDetailImpl({required this._repository});
+  GetNoticeDetailImpl({required NoticeRepository repository})
+    : _repository = repository;
 
   final NoticeRepository _repository;
 
