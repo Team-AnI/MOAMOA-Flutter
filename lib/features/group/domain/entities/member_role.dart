@@ -2,7 +2,7 @@
 enum MemberRole { admin, member }
 
 /// 역할에 따른 기능별 권한입니다.
-extension MemberRolePermissions on MemberRole {
+extension MemberRoleX on MemberRole {
   bool get canWriteNotices => this == MemberRole.admin;
   bool get canCreateSchedules => this == MemberRole.admin;
   bool get canConfirmSchedules => this == MemberRole.admin;
