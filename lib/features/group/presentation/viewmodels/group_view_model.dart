@@ -129,15 +129,6 @@ class GroupViewModel extends Notifier<GroupState> {
         currentGroup: current,
       );
       return current;
-    } on ArgumentError catch (error) {
-      if (ref.mounted) {
-        state = GroupState(
-          groups: previous.groups,
-          currentGroup: previous.currentGroup,
-          errorMessage: error.message.toString(),
-        );
-      }
-      return null;
     } on Exception catch (error) {
       if (ref.mounted) {
         state = GroupState(

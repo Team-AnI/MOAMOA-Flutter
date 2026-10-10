@@ -116,28 +116,7 @@ class _ListBody extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          if (state.isLoading)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(
-                child: CircularProgressIndicator(color: GroupDesign.ink),
-              ),
-            ),
-          if (state.errorMessage != null) ...[
-            Text(state.errorMessage!, style: GroupDesign.body),
-            TextButton(
-              onPressed: () => ref.read(groupProvider.notifier).loadGroups(),
-              child: const Text('다시 시도'),
-            ),
-          ],
-          if (!state.isLoading &&
-              state.groups.isEmpty &&
-              pending.isEmpty &&
-              state.errorMessage == null) ...[
-            const GroupEmptyState(),
-            const SizedBox(height: 12),
-          ],
-          if (state.groups.isEmpty) const GroupEntryChoices(),
+          const _ListStatus(),
           if (pending.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -184,4 +163,41 @@ class _PendingCard extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// 목록 조회 상태와 첫 모임 진입 선택지를 표시합니다.
+class _ListStatus extends ConsumerWidget {
+  const _ListStatus();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(groupProvider);
+    final pending = ref.watch(groupMockPendingProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (state.isLoading)
+          const Padding(
+            padding: EdgeInsets.all(40),
+            child: Center(
+              child: CircularProgressIndicator(color: GroupDesign.ink),
+            ),
+          ),
+        if (state.errorMessage != null) ...[
+          Text(state.errorMessage!, style: GroupDesign.body),
+          TextButton(
+            onPressed: () => ref.read(groupProvider.notifier).loadGroups(),
+            child: const Text('다시 시도'),
+          ),
+        ],
+        if (!state.isLoading &&
+            state.groups.isEmpty &&
+            pending.isEmpty &&
+            state.errorMessage == null) ...[
+          const GroupEmptyState(),
+          const SizedBox(height: 12),
+        ],
+        if (state.groups.isEmpty) const GroupEntryChoices(),
+      ],
+    );
+  }
 }

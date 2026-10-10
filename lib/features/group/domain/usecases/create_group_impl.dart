@@ -8,7 +8,7 @@ final class CreateGroupImpl implements CreateGroup {
   @override
   Future<CurrentGroup> call(CreateGroupParams params) {
     final name = params.name.trim();
-    if (name.isEmpty) throw ArgumentError('모임명을 입력해주세요.');
+    if (name.isEmpty) throw const GroupFailure(GroupFailureReason.validation);
     return repository.createGroup(
       CreateGroupParams(name: name, description: params.description.trim()),
     );

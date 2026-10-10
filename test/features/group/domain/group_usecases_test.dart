@@ -16,7 +16,13 @@ void main() {
     final create = CreateGroupImpl(repository: repository);
     expect(
       () => create(const CreateGroupParams(name: '', description: '소개')),
-      throwsArgumentError,
+      throwsA(
+        isA<GroupFailure>().having(
+          (failure) => failure.reason,
+          'reason',
+          GroupFailureReason.validation,
+        ),
+      ),
     );
 
     expect(repository.createCalls, 0);
@@ -37,7 +43,13 @@ void main() {
       () => JoinGroupImpl(repository: FakeGroupRepository())(
         const JoinGroupParams(inviteCode: ' '),
       ),
-      throwsArgumentError,
+      throwsA(
+        isA<GroupFailure>().having(
+          (failure) => failure.reason,
+          'reason',
+          GroupFailureReason.validation,
+        ),
+      ),
     );
   });
 

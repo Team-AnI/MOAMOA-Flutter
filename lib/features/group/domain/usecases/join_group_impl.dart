@@ -9,7 +9,7 @@ final class JoinGroupImpl implements JoinGroup {
   @override
   Future<CurrentGroup> call(JoinGroupParams params) {
     final code = params.inviteCode.trim();
-    if (code.isEmpty) throw ArgumentError('초대 코드를 입력해주세요.');
+    if (code.isEmpty) throw const GroupFailure(GroupFailureReason.validation);
     return repository.joinGroup(inviteCode: code);
   }
 }
