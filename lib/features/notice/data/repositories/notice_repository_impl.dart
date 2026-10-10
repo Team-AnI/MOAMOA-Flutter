@@ -6,11 +6,19 @@ import '../../domain/entities/notice_exception.dart';
 import '../../domain/entities/notice_list_result.dart';
 import '../../domain/repositories/notice_repository.dart';
 import '../datasources/notice_remote_data_source.dart';
-import '../models/notice_request_model.dart';
+import '../models/create_notice_request.dart';
+import '../models/delete_notice_request.dart';
+import '../models/fetch_my_role_request.dart';
+import '../models/fetch_notice_detail_request.dart';
+import '../models/fetch_notices_request.dart';
+import '../models/pin_notice_request.dart';
+import '../models/unpin_notice_request.dart';
+import '../models/update_notice_request.dart';
 
 /// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
 class NoticeRepositoryImpl implements NoticeRepository {
-  const NoticeRepositoryImpl({required this._remoteDataSource});
+  const NoticeRepositoryImpl({required NoticeRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   final NoticeRemoteDataSource _remoteDataSource;
 
@@ -22,9 +30,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   }) {
     return _guard(() async {
       final response = await _remoteDataSource.fetchNotices(
-        meetingId: meetingId,
-        page: page,
-        size: size,
+        FetchNoticesRequest(meetingId: meetingId, page: page, size: size),
       );
       return response.toEntity();
     });
@@ -37,8 +43,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   }) {
     return _guard(() async {
       final response = await _remoteDataSource.fetchNoticeDetail(
-        meetingId: meetingId,
-        noticeId: noticeId,
+        FetchNoticeDetailRequest(meetingId: meetingId, noticeId: noticeId),
       );
       return response.toEntity();
     });
@@ -52,8 +57,11 @@ class NoticeRepositoryImpl implements NoticeRepository {
   }) {
     return _guard(
       () => _remoteDataSource.createNotice(
-        meetingId: meetingId,
-        request: NoticeRequestModel(title: title, content: content),
+        CreateNoticeRequest(
+          meetingId: meetingId,
+          title: title,
+          content: content,
+        ),
       ),
     );
   }
@@ -67,9 +75,12 @@ class NoticeRepositoryImpl implements NoticeRepository {
   }) {
     return _guard(
       () => _remoteDataSource.updateNotice(
-        meetingId: meetingId,
-        noticeId: noticeId,
-        request: NoticeRequestModel(title: title, content: content),
+        UpdateNoticeRequest(
+          meetingId: meetingId,
+          noticeId: noticeId,
+          title: title,
+          content: content,
+        ),
       ),
     );
   }
@@ -78,8 +89,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   Future<void> deleteNotice({required int meetingId, required int noticeId}) {
     return _guard(
       () => _remoteDataSource.deleteNotice(
-        meetingId: meetingId,
-        noticeId: noticeId,
+        DeleteNoticeRequest(meetingId: meetingId, noticeId: noticeId),
       ),
     );
   }
@@ -87,7 +97,9 @@ class NoticeRepositoryImpl implements NoticeRepository {
   @override
   Future<MemberRole> getMyRole({required int meetingId}) {
     return _guard(() async {
-      final role = await _remoteDataSource.fetchMyRole(meetingId: meetingId);
+      final role = await _remoteDataSource.fetchMyRole(
+        FetchMyRoleRequest(meetingId: meetingId),
+      );
       return role == 'ADMIN' ? MemberRole.admin : MemberRole.member;
     });
   }
@@ -101,12 +113,10 @@ class NoticeRepositoryImpl implements NoticeRepository {
     return _guard(
       () => pinned
           ? _remoteDataSource.pinNotice(
-              meetingId: meetingId,
-              noticeId: noticeId,
+              PinNoticeRequest(meetingId: meetingId, noticeId: noticeId),
             )
           : _remoteDataSource.unpinNotice(
-              meetingId: meetingId,
-              noticeId: noticeId,
+              UnpinNoticeRequest(meetingId: meetingId, noticeId: noticeId),
             ),
     );
   }
