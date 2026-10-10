@@ -190,6 +190,17 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
     }
   }
 
+  void _close() {
+    if (widget.isJoining && _step == 2) {
+      setState(() {
+        _step = 1;
+        _error = null;
+      });
+    } else {
+      context.go('/groups');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final submitting = ref.watch(
@@ -207,30 +218,15 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       child: GroupPageLayout(
         title: widget.isJoining ? null : '모임 만들기',
         isBack: widget.isJoining,
-        onClose: busy
-            ? null
-            : () {
-                if (widget.isJoining && _step == 2) {
-                  setState(() {
-                    _step = 1;
-                    _error = null;
-                  });
-                } else {
-                  context.go('/groups');
-                }
-              },
+        onClose: busy ? null : _close,
         step: widget.isJoining ? null : _step,
-        bottom: GroupPrimaryButton(
-          label: busy
-              ? '처리 중…'
-              : widget.isJoining
-              ? (_step == 1 && ref.watch(groupUseMockProvider)
-                    ? '다음'
-                    : (_previewApproval ? '가입 요청 보내기' : '가입하기'))
-              : _step == 1
-              ? '다음'
-              : '모임 만들기',
-          onPressed: busy || _pickingPhoto ? null : _submit,
+        bottom: _FormSubmitButton(
+          joining: widget.isJoining,
+          step: _step,
+          approval: _previewApproval,
+          busy: busy,
+          pickingPhoto: _pickingPhoto,
+          onSubmit: _submit,
         ),
         child: _GroupFormContent(
           formKey: _formKey,
@@ -351,5 +347,35 @@ class _GroupFormContent extends ConsumerWidget {
         const SizedBox(height: 24),
       ],
     ),
+  );
+}
+
+/// 제출 버튼의 단계별 문구와 활성 상태를 담당합니다.
+class _FormSubmitButton extends ConsumerWidget {
+  const _FormSubmitButton({
+    required this.joining,
+    required this.step,
+    required this.approval,
+    required this.busy,
+    required this.pickingPhoto,
+    required this.onSubmit,
+  });
+  final bool joining, approval, busy, pickingPhoto;
+  final int step;
+  final VoidCallback onSubmit;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => GroupPrimaryButton(
+    label: busy
+        ? '처리 중…'
+        : joining
+        ? (step == 1 && ref.watch(groupUseMockProvider)
+              ? '다음'
+              : approval
+              ? '가입 요청 보내기'
+              : '가입하기')
+        : step == 1
+        ? '다음'
+        : '모임 만들기',
+    onPressed: busy || pickingPhoto ? null : onSubmit,
   );
 }
