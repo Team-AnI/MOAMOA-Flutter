@@ -1,7 +1,7 @@
 const _weekdays = ['월', '화', '수', '목', '금', '토', '일'];
 
 /// 화면 표시용 날짜/시간 문자열. 서버가 UTC 로 줄 수 있어 toLocal() 한 값에 사용합니다.
-extension ScheduleDateFormat on DateTime {
+extension ScheduleDateFormatX on DateTime {
   String get weekdayKo => _weekdays[weekday - 1];
 
   String get hhmm =>

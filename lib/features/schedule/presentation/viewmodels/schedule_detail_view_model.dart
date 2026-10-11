@@ -6,7 +6,7 @@ import '../providers/schedule_providers.dart';
 
 /// 일정 한 건의 상세 정보
 class ScheduleDetailViewModel extends AsyncNotifier<Schedule> {
-  ScheduleDetailViewModel(this.request);
+  ScheduleDetailViewModel({required this.request});
 
   final ScheduleDetailRequest request;
 

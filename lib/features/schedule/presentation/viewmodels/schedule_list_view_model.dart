@@ -5,7 +5,7 @@ import 'package:moamoa/features/schedule/presentation/providers/schedule_provide
 
 /// 기간 내 일정 목록(시작 일시 오름차순)
 class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
-  ScheduleListViewModel(this.request);
+  ScheduleListViewModel({required this.request});
 
   final ScheduleListRequest request;
 

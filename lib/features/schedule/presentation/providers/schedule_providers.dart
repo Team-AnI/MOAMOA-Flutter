@@ -4,6 +4,7 @@ import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
@@ -31,14 +32,14 @@ final scheduleListProvider =
       ScheduleListViewModel,
       List<Schedule>,
       ScheduleListRequest
-    >(ScheduleListViewModel.new);
+    >((request) => ScheduleListViewModel(request: request));
 
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<
       ScheduleDetailViewModel,
       Schedule,
       ScheduleDetailRequest
-    >(ScheduleDetailViewModel.new);
+    >((request) => ScheduleDetailViewModel(request: request));
 
 /// 인자는 일정을 만들 모임의 id 입니다.
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공 id, 오류)가 남지 않게 초기화합니다.

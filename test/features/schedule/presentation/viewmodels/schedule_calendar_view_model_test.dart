@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
-import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 
 void main() {
   late ProviderContainer container;
@@ -21,8 +21,7 @@ void main() {
   ScheduleCalendarState state() => container.read(scheduleCalendarProvider);
 
   test('처음에는 이번 달이 보이고 오늘이 선택되어 있다', () {
-    expect(state().month, thisMonth);
-    expect(state().selected, today);
+    expect(state(), ScheduleCalendarState(month: thisMonth, selected: today));
   });
 
   test('다른 달로 바꾸면 그 달 1일이 선택된다', () {
