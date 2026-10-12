@@ -6,6 +6,7 @@ import '../../domain/entities/notice.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
+import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 
 /// 공지 목록 화면
@@ -45,9 +46,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(noticeErrorMessage(error))));
+    showNoticeSnackBar(context, noticeErrorMessage(error));
   }
 
   void _goWrite() => context.push('/meetings/${widget.meetingId}/notices/new');
@@ -78,6 +77,9 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
                     ? _EmptyView(
                         onWrite: isAdmin ? _goWrite : null,
                         onRetryRole: retryRole,
+                        onRefresh: () => ref
+                            .read(noticeListProvider(widget.meetingId).notifier)
+                            .refresh(),
                       )
                     : _NoticeListBody(
                         state: state,
@@ -282,44 +284,124 @@ class _MetaText extends StatelessWidget {
   }
 }
 
-/// 공지가 없을 때. 관리자에게는 작성 버튼을 보여줍니다.
+/// 공지가 없을 때. 관리자에게는 작성 버튼을, 구성원에게는 안내 문구를 보여줍니다.
+///
+/// 비어 있어도 당겨서 새로고침할 수 있습니다.
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({this.onWrite, this.onRetryRole});
+  const _EmptyView({required this.onRefresh, this.onWrite, this.onRetryRole});
 
+  final Future<void> Function() onRefresh;
   final VoidCallback? onWrite;
   final VoidCallback? onRetryRole;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            '아직 등록된 공지가 없어요',
-            style: TextStyle(fontSize: 15, color: NoticeColors.subText),
-          ),
-          if (onRetryRole != null) ...[
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: onRetryRole,
-              child: const Text('권한 다시 확인'),
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: constraints.maxWidth,
+              minHeight: constraints.maxHeight,
             ),
-          ],
-          if (onWrite != null) ...[
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onWrite,
-              style: FilledButton.styleFrom(
-                backgroundColor: NoticeColors.text,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            child: Padding(
+              // 화면 정중앙보다 조금 위에 둡니다.
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: NoticeColors.gray,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.campaign_outlined,
+                      size: 28,
+                      color: NoticeColors.subText,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    '아직 등록된 공지가 없어요',
+                    style: TextStyle(
+                      fontSize: 17,
+                      height: 1.41,
+                      letterSpacing: -0.3,
+                      fontWeight: FontWeight.w600,
+                      color: NoticeColors.text,
+                    ),
+                  ),
+                  // 관리자에게만 안내 문구를 보여줍니다.
+                  if (onWrite != null) ...[
+                    const SizedBox(height: 6),
+                    const Text(
+                      '첫 공지를 작성해 보세요',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.43,
+                        letterSpacing: -0.1,
+                        color: NoticeColors.bodyText,
+                      ),
+                    ),
+                  ],
+                  if (onRetryRole != null) ...[
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: onRetryRole,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: NoticeColors.gray,
+                        foregroundColor: NoticeColors.text,
+                        minimumSize: const Size(0, 48),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        '권한 다시 확인',
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.25,
+                          letterSpacing: -0.2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (onWrite != null) ...[
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: onWrite,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: NoticeColors.text,
+                        minimumSize: const Size(0, 48),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        '공지 작성하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.25,
+                          letterSpacing: -0.2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              child: const Text('공지 작성하기'),
             ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }

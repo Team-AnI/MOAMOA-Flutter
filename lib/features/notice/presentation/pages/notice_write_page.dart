@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/notice.dart';
 import '../providers/notice_providers.dart';
 import '../widgets/notice_colors.dart';
+import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 
 /// 공지 작성 화면. [noticeId] 가 있으면 수정 화면으로 동작합니다.
@@ -139,11 +140,11 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     }
     // 작성한 내용은 그대로 두고 다시 시도할 수 있게 안내합니다. (예외처리 4-3)
     final error = ref.read(noticeWriteProvider(widget.meetingId)).error;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(noticeErrorMessage(error)),
-        action: SnackBarAction(label: '다시 시도', onPressed: _submit),
-      ),
+    showNoticeSnackBar(
+      context,
+      noticeErrorMessage(error),
+      actionLabel: '다시 시도',
+      onAction: _submit,
     );
   }
 

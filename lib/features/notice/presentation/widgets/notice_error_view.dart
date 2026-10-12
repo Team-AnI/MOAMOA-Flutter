@@ -41,10 +41,35 @@ class NoticeErrorView extends StatelessWidget {
             Text(
               message ?? noticeErrorMessage(error),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: NoticeColors.icon),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.47,
+                letterSpacing: -0.2,
+                color: NoticeColors.bodyText,
+              ),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(onPressed: onAction, child: Text(actionLabel)),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: onAction,
+              style: FilledButton.styleFrom(
+                backgroundColor: NoticeColors.gray,
+                foregroundColor: NoticeColors.text,
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Text(
+                actionLabel,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.25,
+                  letterSpacing: -0.2,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
         ),
       ),

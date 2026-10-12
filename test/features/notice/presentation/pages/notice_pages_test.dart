@@ -55,6 +55,7 @@ void main() {
 
       expect(find.text('아직 등록된 공지가 없어요'), findsOneWidget);
       expect(find.text('공지 작성하기'), findsOneWidget);
+      expect(find.text('첫 공지를 작성해 보세요'), findsOneWidget);
       expect(find.byTooltip('공지 작성'), findsOneWidget);
     });
 
@@ -63,8 +64,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('아직 등록된 공지가 없어요'), findsOneWidget);
+      expect(find.text('첫 공지를 작성해 보세요'), findsNothing);
       expect(find.text('공지 작성하기'), findsNothing);
       expect(find.byTooltip('공지 작성'), findsNothing);
+    });
+
+    testWidgets('공지가 없어도 당겨서 새로고침할 수 있다', (tester) async {
+      final repository = FakeNoticeRepository();
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+      expect(repository.getNoticesCallCount, 1);
+
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 300));
+      await tester.pumpAndSettle();
+
+      expect(repository.getNoticesCallCount, 2);
     });
   });
 

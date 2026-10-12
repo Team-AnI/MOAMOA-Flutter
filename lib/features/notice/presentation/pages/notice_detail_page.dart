@@ -6,6 +6,7 @@ import '../../domain/entities/notice.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
+import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 
 /// 공지 상세 화면
@@ -22,22 +23,11 @@ class NoticeDetailPage extends ConsumerWidget {
   NoticeDetailArgs get _args => (meetingId: meetingId, noticeId: noticeId);
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('공지를 삭제할까요?'),
-        content: const Text('삭제한 공지는 되돌릴 수 없어요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final confirmed = await showNoticeConfirmDialog(
+      context,
+      title: '공지를 삭제할까요?',
+      message: '삭제한 공지는 되돌릴 수 없어요.',
+      confirmLabel: '삭제',
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -51,9 +41,7 @@ class NoticeDetailPage extends ConsumerWidget {
   }
 
   void _showError(BuildContext context, Object error) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(noticeErrorMessage(error))));
+    showNoticeSnackBar(context, noticeErrorMessage(error));
   }
 
   @override
