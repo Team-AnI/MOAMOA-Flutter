@@ -15,20 +15,5 @@ abstract final class NoticeColors {
 
   /// bg/fill
   static const gray = Color(0xFFF5F5F7);
-  static const divider = Color(0xFFE5E8EB);
   static const error = Color(0xFFF04452);
-  static const switchOff = Color(0xFFD2D2D7);
-
-  /// text/disabled
-  static const disabled = Color(0xFFCCCCCC);
-
-  /// accent/text
-  static const blue = Color(0xFF0066CC);
-
-  /// accent/tint
-  static const lightBlue = Color(0xFFE5EFFA);
-
-  /// alert/text, alert/tint (중요 뱃지)
-  static const alert = Color(0xFFE30000);
-  static const alertTint = Color(0xFFFDECEC);
 }

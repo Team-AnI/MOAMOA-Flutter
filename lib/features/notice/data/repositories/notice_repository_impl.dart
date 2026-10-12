@@ -11,8 +11,6 @@ import '../models/delete_notice_request.dart';
 import '../models/fetch_my_role_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
-import '../models/pin_notice_request.dart';
-import '../models/unpin_notice_request.dart';
 import '../models/update_notice_request.dart';
 
 /// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
@@ -54,7 +52,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
-    bool isImportant = false,
   }) {
     return _guard(
       () => _remoteDataSource.createNotice(
@@ -62,7 +59,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
           meetingId: meetingId,
           title: title,
           content: content,
-          isImportant: isImportant,
         ),
       ),
     );
@@ -74,7 +70,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
-    bool? isImportant,
   }) {
     return _guard(
       () => _remoteDataSource.updateNotice(
@@ -83,7 +78,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
           noticeId: noticeId,
           title: title,
           content: content,
-          isImportant: isImportant,
         ),
       ),
     );
@@ -106,23 +100,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
       );
       return role == 'ADMIN' ? MemberRole.admin : MemberRole.member;
     });
-  }
-
-  @override
-  Future<void> setPinned({
-    required int meetingId,
-    required int noticeId,
-    required bool pinned,
-  }) {
-    return _guard(
-      () => pinned
-          ? _remoteDataSource.pinNotice(
-              PinNoticeRequest(meetingId: meetingId, noticeId: noticeId),
-            )
-          : _remoteDataSource.unpinNotice(
-              UnpinNoticeRequest(meetingId: meetingId, noticeId: noticeId),
-            ),
-    );
   }
 
   Future<T> _guard<T>(Future<T> Function() request) async {

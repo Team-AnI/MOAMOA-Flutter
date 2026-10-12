@@ -17,10 +17,6 @@ abstract class NoticeModel with _$NoticeModel {
     /// ISO-8601 (KST, 예: 2026-10-07T10:00:00+09:00)
     required String createdAt,
     String? content,
-    String? authorNickname,
-    bool? isPinned,
-    bool? isImportant,
-    bool? isEdited,
   }) = _NoticeModel;
 
   factory NoticeModel.fromJson(Map<String, dynamic> json) =>
@@ -31,9 +27,5 @@ abstract class NoticeModel with _$NoticeModel {
     title: title,
     content: content,
     createdAt: DateTime.parse(createdAt).toLocal(),
-    authorName: authorNickname,
-    isPinned: isPinned ?? false,
-    isImportant: isImportant ?? false,
-    isEdited: isEdited ?? false,
   );
 }

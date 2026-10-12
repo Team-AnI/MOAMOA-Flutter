@@ -152,7 +152,7 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-/// 고정 뱃지 · 제목 · 작성자 · 본문
+/// 제목 · 작성일 · 본문
 class _NoticeContent extends StatelessWidget {
   const _NoticeContent({required this.notice});
 
@@ -178,10 +178,6 @@ class _NoticeContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (notice.isPinned) ...[
-            const _PinnedChip(),
-            const SizedBox(height: 10),
-          ],
           Text(
             notice.title,
             style: const TextStyle(
@@ -193,10 +189,14 @@ class _NoticeContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          _AuthorRow(
-            authorName: notice.authorName,
-            createdAt: notice.createdAt,
-            isEdited: notice.isEdited,
+          Text(
+            '${notice.createdAt.month}월 ${notice.createdAt.day}일',
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.43,
+              letterSpacing: -0.1,
+              color: NoticeColors.bodyText,
+            ),
           ),
           const SizedBox(height: 24),
           for (final paragraph in paragraphs) ...[
@@ -205,91 +205,6 @@ class _NoticeContent extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _PinnedChip extends StatelessWidget {
-  const _PinnedChip();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 26,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: NoticeColors.lightBlue,
-        borderRadius: BorderRadius.circular(9999),
-      ),
-      // 글자 크기만큼만 차지하면서 세로로 가운데 정렬합니다.
-      child: const Center(
-        widthFactor: 1,
-        child: Text(
-          '고정된 공지',
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.33,
-            fontWeight: FontWeight.w600,
-            color: NoticeColors.blue,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// (도) 김도윤 · 9월 12일 · 수정됨. 작성자가 없으면 날짜만 보여줍니다.
-class _AuthorRow extends StatelessWidget {
-  const _AuthorRow({
-    required this.authorName,
-    required this.createdAt,
-    required this.isEdited,
-  });
-
-  final String? authorName;
-  final DateTime createdAt;
-  final bool isEdited;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = authorName;
-    final date = '${createdAt.month}월 ${createdAt.day}일';
-    const style = TextStyle(fontSize: 14, height: 1.43, letterSpacing: -0.1);
-
-    return Row(
-      children: [
-        if (name != null && name.isNotEmpty) ...[
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: NoticeColors.lightBlue,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              name.characters.first,
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.33,
-                fontWeight: FontWeight.w600,
-                color: NoticeColors.blue,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-        Text(
-          name == null ? date : '$name · $date',
-          style: style.copyWith(color: NoticeColors.bodyText),
-        ),
-        if (isEdited) ...[
-          const SizedBox(width: 6),
-          Text('·', style: style.copyWith(color: NoticeColors.subText)),
-          const SizedBox(width: 6),
-          Text('수정됨', style: style.copyWith(color: NoticeColors.subText)),
-        ],
-      ],
     );
   }
 }

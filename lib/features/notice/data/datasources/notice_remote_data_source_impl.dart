@@ -7,8 +7,6 @@ import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
 import '../models/notice_list_model.dart';
 import '../models/notice_model.dart';
-import '../models/pin_notice_request.dart';
-import '../models/unpin_notice_request.dart';
 import '../models/update_notice_request.dart';
 import 'notice_remote_data_source.dart';
 
@@ -69,20 +67,6 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
       '/v1/meetings/${request.meetingId}',
     );
     return _data(response)['myRole'] as String;
-  }
-
-  @override
-  Future<void> pinNotice(PinNoticeRequest request) async {
-    await _dio.post<Map<String, dynamic>>(
-      '/v1/meetings/${request.meetingId}/notices/${request.noticeId}/pin',
-    );
-  }
-
-  @override
-  Future<void> unpinNotice(UnpinNoticeRequest request) async {
-    await _dio.delete<Map<String, dynamic>>(
-      '/v1/meetings/${request.meetingId}/notices/${request.noticeId}/pin',
-    );
   }
 
   /// 공통 응답 { success, data, error, timestamp } 에서 data 를 꺼냅니다.

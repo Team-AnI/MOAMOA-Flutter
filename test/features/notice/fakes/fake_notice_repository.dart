@@ -7,23 +7,11 @@ import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
 import 'package:moamoa/features/notice/domain/repositories/notice_repository.dart';
 
 /// 테스트용 공지 생성 헬퍼
-Notice buildNotice(
-  int id, {
-  String? title,
-  String? content,
-  String? authorName,
-  bool isPinned = false,
-  bool isImportant = false,
-  bool isEdited = false,
-}) {
+Notice buildNotice(int id, {String? title, String? content}) {
   return Notice(
     id: id,
     title: title ?? '공지 $id',
     content: content,
-    authorName: authorName,
-    isPinned: isPinned,
-    isImportant: isImportant,
-    isEdited: isEdited,
     createdAt: DateTime(2026, 10, 1).add(Duration(days: id)),
   );
 }
@@ -71,26 +59,6 @@ class FakeNoticeRepository implements NoticeRepository {
     return index;
   }
 
-  Notice _copy(
-    Notice old, {
-    String? title,
-    String? content,
-    bool? isPinned,
-    bool? isImportant,
-    bool? isEdited,
-  }) {
-    return Notice(
-      id: old.id,
-      title: title ?? old.title,
-      content: content ?? old.content,
-      createdAt: old.createdAt,
-      authorName: old.authorName,
-      isPinned: isPinned ?? old.isPinned,
-      isImportant: isImportant ?? old.isImportant,
-      isEdited: isEdited ?? old.isEdited,
-    );
-  }
-
   @override
   Future<NoticeListResult> getNotices({
     required int meetingId,
@@ -127,19 +95,12 @@ class FakeNoticeRepository implements NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
-    bool isImportant = false,
   }) async {
     _throwIfError();
     final id = _nextId++;
     notices.insert(
       0,
-      Notice(
-        id: id,
-        title: title,
-        content: content,
-        createdAt: DateTime.now(),
-        isImportant: isImportant,
-      ),
+      Notice(id: id, title: title, content: content, createdAt: DateTime.now()),
     );
     await createGate?.future;
     return id;
@@ -151,17 +112,15 @@ class FakeNoticeRepository implements NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
-    bool? isImportant,
   }) async {
     _throwIfError();
     final index = _indexOf(noticeId);
-    // 수정하면 공지에 "수정됨"이 붙습니다.
-    notices[index] = _copy(
-      notices[index],
-      title: title,
-      content: content,
-      isImportant: isImportant,
-      isEdited: true,
+    final old = notices[index];
+    notices[index] = Notice(
+      id: old.id,
+      title: title ?? old.title,
+      content: content ?? old.content,
+      createdAt: old.createdAt,
     );
   }
 
@@ -179,16 +138,5 @@ class FakeNoticeRepository implements NoticeRepository {
     if (myRoleError != null) throw myRoleError!;
     _throwIfError();
     return myRole;
-  }
-
-  @override
-  Future<void> setPinned({
-    required int meetingId,
-    required int noticeId,
-    required bool pinned,
-  }) async {
-    _throwIfError();
-    final index = _indexOf(noticeId);
-    notices[index] = _copy(notices[index], isPinned: pinned);
   }
 }

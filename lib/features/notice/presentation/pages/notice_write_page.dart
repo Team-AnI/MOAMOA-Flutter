@@ -82,7 +82,7 @@ class NoticeWritePage extends ConsumerWidget {
   }
 }
 
-/// 제목·내용 입력칸, 중요 공지·고정 설정, 등록 버튼
+/// 제목·내용 입력칸과 등록 버튼
 ///
 /// [initialNotice] 가 있으면 수정 모드이며, 처음 만들어질 때 한 번만 기존 내용을 채웁니다.
 class _NoticeForm extends ConsumerStatefulWidget {
@@ -105,12 +105,6 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
 
   /// 등록을 한 번 누른 뒤부터 빠진 항목 안내를 보여줍니다. (예외처리 4-1)
   bool _showMissing = false;
-
-  /// 목록 맨 위에 고정. 수정일 때는 현재 고정 여부로 시작합니다.
-  late bool _pinToTop = widget.initialNotice?.isPinned ?? false;
-
-  /// 중요 공지로 표시. 수정일 때는 현재 값으로 시작합니다.
-  late bool _isImportant = widget.initialNotice?.isImportant ?? false;
 
   bool get _isEdit => widget.initialNotice != null;
 
@@ -137,9 +131,6 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
           noticeId: widget.initialNotice?.id,
           title: _titleController.text,
           content: _contentController.text,
-          pinToTop: _pinToTop,
-          wasPinned: widget.initialNotice?.isPinned ?? false,
-          isImportant: _isImportant,
         );
     if (!mounted) return;
     if (success) {
@@ -210,17 +201,6 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
                     : null,
                 onChanged: _onChanged,
               ),
-              const SizedBox(height: 16),
-              _ImportantCard(
-                value: _isImportant,
-                onChanged: (value) => setState(() => _isImportant = value),
-              ),
-              const SizedBox(height: 16),
-              _PinToggle(
-                value: _pinToTop,
-                onChanged: (value) => setState(() => _pinToTop = value),
-              ),
-              if (_isEdit) ...[const SizedBox(height: 16), const _EditHint()],
             ],
           ),
         ),
@@ -321,217 +301,6 @@ class _InputField extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// "중요 공지로 표시" 체크 카드. 체크하면 빨간 테두리가 생깁니다.
-class _ImportantCard extends StatelessWidget {
-  const _ImportantCard({required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      checked: value,
-      label: '중요 공지로 표시',
-      child: GestureDetector(
-        onTap: () => onChanged(!value),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: NoticeColors.gray,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: value ? NoticeColors.alert : Colors.transparent,
-              width: 1.5,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: value ? NoticeColors.alertTint : Colors.white,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.warning_amber_rounded,
-                  size: 20,
-                  color: NoticeColors.alert,
-                ),
-              ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '중요 공지로 표시',
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.47,
-                        letterSpacing: -0.2,
-                        fontWeight: FontWeight.w600,
-                        color: NoticeColors.text,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      '중요 표시가 붙고, 안 읽은 사람에게 다시 알려요',
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.33,
-                        color: NoticeColors.bodyText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 14),
-              Container(
-                width: 24,
-                height: 24,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: value ? NoticeColors.text : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: value
-                      ? null
-                      : Border.all(color: NoticeColors.disabled, width: 1.5),
-                ),
-                child: value
-                    ? const Icon(Icons.check, size: 13, color: Colors.white)
-                    : null,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 목록 맨 위에 고정 토글
-class _PinToggle extends StatelessWidget {
-  const _PinToggle({required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: NoticeColors.gray,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                '목록 맨 위에 고정',
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.47,
-                  letterSpacing: -0.2,
-                  color: NoticeColors.text,
-                ),
-              ),
-            ),
-            _Toggle(value: value, onChanged: onChanged),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 50x30 알약 모양 토글
-class _Toggle extends StatelessWidget {
-  const _Toggle({required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      toggled: value,
-      child: GestureDetector(
-        onTap: () => onChanged(!value),
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 50,
-          height: 30,
-          padding: const EdgeInsets.all(2),
-          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: value ? NoticeColors.text : NoticeColors.switchOff,
-            borderRadius: BorderRadius.circular(9999),
-          ),
-          child: Container(
-            width: 26,
-            height: 26,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x14000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 수정 화면 안내 문구
-class _EditHint extends StatelessWidget {
-  const _EditHint();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(
-              Icons.info_outline,
-              size: 18,
-              color: NoticeColors.bodyText,
-            ),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '저장하면 공지에 수정됨 표시가 붙어요.',
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.43,
-                letterSpacing: -0.1,
-                color: NoticeColors.bodyText,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

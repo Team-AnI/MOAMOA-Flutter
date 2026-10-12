@@ -77,34 +77,4 @@ void main() {
       ),
     );
   });
-
-  test('작성자 · 고정 · 중요 · 수정됨이 오면 함께 변환한다', () async {
-    final repository = _repositoryWith(200, '''
-      {"success": true, "data": {"noticeId": 30, "title": "회식 정산 안내",
-       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
-       "authorNickname": "김도윤", "isPinned": true,
-       "isImportant": true, "isEdited": true}}
-    ''');
-
-    final notice = await repository.getNoticeDetail(meetingId: 1, noticeId: 30);
-
-    expect(notice.authorName, '김도윤');
-    expect(notice.isPinned, isTrue);
-    expect(notice.isImportant, isTrue);
-    expect(notice.isEdited, isTrue);
-  });
-
-  test('작성자 · 고정 · 중요 · 수정됨이 없으면 기본값을 쓴다', () async {
-    final repository = _repositoryWith(200, '''
-      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
-       "createdAt": "2026-10-07T10:00:00+09:00"}}
-    ''');
-
-    final notice = await repository.getNoticeDetail(meetingId: 1, noticeId: 30);
-
-    expect(notice.authorName, isNull);
-    expect(notice.isPinned, isFalse);
-    expect(notice.isImportant, isFalse);
-    expect(notice.isEdited, isFalse);
-  });
 }

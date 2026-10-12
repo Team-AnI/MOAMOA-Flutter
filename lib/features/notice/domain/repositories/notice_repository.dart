@@ -24,7 +24,6 @@ abstract interface class NoticeRepository {
     required int meetingId,
     required String title,
     required String content,
-    bool isImportant = false,
   });
 
   /// 3-4 공지 수정. 보낸 필드만 변경됩니다.
@@ -33,7 +32,6 @@ abstract interface class NoticeRepository {
     required int noticeId,
     String? title,
     String? content,
-    bool? isImportant,
   });
 
   /// 3-5 공지 삭제
@@ -42,11 +40,4 @@ abstract interface class NoticeRepository {
   /// 1-4 모임 상세의 myRole. 작성·수정·삭제 버튼 노출에 사용합니다.
   // TODO(#44): 역할 조회는 모임 기능의 책임이므로 group feature 로 이동
   Future<MemberRole> getMyRole({required int meetingId});
-
-  /// 공지 고정 / 고정 해제 (후순위 API: POST·DELETE .../notices/{noticeId}/pin)
-  Future<void> setPinned({
-    required int meetingId,
-    required int noticeId,
-    required bool pinned,
-  });
 }
