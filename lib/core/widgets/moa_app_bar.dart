@@ -15,22 +15,15 @@ class MoaAppBar extends AppBar {
         scrolledUnderElevation: 0,
         // Figma 의 왼쪽 여백(16px)에 맞춥니다.
         leadingWidth: 60,
-        leading: const _BackButton(),
+        // 뒤로가기(context.pop)에 BuildContext 가 필요해서 Builder 로 감쌉니다.
+        leading: Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: IconButton(
+              onPressed: context.pop,
+              icon: SvgPicture.asset('assets/icons/caret_left.svg'),
+            ),
+          ),
+        ),
       );
-}
-
-/// 이전 화면으로 돌아가는 버튼. `context.pop` 이 필요해서 별도 위젯으로 둡니다.
-class _BackButton extends StatelessWidget {
-  const _BackButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12),
-      child: IconButton(
-        onPressed: context.pop,
-        icon: SvgPicture.asset('assets/icons/caret_left.svg'),
-      ),
-    );
-  }
 }
