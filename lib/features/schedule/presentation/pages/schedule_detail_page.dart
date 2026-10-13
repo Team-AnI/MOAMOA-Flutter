@@ -4,10 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 
-import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
+import '../viewmodels/schedule_detail_view_model.dart';
 
 /// 일정 상세 화면입니다. 목록이나 캘린더에서 일정을 누르면 열립니다.
 ///
@@ -27,8 +26,9 @@ class ScheduleDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final schedule = ref.watch(
-      scheduleDetailProvider(
-        ScheduleDetailRequest(meetingId: meetingId, scheduleId: scheduleId),
+      scheduleDetailViewModelProvider(
+        meetingId: meetingId,
+        scheduleId: scheduleId,
       ),
     );
 

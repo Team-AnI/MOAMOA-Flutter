@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_detail_view_model.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -29,9 +29,7 @@ void main() {
 
   test('일정 상세를 불러온다', () async {
     final schedule = await container.read(
-      scheduleDetailProvider(
-        const ScheduleDetailRequest(meetingId: 1, scheduleId: 20),
-      ).future,
+      scheduleDetailViewModelProvider(meetingId: 1, scheduleId: 20).future,
     );
 
     expect(schedule, run);
@@ -40,9 +38,7 @@ void main() {
   test('없는 일정이면 오류 상태가 된다', () async {
     await expectLater(
       container.read(
-        scheduleDetailProvider(
-          const ScheduleDetailRequest(meetingId: 1, scheduleId: 999),
-        ).future,
+        scheduleDetailViewModelProvider(meetingId: 1, scheduleId: 999).future,
       ),
       throwsStateError,
     );

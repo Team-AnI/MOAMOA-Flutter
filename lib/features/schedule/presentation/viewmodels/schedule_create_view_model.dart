@@ -1,18 +1,20 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../providers/schedule_providers.dart';
 import 'schedule_create_state.dart';
 import 'schedule_create_status.dart';
+import 'schedule_list_view_model.dart';
+
+part 'schedule_create_view_model.g.dart';
 
 /// 일정 만들기 ViewModel 입니다. [meetingId] 모임에 일정을 만들고 제출 과정을 [ScheduleCreateState] 로 알립니다.
-class ScheduleCreateViewModel extends Notifier<ScheduleCreateState> {
-  ScheduleCreateViewModel(this.meetingId);
-
-  final int meetingId;
-
+///
+/// autoDispose: 화면을 닫으면 이전 제출 결과(성공 id, 오류)가 남지 않게 초기화합니다.
+@riverpod
+class ScheduleCreateViewModel extends _$ScheduleCreateViewModel {
   @override
-  ScheduleCreateState build() => const ScheduleCreateState();
+  ScheduleCreateState build(int meetingId) => const ScheduleCreateState();
 
   Future<void> submit({
     required String title,
@@ -46,7 +48,7 @@ class ScheduleCreateViewModel extends Notifier<ScheduleCreateState> {
 
     if (!ref.mounted) return; // 제출 중에 화면이 닫힌 경우
     if (result.status == ScheduleCreateStatus.success) {
-      ref.invalidate(scheduleListProvider);
+      ref.invalidate(scheduleListViewModelProvider);
     }
     state = result;
   }

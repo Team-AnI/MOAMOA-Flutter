@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
-import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
 import '../viewmodels/schedule_create_state.dart';
 import '../viewmodels/schedule_create_status.dart';
+import '../viewmodels/schedule_create_view_model.dart';
 
 /// 일정 만들기 화면 (관리자). 입력 → 제출 → 결과 순서로 동작합니다.
 ///
@@ -73,7 +73,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   void _submit() {
     FocusScope.of(context).unfocus();
     ref
-        .read(scheduleCreateProvider(widget.meetingId).notifier)
+        .read(scheduleCreateViewModelProvider(widget.meetingId).notifier)
         .submit(
           title: _title.text,
           description: _description.text,
@@ -112,7 +112,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = scheduleCreateProvider(widget.meetingId);
+    final provider = scheduleCreateViewModelProvider(widget.meetingId);
     ref.listen(provider, _onStateChanged);
     final state = ref.watch(provider);
 

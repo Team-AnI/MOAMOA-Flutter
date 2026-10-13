@@ -4,10 +4,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 
 import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
+import '../viewmodels/schedule_calendar_view_model.dart';
+import '../viewmodels/schedule_list_view_model.dart';
 import '../widgets/schedule_calendar.dart';
 import '../widgets/schedule_card.dart';
 import '../widgets/schedule_event_tile.dart';
@@ -17,8 +18,8 @@ import '../widgets/schedule_event_tile.dart';
 String _basePath(int meetingId) => '/meetings/$meetingId/schedules';
 
 /// 캘린더 탭이 조회하는 기간입니다. [month] 달의 1일 ~ 말일
-ScheduleListRequest _monthRequest(int meetingId, DateTime month) =>
-    ScheduleListRequest(
+ScheduleListViewModelProvider _monthRequest(int meetingId, DateTime month) =>
+    scheduleListViewModelProvider(
       meetingId: meetingId,
       startDate: month,
       endDate: DateTime(month.year, month.month + 1, 0),
@@ -48,7 +49,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
   @override
   Widget build(BuildContext context) {
     // 목록 탭으로 가서 캘린더 탭이 사라져도 보던 달/선택 날짜가 남도록 구독을 유지합니다.
-    ref.listen(scheduleCalendarProvider, (_, _) {});
+    ref.listen(scheduleCalendarViewModelProvider, (_, _) {});
 
     return Scaffold(
       backgroundColor: MoaColors.page,
@@ -91,12 +92,10 @@ class _ListTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final today = DateUtils.dateOnly(DateTime.now());
     final schedules = ref.watch(
-      scheduleListProvider(
-        ScheduleListRequest(
-          meetingId: meetingId,
-          startDate: DateTime(today.year, today.month - 3),
-          endDate: DateTime(today.year, today.month + 13, 0),
-        ),
+      scheduleListViewModelProvider(
+        meetingId: meetingId,
+        startDate: DateTime(today.year, today.month - 3),
+        endDate: DateTime(today.year, today.month + 13, 0),
       ),
     );
 
@@ -115,7 +114,7 @@ class _ListTab extends ConsumerWidget {
             ),
       error: (_, _) => _Message(
         '일정을 불러오지 못했어요',
-        onRetry: () => ref.invalidate(scheduleListProvider),
+        onRetry: () => ref.invalidate(scheduleListViewModelProvider),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
     );
@@ -134,11 +133,9 @@ class _CalendarTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendar = ref.watch(scheduleCalendarProvider);
-    final viewModel = ref.read(scheduleCalendarProvider.notifier);
-    final schedules = ref.watch(
-      scheduleListProvider(_monthRequest(meetingId, calendar.month)),
-    );
+    final calendar = ref.watch(scheduleCalendarViewModelProvider);
+    final viewModel = ref.read(scheduleCalendarViewModelProvider.notifier);
+    final schedules = ref.watch(_monthRequest(meetingId, calendar.month));
     final marked = {
       for (final s in schedules.value ?? const <Schedule>[])
         DateUtils.dateOnly(s.startAt.toLocal()),
@@ -178,10 +175,8 @@ class _SelectedDaySchedules extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendar = ref.watch(scheduleCalendarProvider);
-    final state = ref.watch(
-      scheduleListProvider(_monthRequest(meetingId, calendar.month)),
-    );
+    final calendar = ref.watch(scheduleCalendarViewModelProvider);
+    final state = ref.watch(_monthRequest(meetingId, calendar.month));
 
     const padding = EdgeInsets.symmetric(vertical: 20);
     if (state.isLoading) {
@@ -195,7 +190,7 @@ class _SelectedDaySchedules extends ConsumerWidget {
         padding: padding,
         child: _Message(
           '일정을 불러오지 못했어요',
-          onRetry: () => ref.invalidate(scheduleListProvider),
+          onRetry: () => ref.invalidate(scheduleListViewModelProvider),
         ),
       );
     }

@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_status.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_view_model.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -23,16 +24,17 @@ void main() {
     );
     addTearDown(container.dispose);
     // 화면이 구독하는 것처럼 상태를 유지한다. (autoDispose 라서 구독이 없으면 사라진다)
-    container.listen(scheduleCreateProvider(1), (_, _) {});
+    container.listen(scheduleCreateViewModelProvider(1), (_, _) {});
   });
 
   Future<void> submit() {
     return container
-        .read(scheduleCreateProvider(1).notifier)
+        .read(scheduleCreateViewModelProvider(1).notifier)
         .submit(title: '정모', startAt: startAt);
   }
 
-  ScheduleCreateState state() => container.read(scheduleCreateProvider(1));
+  ScheduleCreateState state() =>
+      container.read(scheduleCreateViewModelProvider(1));
 
   test('제출 전에는 초기 상태이다', () {
     expect(state().status, ScheduleCreateStatus.initial);
@@ -75,16 +77,16 @@ void main() {
   });
 
   test('생성에 성공하면 일정 목록을 다시 불러온다', () async {
-    final args = ScheduleListRequest(
+    final provider = scheduleListViewModelProvider(
       meetingId: 1,
       startDate: DateTime(2026, 10),
       endDate: DateTime(2026, 10, 31),
     );
-    await container.read(scheduleListProvider(args).future);
+    await container.read(provider.future);
     expect(repository.listCallCount, 1);
 
     await submit();
-    await container.read(scheduleListProvider(args).future);
+    await container.read(provider.future);
 
     expect(repository.listCallCount, 2);
   });
