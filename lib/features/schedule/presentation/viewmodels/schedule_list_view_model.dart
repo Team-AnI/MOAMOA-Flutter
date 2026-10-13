@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
+import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 
 /// 기간 내 일정 목록(시작 일시 오름차순)
 class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
-  ScheduleListViewModel({required this.request});
+  ScheduleListViewModel({
+    required this.meetingId,
+    required this.startDate,
+    required this.endDate,
+  });
 
-  final ScheduleListRequest request;
+  final int meetingId;
+  final DateTime startDate;
+  final DateTime endDate;
 
   @override
   Future<List<Schedule>> build() => _fetch();
@@ -20,6 +26,12 @@ class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
   }
 
   Future<List<Schedule>> _fetch() {
-    return ref.read(scheduleRepositoryProvider).getSchedules(request);
+    return ref.read(getSchedulesProvider)(
+      GetSchedulesParams(
+        meetingId: meetingId,
+        startDate: startDate,
+        endDate: endDate,
+      ),
+    );
   }
 }

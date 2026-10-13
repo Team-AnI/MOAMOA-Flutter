@@ -4,6 +4,8 @@ import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
+import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
+import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
@@ -22,6 +24,14 @@ final createScheduleProvider = Provider<CreateSchedule>(
       CreateScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
 );
 
+final getSchedulesProvider = Provider<GetSchedules>(
+  (ref) => GetSchedulesImpl(repository: ref.watch(scheduleRepositoryProvider)),
+);
+
+final getScheduleProvider = Provider<GetSchedule>(
+  (ref) => GetScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
+);
+
 /// 현재 사용자가 이 모임의 관리자인지 알려줍니다.
 /// 권한 정보가 연동되기 전에는 관리자가 아닌 것으로 보고 일정 만들기 버튼을 숨깁니다.
 /// TODO(#29): 모임 상세 응답의 myRole 로 교체합니다.
@@ -32,14 +42,25 @@ final scheduleListProvider =
       ScheduleListViewModel,
       List<Schedule>,
       ScheduleListRequest
-    >((request) => ScheduleListViewModel(request: request));
+    >(
+      (request) => ScheduleListViewModel(
+        meetingId: request.meetingId,
+        startDate: request.startDate,
+        endDate: request.endDate,
+      ),
+    );
 
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<
       ScheduleDetailViewModel,
       Schedule,
       ScheduleDetailRequest
-    >((request) => ScheduleDetailViewModel(request: request));
+    >(
+      (request) => ScheduleDetailViewModel(
+        meetingId: request.meetingId,
+        scheduleId: request.scheduleId,
+      ),
+    );
 
 /// 인자는 일정을 만들 모임의 id 입니다.
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공 id, 오류)가 남지 않게 초기화합니다.
