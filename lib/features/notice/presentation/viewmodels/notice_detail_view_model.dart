@@ -10,7 +10,7 @@ typedef NoticeDetailArgs = ({int meetingId, int noticeId});
 
 /// 공지 상세 ViewModel
 class NoticeDetailViewModel extends AsyncNotifier<Notice> {
-  NoticeDetailViewModel(this._args);
+  NoticeDetailViewModel({required NoticeDetailArgs args}) : _args = args;
 
   final NoticeDetailArgs _args;
 

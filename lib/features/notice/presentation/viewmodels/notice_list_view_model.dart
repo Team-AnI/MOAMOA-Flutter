@@ -6,7 +6,7 @@ import 'notice_list_state.dart';
 
 /// 공지 목록 ViewModel (family 인자: meetingId)
 class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
-  NoticeListViewModel(this._meetingId);
+  NoticeListViewModel({required int meetingId}) : _meetingId = meetingId;
 
   final int _meetingId;
 

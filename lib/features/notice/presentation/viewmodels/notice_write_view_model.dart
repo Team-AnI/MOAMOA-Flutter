@@ -10,7 +10,7 @@ import '../providers/notice_providers.dart';
 ///
 /// 상태는 등록 요청의 진행 상황입니다. (대기 / 등록 중 / 실패)
 class NoticeWriteViewModel extends AsyncNotifier<void> {
-  NoticeWriteViewModel(this._meetingId);
+  NoticeWriteViewModel({required int meetingId}) : _meetingId = meetingId;
 
   final int _meetingId;
 

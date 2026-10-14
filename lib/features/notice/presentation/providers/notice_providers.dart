@@ -71,12 +71,16 @@ final noticeMyRoleProvider = FutureProvider.autoDispose.family<MemberRole, int>(
 );
 
 final noticeListProvider = AsyncNotifierProvider.autoDispose
-    .family<NoticeListViewModel, NoticeListState, int>(NoticeListViewModel.new);
+    .family<NoticeListViewModel, NoticeListState, int>(
+      (meetingId) => NoticeListViewModel(meetingId: meetingId),
+    );
 
 final noticeDetailProvider = AsyncNotifierProvider.autoDispose
     .family<NoticeDetailViewModel, Notice, NoticeDetailArgs>(
-      NoticeDetailViewModel.new,
+      (args) => NoticeDetailViewModel(args: args),
     );
 
 final noticeWriteProvider = AsyncNotifierProvider.autoDispose
-    .family<NoticeWriteViewModel, void, int>(NoticeWriteViewModel.new);
+    .family<NoticeWriteViewModel, void, int>(
+      (meetingId) => NoticeWriteViewModel(meetingId: meetingId),
+    );
