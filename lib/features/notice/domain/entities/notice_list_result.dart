@@ -1,16 +1,16 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import 'notice.dart';
 
-/// 페이지 단위 공지 목록 조회 결과 (3-2)
-class NoticeListResult {
-  const NoticeListResult({
-    required this.notices,
-    required this.page,
-    required this.size,
-    required this.hasNext,
-  });
+part 'notice_list_result.freezed.dart';
 
-  final List<Notice> notices;
-  final int page;
-  final int size;
-  final bool hasNext;
+/// 페이지 단위 공지 목록 조회 결과 (3-2)
+@freezed
+abstract class NoticeListResult with _$NoticeListResult {
+  const factory NoticeListResult({
+    required List<Notice> notices,
+    required int page,
+    required int size,
+    required bool hasNext,
+  }) = _NoticeListResult;
 }
