@@ -1,19 +1,22 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'schedule_list_view_model.g.dart';
 
 /// 기간 내 일정 목록(시작 일시 오름차순)
-@Riverpod(keepAlive: true)
-class ScheduleListViewModel extends _$ScheduleListViewModel {
+class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
+  ScheduleListViewModel({
+    required this.meetingId,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  final int meetingId;
+  final DateTime startDate;
+  final DateTime endDate;
+
   @override
-  Future<List<Schedule>> build({
-    required int meetingId,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) => _fetch();
+  Future<List<Schedule>> build() => _fetch();
 
   Future<void> refresh() async {
     // 이미 불러오는 중이면 무시한다. (늦게 끝난 이전 응답이 최신 목록을 덮어쓰는 것을 방지)

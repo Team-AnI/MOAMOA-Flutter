@@ -36,7 +36,7 @@ class ScheduleCard extends StatelessWidget {
           child: Row(
             spacing: 14,
             children: [
-              _DateBadge(start),
+              _DateBadge(date: start),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,8 +50,12 @@ class ScheduleCard extends StatelessWidget {
                             : MoaColors.textPrimary,
                       ),
                     ),
-                    _Meta('clock', '${start.weekdayKo} ${start.hhmm}'),
-                    if (location.isNotEmpty) _Meta('map_pin', location),
+                    _Meta(
+                      icon: 'clock',
+                      text: '${start.weekdayKo} ${start.hhmm}',
+                    ),
+                    if (location.isNotEmpty)
+                      _Meta(icon: 'map_pin', text: location),
                   ],
                 ),
               ),
@@ -66,7 +70,7 @@ class ScheduleCard extends StatelessWidget {
 
 /// 카드 왼쪽의 날짜 배지입니다. 위에 월(`10월`), 아래에 일(`11`)을 보여줍니다.
 class _DateBadge extends StatelessWidget {
-  const _DateBadge(this.date);
+  const _DateBadge({required this.date});
 
   final DateTime date;
 
@@ -94,7 +98,7 @@ class _DateBadge extends StatelessWidget {
 
 /// 작은 아이콘과 한 줄 글자입니다. [icon] 은 assets/icons 의 파일 이름입니다.
 class _Meta extends StatelessWidget {
-  const _Meta(this.icon, this.text);
+  const _Meta({required this.icon, required this.text});
 
   final String icon;
   final String text;

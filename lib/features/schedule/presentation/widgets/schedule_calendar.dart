@@ -92,14 +92,14 @@ class _MonthHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _MonthButton(
-            'caret_left_calendar',
-            () => onMonthChanged(DateTime(month.year, month.month - 1)),
+            icon: 'caret_left_calendar',
+            onTap: () => onMonthChanged(DateTime(month.year, month.month - 1)),
             key: const Key('calendar-prev-month'),
           ),
           Text('${month.year}년 ${month.month}월', style: MoaText.titleM),
           _MonthButton(
-            'caret_right_calendar',
-            () => onMonthChanged(DateTime(month.year, month.month + 1)),
+            icon: 'caret_right_calendar',
+            onTap: () => onMonthChanged(DateTime(month.year, month.month + 1)),
             key: const Key('calendar-next-month'),
           ),
         ],
@@ -218,7 +218,7 @@ class _DayNumber extends StatelessWidget {
 
 /// 이전/다음 달 이동 버튼입니다. [icon] 은 assets/icons 의 파일 이름입니다.
 class _MonthButton extends StatelessWidget {
-  const _MonthButton(this.icon, this.onTap, {super.key});
+  const _MonthButton({required this.icon, required this.onTap, super.key});
 
   final String icon;
   final VoidCallback onTap;

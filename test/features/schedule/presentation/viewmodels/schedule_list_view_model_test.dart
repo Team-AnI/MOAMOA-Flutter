@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
-import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_view_model.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -15,7 +15,7 @@ void main() {
     title: '10월 정기 러닝',
     startAt: DateTime(2026, 10, 11, 7),
   );
-  final provider = scheduleListViewModelProvider(
+  final args = ScheduleListRequest(
     meetingId: 1,
     startDate: DateTime(2026, 10),
     endDate: DateTime(2026, 10, 31),
@@ -32,13 +32,13 @@ void main() {
   });
 
   test('일정 목록을 불러온다', () async {
-    final schedules = await container.read(provider.future);
+    final schedules = await container.read(scheduleListProvider(args).future);
 
     expect(schedules, [run]);
   });
 
   test('refresh 하면 최신 목록으로 갱신된다', () async {
-    await container.read(provider.future);
+    await container.read(scheduleListProvider(args).future);
     final added = Schedule(
       id: 21,
       title: '정모',
@@ -46,14 +46,14 @@ void main() {
     );
     repository.schedules = [run, added];
 
-    await container.read(provider.notifier).refresh();
+    await container.read(scheduleListProvider(args).notifier).refresh();
 
-    expect(container.read(provider).value, [run, added]);
+    expect(container.read(scheduleListProvider(args)).value, [run, added]);
   });
 
   test('refresh 를 연속으로 호출해도 한 번만 조회한다', () async {
-    await container.read(provider.future);
-    final notifier = container.read(provider.notifier);
+    await container.read(scheduleListProvider(args).future);
+    final notifier = container.read(scheduleListProvider(args).notifier);
     final before = repository.listCallCount;
 
     await Future.wait([notifier.refresh(), notifier.refresh()]);
@@ -64,6 +64,9 @@ void main() {
   test('불러오지 못하면 오류 상태가 된다', () async {
     repository.error = Exception('network');
 
-    await expectLater(container.read(provider.future), throwsException);
+    await expectLater(
+      container.read(scheduleListProvider(args).future),
+      throwsException,
+    );
   });
 }

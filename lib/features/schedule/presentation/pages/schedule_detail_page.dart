@@ -4,9 +4,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 
+import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
-import '../viewmodels/schedule_detail_view_model.dart';
 
 /// 일정 상세 화면입니다. 목록이나 캘린더에서 일정을 누르면 열립니다.
 ///
@@ -26,9 +27,8 @@ class ScheduleDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final schedule = ref.watch(
-      scheduleDetailViewModelProvider(
-        meetingId: meetingId,
-        scheduleId: scheduleId,
+      scheduleDetailProvider(
+        ScheduleDetailRequest(meetingId: meetingId, scheduleId: scheduleId),
       ),
     );
 
@@ -40,7 +40,7 @@ class ScheduleDetailPage extends ConsumerWidget {
           children: [
             Expanded(
               child: schedule.when(
-                data: (s) => _Body(s),
+                data: (s) => _Body(schedule: s),
                 error: (_, _) => Center(
                   child: Text(
                     '일정을 불러오지 못했어요',
@@ -63,7 +63,7 @@ class ScheduleDetailPage extends ConsumerWidget {
 ///   같은 날이면 `~ 21:00` 처럼 시각만, 다른 날이면 날짜까지 붙입니다.
 /// - 장소, 설명: 비어 있으면 그 줄을 그리지 않습니다.
 class _Body extends StatelessWidget {
-  const _Body(this.schedule);
+  const _Body({required this.schedule});
 
   final Schedule schedule;
 
@@ -89,8 +89,9 @@ class _Body extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(schedule.title, style: MoaText.titleXl),
           ),
-          _InfoRow('clock_field', '${start.fieldLabel}$endLabel'),
-          if (location.isNotEmpty) _InfoRow('map_pin_field', location),
+          _InfoRow(icon: 'clock_field', text: '${start.fieldLabel}$endLabel'),
+          if (location.isNotEmpty)
+            _InfoRow(icon: 'map_pin_field', text: location),
           if (description.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
@@ -107,7 +108,7 @@ class _Body extends StatelessWidget {
 
 /// 아이콘과 한 줄 글자입니다. [icon] 은 assets/icons 의 파일 이름(시계, 장소)입니다.
 class _InfoRow extends StatelessWidget {
-  const _InfoRow(this.icon, this.text);
+  const _InfoRow({required this.icon, required this.text});
 
   final String icon;
   final String text;

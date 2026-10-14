@@ -4,7 +4,7 @@ import 'package:moamoa/features/schedule/domain/entities/schedule_create_request
 import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 
-abstract class ScheduleRepository {
+abstract interface class ScheduleRepository {
   /// 일정을 만들고 생성된 일정을 돌려줍니다.
   Future<CreatedSchedule> createSchedule(ScheduleCreateRequest request);
 

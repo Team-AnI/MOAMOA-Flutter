@@ -1,13 +1,10 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'schedule_calendar_state.dart';
 
-part 'schedule_calendar_view_model.g.dart';
-
 /// 캘린더 탭의 월 이동과 날짜 선택을 관리합니다.
 /// 목록 탭을 다녀와도 보던 달과 날짜가 유지되도록 ViewModel 에서 상태를 들고 있습니다.
-@riverpod
-class ScheduleCalendarViewModel extends _$ScheduleCalendarViewModel {
+class ScheduleCalendarViewModel extends Notifier<ScheduleCalendarState> {
   @override
   ScheduleCalendarState build() {
     final today = _today();

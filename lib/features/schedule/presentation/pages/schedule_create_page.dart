@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
+import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
 import '../viewmodels/schedule_create_state.dart';
 import '../viewmodels/schedule_create_status.dart';
-import '../viewmodels/schedule_create_view_model.dart';
 
 /// 일정 만들기 화면 (관리자). 입력 → 제출 → 결과 순서로 동작합니다.
 ///
@@ -73,7 +73,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   void _submit() {
     FocusScope.of(context).unfocus();
     ref
-        .read(scheduleCreateViewModelProvider(widget.meetingId).notifier)
+        .read(scheduleCreateProvider(widget.meetingId).notifier)
         .submit(
           title: _title.text,
           description: _description.text,
@@ -112,7 +112,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = scheduleCreateViewModelProvider(widget.meetingId);
+    final provider = scheduleCreateProvider(widget.meetingId);
     ref.listen(provider, _onStateChanged);
     final state = ref.watch(provider);
 
@@ -224,7 +224,7 @@ class _TextFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Field(
-      label,
+      label: label,
       child: _InputBox(
         icon: icon,
         child: _TextInput(
@@ -251,7 +251,14 @@ class _PickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Field(label, child: _PickerBox(value, '날짜와 시간을 선택해 주세요', onTap));
+    return _Field(
+      label: label,
+      child: _PickerBox(
+        value: value,
+        placeholder: '날짜와 시간을 선택해 주세요',
+        onTap: onTap,
+      ),
+    );
   }
 }
 
@@ -288,7 +295,7 @@ class _SubmitButton extends StatelessWidget {
 
 /// 라벨과 입력 상자입니다.
 class _Field extends StatelessWidget {
-  const _Field(this.label, {required this.child});
+  const _Field({required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -343,7 +350,11 @@ class _InputBox extends StatelessWidget {
 
 /// 눌러서 날짜/시간을 고르는 입력 상자입니다.
 class _PickerBox extends StatelessWidget {
-  const _PickerBox(this.value, this.placeholder, this.onTap);
+  const _PickerBox({
+    required this.value,
+    required this.placeholder,
+    required this.onTap,
+  });
 
   final DateTime? value;
   final String placeholder;
