@@ -1,0 +1,135 @@
+import 'package:dio/dio.dart';
+
+import '../../domain/entities/member_role.dart';
+import '../../domain/entities/notice.dart';
+import '../../domain/entities/notice_exception.dart';
+import '../../domain/entities/notice_list_result.dart';
+import '../../domain/repositories/notice_repository.dart';
+import '../datasources/notice_remote_data_source.dart';
+import '../models/create_notice_request.dart';
+import '../models/delete_notice_request.dart';
+import '../models/fetch_my_role_request.dart';
+import '../models/fetch_notice_detail_request.dart';
+import '../models/fetch_notices_request.dart';
+import '../models/notice_list_model.dart';
+import '../models/notice_model.dart';
+import '../models/update_notice_request.dart';
+
+/// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
+class NoticeRepositoryImpl implements NoticeRepository {
+  const NoticeRepositoryImpl({
+    required NoticeRemoteDataSource noticeRemoteDataSource,
+  }) : _noticeRemoteDataSource = noticeRemoteDataSource;
+
+  final NoticeRemoteDataSource _noticeRemoteDataSource;
+
+  @override
+  Future<NoticeListResult> getNotices({
+    required int meetingId,
+    required int page,
+    required int size,
+  }) {
+    return _guard(() async {
+      final response = await _noticeRemoteDataSource.fetchNotices(
+        FetchNoticesRequest(meetingId: meetingId, page: page, size: size),
+      );
+      return response.toEntity();
+    });
+  }
+
+  @override
+  Future<Notice> getNoticeDetail({
+    required int meetingId,
+    required int noticeId,
+  }) {
+    return _guard(() async {
+      final response = await _noticeRemoteDataSource.fetchNoticeDetail(
+        FetchNoticeDetailRequest(meetingId: meetingId, noticeId: noticeId),
+      );
+      return response.toEntity();
+    });
+  }
+
+  @override
+  Future<int> createNotice({
+    required int meetingId,
+    required String title,
+    required String content,
+  }) {
+    return _guard(
+      () => _noticeRemoteDataSource.createNotice(
+        CreateNoticeRequest(
+          meetingId: meetingId,
+          title: title,
+          content: content,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> updateNotice({
+    required int meetingId,
+    required int noticeId,
+    String? title,
+    String? content,
+  }) {
+    return _guard(
+      () => _noticeRemoteDataSource.updateNotice(
+        UpdateNoticeRequest(
+          meetingId: meetingId,
+          noticeId: noticeId,
+          title: title,
+          content: content,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteNotice({required int meetingId, required int noticeId}) {
+    return _guard(
+      () => _noticeRemoteDataSource.deleteNotice(
+        DeleteNoticeRequest(meetingId: meetingId, noticeId: noticeId),
+      ),
+    );
+  }
+
+  @override
+  Future<MemberRole> getMyRole({required int meetingId}) {
+    return _guard(() async {
+      final role = await _noticeRemoteDataSource.fetchMyRole(
+        FetchMyRoleRequest(meetingId: meetingId),
+      );
+      return role == 'ADMIN' ? MemberRole.admin : MemberRole.member;
+    });
+  }
+
+  Future<T> _guard<T>(Future<T> Function() request) async {
+    try {
+      return await request();
+    } on DioException catch (e) {
+      throw _toNoticeException(e);
+    }
+  }
+
+  /// 실패 응답 { error: { code, message } } 의 메시지를 그대로 사용합니다.
+  NoticeException _toNoticeException(DioException e) {
+    final body = e.response?.data;
+    if (body is Map<String, dynamic>) {
+      final error = body['error'];
+      if (error is Map<String, dynamic> && error['message'] is String) {
+        return NoticeException(
+          error['message'] as String,
+          code: error['code'] as String?,
+        );
+      }
+    }
+    // 응답 자체를 받지 못한 경우(연결 실패, 시간 초과)
+    if (e.response == null) {
+      return const NoticeException('네트워크 연결을 확인해주세요.');
+    }
+    // 응답은 받았지만 형식이 예상과 다른 경우
+    return const NoticeException('요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
+  }
+}
