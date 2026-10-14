@@ -19,10 +19,10 @@ final class CreateNoticeParams extends Params {
 abstract class CreateNotice extends Usecase<int, CreateNoticeParams> {}
 
 final class CreateNoticeImpl implements CreateNotice {
-  CreateNoticeImpl({required NoticeRepository repository})
-    : _repository = repository;
+  CreateNoticeImpl({required NoticeRepository noticeRepository})
+    : _noticeRepository = noticeRepository;
 
-  final NoticeRepository _repository;
+  final NoticeRepository _noticeRepository;
 
   /// 제목과 내용은 필수이며, 공백만 입력할 수 없습니다.
   @override
@@ -35,7 +35,7 @@ final class CreateNoticeImpl implements CreateNotice {
     if (content.isEmpty) {
       throw const NoticeException('공지 내용을 입력해주세요.');
     }
-    return _repository.createNotice(
+    return _noticeRepository.createNotice(
       meetingId: params.meetingId,
       title: title,
       content: content,

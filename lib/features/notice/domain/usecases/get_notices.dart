@@ -21,14 +21,14 @@ final class GetNoticesParams extends Params {
 abstract class GetNotices extends Usecase<NoticeListResult, GetNoticesParams> {}
 
 final class GetNoticesImpl implements GetNotices {
-  GetNoticesImpl({required NoticeRepository repository})
-    : _repository = repository;
+  GetNoticesImpl({required NoticeRepository noticeRepository})
+    : _noticeRepository = noticeRepository;
 
-  final NoticeRepository _repository;
+  final NoticeRepository _noticeRepository;
 
   @override
   Future<NoticeListResult> call(GetNoticesParams params) {
-    return _repository.getNotices(
+    return _noticeRepository.getNotices(
       meetingId: params.meetingId,
       page: params.page,
       size: params.size,

@@ -13,13 +13,13 @@ final class GetMyRoleParams extends Params {
 abstract class GetMyRole extends Usecase<MemberRole, GetMyRoleParams> {}
 
 final class GetMyRoleImpl implements GetMyRole {
-  GetMyRoleImpl({required NoticeRepository repository})
-    : _repository = repository;
+  GetMyRoleImpl({required NoticeRepository noticeRepository})
+    : _noticeRepository = noticeRepository;
 
-  final NoticeRepository _repository;
+  final NoticeRepository _noticeRepository;
 
   @override
   Future<MemberRole> call(GetMyRoleParams params) {
-    return _repository.getMyRole(meetingId: params.meetingId);
+    return _noticeRepository.getMyRole(meetingId: params.meetingId);
   }
 }

@@ -33,27 +33,33 @@ final noticeRepositoryProvider = Provider<NoticeRepository>(
 // UseCase
 
 final getNoticesProvider = Provider<GetNotices>(
-  (ref) => GetNoticesImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) =>
+      GetNoticesImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
 final getNoticeDetailProvider = Provider<GetNoticeDetail>(
-  (ref) => GetNoticeDetailImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) => GetNoticeDetailImpl(
+    noticeRepository: ref.watch(noticeRepositoryProvider),
+  ),
 );
 
 final createNoticeProvider = Provider<CreateNotice>(
-  (ref) => CreateNoticeImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) =>
+      CreateNoticeImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
 final updateNoticeProvider = Provider<UpdateNotice>(
-  (ref) => UpdateNoticeImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) =>
+      UpdateNoticeImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
 final deleteNoticeProvider = Provider<DeleteNotice>(
-  (ref) => DeleteNoticeImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) =>
+      DeleteNoticeImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
 final getMyRoleProvider = Provider<GetMyRole>(
-  (ref) => GetMyRoleImpl(repository: ref.watch(noticeRepositoryProvider)),
+  (ref) => GetMyRoleImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
 // ViewModel / 화면 상태 (family 인자: meetingId)

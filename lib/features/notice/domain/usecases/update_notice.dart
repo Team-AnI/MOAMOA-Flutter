@@ -21,10 +21,10 @@ final class UpdateNoticeParams extends Params {
 abstract class UpdateNotice extends Usecase<void, UpdateNoticeParams> {}
 
 final class UpdateNoticeImpl implements UpdateNotice {
-  UpdateNoticeImpl({required NoticeRepository repository})
-    : _repository = repository;
+  UpdateNoticeImpl({required NoticeRepository noticeRepository})
+    : _noticeRepository = noticeRepository;
 
-  final NoticeRepository _repository;
+  final NoticeRepository _noticeRepository;
 
   /// 보내는 제목과 내용은 공백만 입력할 수 없습니다.
   @override
@@ -37,7 +37,7 @@ final class UpdateNoticeImpl implements UpdateNotice {
     if (content != null && content.isEmpty) {
       throw const NoticeException('공지 내용을 입력해주세요.');
     }
-    return _repository.updateNotice(
+    return _noticeRepository.updateNotice(
       meetingId: params.meetingId,
       noticeId: params.noticeId,
       title: title,

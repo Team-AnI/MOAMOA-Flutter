@@ -13,14 +13,14 @@ final class DeleteNoticeParams extends Params {
 abstract class DeleteNotice extends Usecase<void, DeleteNoticeParams> {}
 
 final class DeleteNoticeImpl implements DeleteNotice {
-  DeleteNoticeImpl({required NoticeRepository repository})
-    : _repository = repository;
+  DeleteNoticeImpl({required NoticeRepository noticeRepository})
+    : _noticeRepository = noticeRepository;
 
-  final NoticeRepository _repository;
+  final NoticeRepository _noticeRepository;
 
   @override
   Future<void> call(DeleteNoticeParams params) {
-    return _repository.deleteNotice(
+    return _noticeRepository.deleteNotice(
       meetingId: params.meetingId,
       noticeId: params.noticeId,
     );

@@ -18,7 +18,7 @@ void main() {
       final repository = FakeNoticeRepository(
         notices: List.generate(25, (index) => buildNotice(index + 1)),
       );
-      getNotices = GetNoticesImpl(repository: repository);
+      getNotices = GetNoticesImpl(noticeRepository: repository);
     });
 
     test('page 를 지정하지 않으면 첫 페이지를 20개 단위로 조회한다', () async {
@@ -46,7 +46,7 @@ void main() {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
       );
-      getNoticeDetail = GetNoticeDetailImpl(repository: repository);
+      getNoticeDetail = GetNoticeDetailImpl(noticeRepository: repository);
     });
 
     test('공지 상세를 내용과 함께 조회한다', () async {
@@ -74,7 +74,7 @@ void main() {
 
     setUp(() {
       repository = FakeNoticeRepository();
-      createNotice = CreateNoticeImpl(repository: repository);
+      createNotice = CreateNoticeImpl(noticeRepository: repository);
     });
 
     test('제목과 내용의 앞뒤 공백을 제거해 공지를 작성하고 id 를 반환한다', () async {
@@ -120,7 +120,7 @@ void main() {
       repository = FakeNoticeRepository(
         notices: [buildNotice(1, title: '기존 제목', content: '기존 내용')],
       );
-      updateNotice = UpdateNoticeImpl(repository: repository);
+      updateNotice = UpdateNoticeImpl(noticeRepository: repository);
     });
 
     test('보낸 필드만 수정한다', () async {
@@ -158,7 +158,7 @@ void main() {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1), buildNotice(2)],
       );
-      final deleteNotice = DeleteNoticeImpl(repository: repository);
+      final deleteNotice = DeleteNoticeImpl(noticeRepository: repository);
 
       await deleteNotice(const DeleteNoticeParams(meetingId: 1, noticeId: 1));
 
@@ -169,7 +169,7 @@ void main() {
   group('GetMyRole', () {
     test('모임에서 내 역할을 조회한다', () async {
       final repository = FakeNoticeRepository(myRole: MemberRole.admin);
-      final getMyRole = GetMyRoleImpl(repository: repository);
+      final getMyRole = GetMyRoleImpl(noticeRepository: repository);
 
       final role = await getMyRole(const GetMyRoleParams(meetingId: 1));
 
