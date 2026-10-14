@@ -8,6 +8,7 @@ import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
 import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
+import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 상세 화면
 class NoticeDetailPage extends ConsumerWidget {
@@ -52,48 +53,18 @@ class NoticeDetailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 56,
-        leadingWidth: 56,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: IconButton(
-            onPressed: () => context.pop(),
-            tooltip: '뒤로',
-            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-            padding: EdgeInsets.zero,
-            icon: const Icon(
-              Icons.chevron_left,
-              size: 24,
-              color: NoticeColors.text,
-            ),
-          ),
-        ),
-        actions: [
-          if (role.hasError && notice.hasValue)
-            NoticeRoleRetryButton(
-              onPressed: () => ref.invalidate(noticeMyRoleProvider(meetingId)),
-            ),
-          if (isAdmin && notice.hasValue) ...[
-            // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
-            _CircleIconButton(
-              icon: Icons.edit_outlined,
-              tooltip: '공지 수정',
-              onPressed: () =>
-                  context.push('/meetings/$meetingId/notices/$noticeId/edit'),
-            ),
-            const SizedBox(width: 8),
-            _CircleIconButton(
-              icon: Icons.delete_outline,
-              tooltip: '공지 삭제',
-              onPressed: () => _delete(context, ref),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ],
+      appBar: _DetailAppBar(
+        onBack: () => context.pop(),
+        onRetryRole: role.hasError && notice.hasValue
+            ? () => ref.invalidate(noticeMyRoleProvider(meetingId))
+            : null,
+        // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
+        onEdit: isAdmin && notice.hasValue
+            ? () => context.push('/meetings/$meetingId/notices/$noticeId/edit')
+            : null,
+        onDelete: isAdmin && notice.hasValue
+            ? () => _delete(context, ref)
+            : null,
       ),
       body: notice.when(
         data: (notice) => _NoticeContent(notice: notice),
@@ -111,6 +82,70 @@ class NoticeDetailPage extends ConsumerWidget {
                 onAction: () => ref.invalidate(noticeDetailProvider(_args)),
               ),
       ),
+    );
+  }
+}
+
+/// 뒤로 가기 + (관리자만) 수정 · 삭제 버튼 / (역할 조회 실패 시) 다시 시도 버튼
+class _DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _DetailAppBar({
+    required this.onBack,
+    this.onRetryRole,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback? onRetryRole;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+
+  @override
+  Widget build(BuildContext context) {
+    final onRetryRole = this.onRetryRole;
+    final onEdit = this.onEdit;
+    final onDelete = this.onDelete;
+
+    return AppBar(
+      backgroundColor: Colors.white,
+      surfaceTintColor: Colors.white,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 56,
+      leadingWidth: 56,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: IconButton(
+          onPressed: onBack,
+          tooltip: '뒤로',
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          padding: EdgeInsets.zero,
+          icon: const Icon(
+            Icons.chevron_left,
+            size: 24,
+            color: NoticeColors.text,
+          ),
+        ),
+      ),
+      actions: [
+        if (onRetryRole != null) NoticeRoleRetryButton(onPressed: onRetryRole),
+        if (onEdit != null && onDelete != null) ...[
+          _CircleIconButton(
+            icon: Icons.edit_outlined,
+            tooltip: '공지 수정',
+            onPressed: onEdit,
+          ),
+          const SizedBox(width: 8),
+          _CircleIconButton(
+            icon: Icons.delete_outline,
+            tooltip: '공지 삭제',
+            onPressed: onDelete,
+          ),
+          const SizedBox(width: 16),
+        ],
+      ],
     );
   }
 }

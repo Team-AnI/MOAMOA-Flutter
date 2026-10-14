@@ -8,6 +8,7 @@ import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
 import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
+import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 목록 화면
 class NoticeListPage extends ConsumerStatefulWidget {
@@ -309,98 +310,148 @@ class _EmptyView extends StatelessWidget {
             child: Padding(
               // 화면 정중앙보다 조금 위에 둡니다.
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: NoticeColors.gray,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.campaign_outlined,
-                      size: 28,
-                      color: NoticeColors.subText,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    '아직 등록된 공지가 없어요',
-                    style: TextStyle(
-                      fontSize: 17,
-                      height: 1.41,
-                      letterSpacing: -0.3,
-                      fontWeight: FontWeight.w600,
-                      color: NoticeColors.text,
-                    ),
-                  ),
-                  // 관리자에게만 안내 문구를 보여줍니다.
-                  if (onWrite != null) ...[
-                    const SizedBox(height: 6),
-                    const Text(
-                      '첫 공지를 작성해 보세요',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.43,
-                        letterSpacing: -0.1,
-                        color: NoticeColors.bodyText,
-                      ),
-                    ),
-                  ],
-                  if (onRetryRole != null) ...[
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: onRetryRole,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: NoticeColors.gray,
-                        foregroundColor: NoticeColors.text,
-                        minimumSize: const Size(0, 48),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        '권한 다시 확인',
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.25,
-                          letterSpacing: -0.2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (onWrite != null) ...[
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: onWrite,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: NoticeColors.text,
-                        minimumSize: const Size(0, 48),
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        '공지 작성하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.25,
-                          letterSpacing: -0.2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              child: _EmptyContent(onWrite: onWrite, onRetryRole: onRetryRole),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 빈 화면의 아이콘, 안내 문구, 버튼
+class _EmptyContent extends StatelessWidget {
+  const _EmptyContent({this.onWrite, this.onRetryRole});
+
+  final VoidCallback? onWrite;
+  final VoidCallback? onRetryRole;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const _EmptyIcon(),
+        const SizedBox(height: 20),
+        const _EmptyTitle(),
+        // 관리자에게만 안내 문구를 보여줍니다.
+        if (onWrite != null) ...[
+          const SizedBox(height: 6),
+          const _EmptyDescription('첫 공지를 작성해 보세요'),
+        ],
+        if (onRetryRole != null) ...[
+          const SizedBox(height: 20),
+          _EmptyActionButton(
+            label: '권한 다시 확인',
+            onPressed: onRetryRole,
+            backgroundColor: NoticeColors.gray,
+            foregroundColor: NoticeColors.text,
+          ),
+        ],
+        if (onWrite != null) ...[
+          const SizedBox(height: 20),
+          _EmptyActionButton(
+            label: '공지 작성하기',
+            onPressed: onWrite,
+            backgroundColor: NoticeColors.text,
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _EmptyIcon extends StatelessWidget {
+  const _EmptyIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: NoticeColors.gray,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Icon(
+        Icons.campaign_outlined,
+        size: 28,
+        color: NoticeColors.subText,
+      ),
+    );
+  }
+}
+
+class _EmptyTitle extends StatelessWidget {
+  const _EmptyTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      '아직 등록된 공지가 없어요',
+      style: TextStyle(
+        fontSize: 17,
+        height: 1.41,
+        letterSpacing: -0.3,
+        fontWeight: FontWeight.w600,
+        color: NoticeColors.text,
+      ),
+    );
+  }
+}
+
+class _EmptyDescription extends StatelessWidget {
+  const _EmptyDescription(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 14,
+        height: 1.43,
+        letterSpacing: -0.1,
+        color: NoticeColors.bodyText,
+      ),
+    );
+  }
+}
+
+class _EmptyActionButton extends StatelessWidget {
+  const _EmptyActionButton({
+    required this.label,
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.25,
+          letterSpacing: -0.2,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

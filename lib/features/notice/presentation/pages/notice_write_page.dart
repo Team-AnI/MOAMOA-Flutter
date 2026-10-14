@@ -163,60 +163,118 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            children: [
-              if (_isEdit)
-                const SizedBox(height: 8)
-              else ...[
-                const SizedBox(height: 4),
-                const Text(
-                  '공지 작성',
-                  style: TextStyle(
-                    fontSize: 26,
-                    height: 1.35,
-                    letterSpacing: -0.7,
-                    fontWeight: FontWeight.w700,
-                    color: NoticeColors.text,
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
-              _InputField(
-                label: '제목',
-                hintText: '공지 제목을 입력하세요',
-                controller: _titleController,
-                errorText: _showMissing && _isTitleMissing
-                    ? '공지 제목을 입력해주세요'
-                    : null,
-                onChanged: _onChanged,
-              ),
-              const SizedBox(height: 16),
-              _InputField(
-                label: '내용',
-                hintText: '구성원에게 전할 내용을 입력하세요',
-                controller: _contentController,
-                minLines: 5,
-                errorText: _showMissing && _isContentMissing
-                    ? '공지 내용을 입력해주세요'
-                    : null,
-                onChanged: _onChanged,
-              ),
-            ],
+          child: _NoticeFormFields(
+            isEdit: _isEdit,
+            titleController: _titleController,
+            contentController: _contentController,
+            showTitleMissing: _showMissing && _isTitleMissing,
+            showContentMissing: _showMissing && _isContentMissing,
+            onChanged: _onChanged,
           ),
         ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            child: _SubmitButton(
-              label: _isEdit ? '수정 완료' : '공지 등록',
-              isLoading: isSubmitting,
-              onPressed: isSubmitting ? null : _submit,
-            ),
-          ),
+        _SubmitBar(
+          label: _isEdit ? '수정 완료' : '공지 등록',
+          isLoading: isSubmitting,
+          onPressed: isSubmitting ? null : _submit,
         ),
       ],
+    );
+  }
+}
+
+/// 제목·내용 입력칸. 작성 화면은 위에 큰 제목이 있고, 수정 화면은 상단 바에 제목이 있습니다.
+class _NoticeFormFields extends StatelessWidget {
+  const _NoticeFormFields({
+    required this.isEdit,
+    required this.titleController,
+    required this.contentController,
+    required this.showTitleMissing,
+    required this.showContentMissing,
+    required this.onChanged,
+  });
+
+  final bool isEdit;
+  final TextEditingController titleController;
+  final TextEditingController contentController;
+  final bool showTitleMissing;
+  final bool showContentMissing;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      children: [
+        if (isEdit)
+          const SizedBox(height: 8)
+        else ...[
+          const SizedBox(height: 4),
+          const _WritePageTitle(),
+          const SizedBox(height: 24),
+        ],
+        _InputField(
+          label: '제목',
+          hintText: '공지 제목을 입력하세요',
+          controller: titleController,
+          errorText: showTitleMissing ? '공지 제목을 입력해주세요' : null,
+          onChanged: onChanged,
+        ),
+        const SizedBox(height: 16),
+        _InputField(
+          label: '내용',
+          hintText: '구성원에게 전할 내용을 입력하세요',
+          controller: contentController,
+          minLines: 5,
+          errorText: showContentMissing ? '공지 내용을 입력해주세요' : null,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}
+
+class _WritePageTitle extends StatelessWidget {
+  const _WritePageTitle();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      '공지 작성',
+      style: TextStyle(
+        fontSize: 26,
+        height: 1.35,
+        letterSpacing: -0.7,
+        fontWeight: FontWeight.w700,
+        color: NoticeColors.text,
+      ),
+    );
+  }
+}
+
+/// 화면 아래의 등록 버튼 줄
+class _SubmitBar extends StatelessWidget {
+  const _SubmitBar({
+    required this.label,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: _SubmitButton(
+          label: label,
+          isLoading: isLoading,
+          onPressed: onPressed,
+        ),
+      ),
     );
   }
 }
@@ -240,6 +298,63 @@ class _InputField extends StatelessWidget {
   /// 값이 있으면 입력칸 아래에 빠진 항목 안내를 보여줍니다.
   final String? errorText;
 
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InputLabel(label),
+        const SizedBox(height: 8),
+        _InputTextField(
+          hintText: hintText,
+          controller: controller,
+          onChanged: onChanged,
+          minLines: minLines,
+          errorText: errorText,
+        ),
+      ],
+    );
+  }
+}
+
+class _InputLabel extends StatelessWidget {
+  const _InputLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          height: 1.43,
+          letterSpacing: -0.1,
+          fontWeight: FontWeight.w600,
+          color: NoticeColors.bodyText,
+        ),
+      ),
+    );
+  }
+}
+
+class _InputTextField extends StatelessWidget {
+  const _InputTextField({
+    required this.hintText,
+    required this.controller,
+    required this.onChanged,
+    required this.minLines,
+    this.errorText,
+  });
+
+  final String hintText;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final int minLines;
+  final String? errorText;
+
   static OutlineInputBorder _border(BorderSide side) => OutlineInputBorder(
     borderRadius: BorderRadius.circular(16),
     borderSide: side,
@@ -250,58 +365,36 @@ class _InputField extends StatelessWidget {
     final isMultiline = minLines > 1;
     final errorBorder = _border(const BorderSide(color: NoticeColors.error));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.43,
-              letterSpacing: -0.1,
-              fontWeight: FontWeight.w600,
-              color: NoticeColors.bodyText,
-            ),
-          ),
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      minLines: minLines,
+      maxLines: isMultiline ? null : 1,
+      style: const TextStyle(
+        fontSize: 15,
+        height: 1.47,
+        letterSpacing: -0.2,
+        color: NoticeColors.text,
+      ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: const TextStyle(color: NoticeColors.hint),
+        errorText: errorText,
+        filled: true,
+        fillColor: NoticeColors.gray,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: isMultiline ? 20 : 16,
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          onChanged: onChanged,
-          minLines: minLines,
-          maxLines: isMultiline ? null : 1,
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.47,
-            letterSpacing: -0.2,
-            color: NoticeColors.text,
-          ),
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: const TextStyle(color: NoticeColors.hint),
-            errorText: errorText,
-            filled: true,
-            fillColor: NoticeColors.gray,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: isMultiline ? 20 : 16,
-            ),
-            border: _border(BorderSide.none),
-            enabledBorder: _border(BorderSide.none),
-            focusedBorder: _border(
-              const BorderSide(color: NoticeColors.text, width: 2),
-            ),
-            errorBorder: errorBorder,
-            focusedErrorBorder: errorBorder,
-            errorStyle: const TextStyle(
-              fontSize: 12,
-              color: NoticeColors.error,
-            ),
-          ),
+        border: _border(BorderSide.none),
+        enabledBorder: _border(BorderSide.none),
+        focusedBorder: _border(
+          const BorderSide(color: NoticeColors.text, width: 2),
         ),
-      ],
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+        errorStyle: const TextStyle(fontSize: 12, color: NoticeColors.error),
+      ),
     );
   }
 }

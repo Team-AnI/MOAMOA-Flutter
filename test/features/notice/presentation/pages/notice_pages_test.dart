@@ -7,9 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_detail_page.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_list_page.dart';
-import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_write_page.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 
