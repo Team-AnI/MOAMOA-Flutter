@@ -213,8 +213,8 @@ return $default(_that.noticeId,_that.title,_that.createdAt,_that.content);case _
 /// @nodoc
 @JsonSerializable()
 
-class _NoticeModel extends NoticeModel {
-  const _NoticeModel({required this.noticeId, required this.title, required this.createdAt, this.content}): super._();
+class _NoticeModel implements NoticeModel {
+  const _NoticeModel({required this.noticeId, required this.title, required this.createdAt, this.content});
   factory _NoticeModel.fromJson(Map<String, dynamic> json) => _$NoticeModelFromJson(json);
 
 @override final  int noticeId;

@@ -11,6 +11,8 @@ import '../models/delete_notice_request.dart';
 import '../models/fetch_my_role_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
+import '../models/notice_list_model.dart';
+import '../models/notice_model.dart';
 import '../models/update_notice_request.dart';
 
 /// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.

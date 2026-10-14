@@ -212,8 +212,8 @@ return $default(_that.notices,_that.page,_that.size,_that.hasNext);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _NoticeListModel extends NoticeListModel {
-  const _NoticeListModel({required  List<NoticeModel> notices, required this.page, required this.size, required this.hasNext}): _notices = notices,super._();
+class _NoticeListModel implements NoticeListModel {
+  const _NoticeListModel({required  List<NoticeModel> notices, required this.page, required this.size, required this.hasNext}): _notices = notices;
   factory _NoticeListModel.fromJson(Map<String, dynamic> json) => _$NoticeListModelFromJson(json);
 
  final  List<NoticeModel> _notices;
