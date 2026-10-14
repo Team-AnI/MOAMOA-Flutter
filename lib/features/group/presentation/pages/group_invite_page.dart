@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
-import '../../domain/repositories/group_join_flow.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_code_card.dart';
 import '../widgets/group_created_actions.dart';
@@ -107,14 +106,7 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
               child: CircularProgressIndicator(color: GroupDesign.ink),
             )
           else if (_code != null)
-            GroupCodeCard(
-              code: _code!,
-              approval:
-                  ref.read(groupUseMockProvider) &&
-                  ref.read(groupRepositoryProvider) is GroupJoinFlow &&
-                  (ref.read(groupRepositoryProvider) as GroupJoinFlow)
-                      .requiresApproval(current!.group.id),
-            )
+            GroupCodeCard(code: _code!, approval: false)
           else ...[
             Text(_error!, style: GroupDesign.body),
             TextButton(onPressed: _load, child: const Text('다시 시도')),

@@ -4,9 +4,8 @@ import 'package:moamoa/features/group/domain/repositories/group_repository.dart'
 import 'package:moamoa/features/group/domain/usecases/create_group_impl.dart';
 import 'package:moamoa/features/group/domain/usecases/get_group_invite_code_impl.dart';
 import 'package:moamoa/features/group/domain/usecases/join_group_impl.dart';
-
-import 'package:moamoa/features/group/domain/usecases/params/join_group_params.dart';
 import 'package:moamoa/features/group/domain/usecases/params/get_group_invite_code_params.dart';
+import 'package:moamoa/features/group/domain/usecases/params/join_group_params.dart';
 
 import '../fake_group_repository.dart';
 

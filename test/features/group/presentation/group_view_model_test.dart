@@ -1,7 +1,7 @@
-import 'package:moamoa/features/group/domain/entities/current_group.dart';
-import 'package:moamoa/features/group/domain/entities/group.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
+import 'package:moamoa/features/group/domain/entities/group.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';

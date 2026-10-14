@@ -1,17 +1,18 @@
 import 'dart:async';
-import 'package:moamoa/features/group/domain/entities/current_group.dart';
-import 'package:moamoa/features/group/presentation/pages/group_form_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
+import 'package:moamoa/features/group/presentation/pages/group_form_page.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
+import 'package:moamoa/features/group/presentation/widgets/group_list_section.dart';
 
 import '../fake_group_repository.dart';
-import 'package:moamoa/features/group/presentation/widgets/group_list_section.dart';
 
 Future<void> openGroups(
   WidgetTester tester,

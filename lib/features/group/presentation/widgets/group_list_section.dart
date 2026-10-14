@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/current_group.dart';
-import '../providers/group_providers.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';
@@ -40,12 +39,7 @@ class GroupListSection extends ConsumerWidget {
                 padding: const EdgeInsets.all(18),
                 child: Row(
                   children: [
-                    GroupMark(
-                      name: current.group.name,
-                      photo: ref.watch(groupUseMockProvider)
-                          ? ref.watch(groupMockPhotosProvider)[current.group.id]
-                          : null,
-                    ),
+                    GroupMark(name: current.group.name, photo: null),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(

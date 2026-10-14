@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:moamoa/app/app.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
+
+import '../fake_group_repository.dart';
 
 class TestPicker extends ImagePicker {
   final sources = <ImageSource>[];
@@ -39,7 +42,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          groupUseMockProvider.overrideWithValue(true),
+          groupRepositoryProvider.overrideWithValue(FakeGroupRepository()),
           groupImagePickerProvider.overrideWithValue(picker),
         ],
         child: const App(),
@@ -72,54 +75,5 @@ void main() {
     expect(find.text('사진 또는 카메라 권한을 설정에서 허용해주세요.'), findsOneWidget);
     await action('기본 이미지로 바꾸기');
     expect(find.byType(Image), findsNothing);
-  });
-  testWidgets('Mock 생성 사진이 목록과 홈에 유지되고 사진 없는 모임에는 적용되지 않는다', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          groupUseMockProvider.overrideWithValue(true),
-          groupImagePickerProvider.overrideWithValue(TestPicker()),
-        ],
-        child: const App(),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('내 모임'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('모임 만들기'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), '사진 모임');
-    await tester.tap(find.byTooltip('모임 사진 선택'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('앨범에서 선택'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('다음'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '모임 만들기'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('내 모임으로'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Image), findsOneWidget);
-    await tester.tap(find.text('사진 모임'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Image), findsOneWidget);
-    await tester.tap(find.byTooltip('내 모임 목록'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('모임 추가'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('초대 코드로 가입'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), 'MOA-JOIN');
-    await tester.tap(find.text('다음'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('가입하기'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('내 모임으로'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Image), findsOneWidget);
-    await tester.tap(find.text('초대받은 스터디'));
-    await tester.pumpAndSettle();
-    expect(find.byType(Image), findsNothing);
-    expect(tester.takeException(), isNull);
   });
 }

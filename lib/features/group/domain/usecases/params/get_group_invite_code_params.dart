@@ -4,4 +4,6 @@ import '../../entities/current_group.dart';
 final class GetGroupInviteCodeParams extends Params {
   const GetGroupInviteCodeParams({required this.currentGroup});
   final CurrentGroup currentGroup;
+  @override
+  List<Object?> get props => [currentGroup];
 }

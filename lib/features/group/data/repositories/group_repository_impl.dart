@@ -5,17 +5,18 @@ import '../models/group_api_failure.dart';
 import '../models/meeting_model.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
-  const GroupRepositoryImpl({required this.remoteDataSource});
-  final GroupRemoteDataSource remoteDataSource;
+  // 명명된 public 인자로 주입하고 내부 참조만 보관합니다.
+  const GroupRepositoryImpl({required GroupRemoteDataSource remoteDataSource})
+    // ignore: prefer_initializing_formals
+    : _remoteDataSource = remoteDataSource;
+  final GroupRemoteDataSource _remoteDataSource;
 
-  Future<Map<String, dynamic>> _request(
-    String method,
-    String path, {
-    Map<String, dynamic>? body,
+  Future<T> _execute<T>(
+    Future<T> Function() operation, {
     bool isJoining = false,
   }) async {
     try {
-      return await remoteDataSource.request(method, path, body: body);
+      return await operation();
     } on GroupApiFailure catch (error) {
       throw _failure(error.code, isJoining: isJoining);
     }
@@ -33,80 +34,36 @@ class GroupRepositoryImpl implements GroupRepository {
         _ => GroupFailureReason.unavailable,
       });
 
-  CurrentGroup _meeting(Map<String, dynamic> json, {String? description}) {
-    try {
-      return MeetingModel.fromJson(
-        json,
-      ).toEntity(descriptionOverride: description);
-    } on FormatException {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    } on TypeError {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    }
-  }
+  @override
+  Future<List<CurrentGroup>> getMyGroups() => _execute(() async {
+    final models = await _remoteDataSource.fetchMyGroups();
+    return models.map((model) => model.toEntity()).toList(growable: false);
+  });
 
   @override
-  Future<List<CurrentGroup>> getMyGroups() async {
-    final data = await _request('GET', '/v1/me/meetings');
-    final meetings = data['meetings'];
-    if (meetings is! List) {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    }
-    // 확장된 역할의 항목은 권한을 추측하지 않고 목록에서 제외합니다.
-    return meetings
-        .where(
-          (entry) =>
-              entry is! Map<String, dynamic> ||
-              entry['myRole'] is! String ||
-              entry['myRole'] == 'ADMIN' ||
-              entry['myRole'] == 'MEMBER',
-        )
-        .map((entry) {
-          if (entry is! Map<String, dynamic>) {
-            throw const GroupFailure(GroupFailureReason.unavailable);
-          }
-          return _meeting(entry);
-        })
-        .toList(growable: false);
-  }
+  Future<CurrentGroup> createGroup(CreateGroupParams params) =>
+      _execute(() async {
+        final model = await _remoteDataSource.createGroup(
+          name: params.name,
+          description: params.description,
+        );
+        return model.toEntity(descriptionOverride: params.description);
+      });
 
   @override
-  Future<CurrentGroup> createGroup(CreateGroupParams params) async {
-    final name = params.name;
-    final description = params.description;
-    final data = await _request(
-      'POST',
-      '/v1/meetings',
-      body: {
-        'name': name,
-        if (description.isNotEmpty) 'description': description,
-      },
-    );
-    return _meeting(data, description: description);
-  }
+  Future<CurrentGroup> joinGroup({required String inviteCode}) =>
+      _execute(() async {
+        final model = await _remoteDataSource.joinGroup(inviteCode);
+        return model.toEntity();
+      }, isJoining: true);
 
   @override
-  Future<CurrentGroup> joinGroup({required String inviteCode}) async {
-    final data = await _request(
-      'POST',
-      '/v1/me/meetings',
-      body: {'inviteCode': inviteCode},
-      isJoining: true,
-    );
-    return _meeting(data);
-  }
+  Future<CurrentGroup> getGroup(int groupId) => _execute(() async {
+    final model = await _remoteDataSource.fetchGroup(groupId);
+    return model.toEntity();
+  });
 
   @override
-  Future<CurrentGroup> getGroup(int groupId) async =>
-      _meeting(await _request('GET', '/v1/meetings/$groupId'));
-
-  @override
-  Future<String> getInviteCode({required int groupId}) async {
-    final data = await _request('GET', '/v1/meetings/$groupId/invite-code');
-    final code = data['inviteCode'];
-    if (code is! String || code.isEmpty) {
-      throw const GroupFailure(GroupFailureReason.unavailable);
-    }
-    return code;
-  }
+  Future<String> getInviteCode({required int groupId}) =>
+      _execute(() => _remoteDataSource.fetchInviteCode(groupId));
 }

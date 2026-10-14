@@ -6,29 +6,35 @@ import '../../domain/entities/group_member.dart';
 import '../../domain/entities/member_role.dart';
 
 part 'meeting_model.freezed.dart';
+part 'meeting_model.g.dart';
 
 /// 생성·가입·목록·상세 응답에서 공통으로 사용하는 API 필드입니다.
-@Freezed(fromJson: false, toJson: false)
+@freezed
 abstract class MeetingModel with _$MeetingModel {
   const factory MeetingModel({
-    required int id,
+    @JsonKey(name: 'meetingId') required int id,
     required String name,
     String? description,
+    @JsonKey(
+      name: 'myRole',
+      fromJson: MeetingModel._role,
+      toJson: MeetingModel._roleJson,
+    )
     required MemberRole role,
-    int? memberCount,
+    @JsonKey(fromJson: MeetingModel._memberCount) int? memberCount,
   }) = _MeetingModel;
 
-  factory MeetingModel.fromJson(Map<String, dynamic> json) => MeetingModel(
-    id: json['meetingId'] as int,
-    name: json['name'] as String,
-    description: json['description'] as String?,
-    memberCount: _memberCount(json['memberCount']),
-    role: switch (json['myRole']) {
-      'ADMIN' => MemberRole.admin,
-      'MEMBER' => MemberRole.member,
-      _ => throw const FormatException('알 수 없는 모임 역할입니다.'),
-    },
-  );
+  factory MeetingModel.fromJson(Map<String, dynamic> json) =>
+      _$MeetingModelFromJson(json);
+
+  static MemberRole _role(Object? value) => switch (value) {
+    'ADMIN' => MemberRole.admin,
+    'MEMBER' => MemberRole.member,
+    _ => throw const FormatException('알 수 없는 모임 역할입니다.'),
+  };
+
+  static String _roleJson(MemberRole value) =>
+      value == MemberRole.admin ? 'ADMIN' : 'MEMBER';
 
   static int? _memberCount(Object? value) {
     if (value == null) return null;

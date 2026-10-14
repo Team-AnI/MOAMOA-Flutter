@@ -10,15 +10,8 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       title: 'MOAMOA',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Pretendard',
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xff1d1d1f),
-          primary: const Color(0xff1d1d1f),
-          surface: Colors.white,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       routerConfig: ref.watch(appRouterProvider),
     );

@@ -122,13 +122,7 @@ class _HomeHeader extends ConsumerWidget {
             onPressed: () => context.go('/groups'),
           ),
           const SizedBox(width: 10),
-          GroupMark(
-            name: current?.group.name ?? '',
-            size: 36,
-            photo: ref.watch(groupUseMockProvider)
-                ? ref.watch(groupMockPhotosProvider)[current?.group.id]
-                : null,
-          ),
+          GroupMark(name: current?.group.name ?? '', size: 36, photo: null),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -12,16 +12,19 @@ part of 'meeting_model.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
+
 /// @nodoc
 mixin _$MeetingModel {
 
- int get id; String get name; String? get description; MemberRole get role; int? get memberCount;
+@JsonKey(name: 'meetingId') int get id; String get name; String? get description;@JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson) MemberRole get role;@JsonKey(fromJson: MeetingModel._memberCount) int? get memberCount;
 /// Create a copy of MeetingModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $MeetingModelCopyWith<MeetingModel> get copyWith => _$MeetingModelCopyWithImpl<MeetingModel>(this as MeetingModel, _$identity);
 
+  /// Serializes this MeetingModel to a JSON map.
+  Map<String, dynamic> toJson();
 
 
 @override
@@ -29,7 +32,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is MeetingModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.role, role) || other.role == role)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,name,description,role,memberCount);
 
@@ -46,7 +49,7 @@ abstract mixin class $MeetingModelCopyWith<$Res>  {
   factory $MeetingModelCopyWith(MeetingModel value, $Res Function(MeetingModel) _then) = _$MeetingModelCopyWithImpl;
 @useResult
 $Res call({
- int id, String name, String? description, MemberRole role, int? memberCount
+@JsonKey(name: 'meetingId') int id, String name, String? description,@JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson) MemberRole role,@JsonKey(fromJson: MeetingModel._memberCount) int? memberCount
 });
 
 
@@ -155,7 +158,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  MemberRole role,  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'meetingId')  int id,  String name,  String? description, @JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson)  MemberRole role, @JsonKey(fromJson: MeetingModel._memberCount)  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MeetingModel() when $default != null:
 return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCount);case _:
@@ -176,7 +179,7 @@ return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCou
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  MemberRole role,  int? memberCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'meetingId')  int id,  String name,  String? description, @JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson)  MemberRole role, @JsonKey(fromJson: MeetingModel._memberCount)  int? memberCount)  $default,) {final _that = this;
 switch (_that) {
 case _MeetingModel():
 return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCount);case _:
@@ -196,7 +199,7 @@ return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCou
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  String? description,  MemberRole role,  int? memberCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'meetingId')  int id,  String name,  String? description, @JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson)  MemberRole role, @JsonKey(fromJson: MeetingModel._memberCount)  int? memberCount)?  $default,) {final _that = this;
 switch (_that) {
 case _MeetingModel() when $default != null:
 return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCount);case _:
@@ -208,17 +211,17 @@ return $default(_that.id,_that.name,_that.description,_that.role,_that.memberCou
 }
 
 /// @nodoc
-
+@JsonSerializable()
 
 class _MeetingModel implements MeetingModel {
-  const _MeetingModel({required this.id, required this.name, this.description, required this.role, this.memberCount});
-  
+  const _MeetingModel({@JsonKey(name: 'meetingId') required this.id, required this.name, this.description, @JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson) required this.role, @JsonKey(fromJson: MeetingModel._memberCount) this.memberCount});
+  factory _MeetingModel.fromJson(Map<String, dynamic> json) => _$MeetingModelFromJson(json);
 
-@override final  int id;
+@override@JsonKey(name: 'meetingId') final  int id;
 @override final  String name;
 @override final  String? description;
-@override final  MemberRole role;
-@override final  int? memberCount;
+@override@JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson) final  MemberRole role;
+@override@JsonKey(fromJson: MeetingModel._memberCount) final  int? memberCount;
 
 /// Create a copy of MeetingModel
 /// with the given fields replaced by the non-null parameter values.
@@ -226,14 +229,17 @@ class _MeetingModel implements MeetingModel {
 @pragma('vm:prefer-inline')
 _$MeetingModelCopyWith<_MeetingModel> get copyWith => __$MeetingModelCopyWithImpl<_MeetingModel>(this, _$identity);
 
-
+@override
+Map<String, dynamic> toJson() {
+  return _$MeetingModelToJson(this, );
+}
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _MeetingModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description)&&(identical(other.role, role) || other.role == role)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount));
 }
 
-
+@JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode => Object.hash(runtimeType,id,name,description,role,memberCount);
 
@@ -250,7 +256,7 @@ abstract mixin class _$MeetingModelCopyWith<$Res> implements $MeetingModelCopyWi
   factory _$MeetingModelCopyWith(_MeetingModel value, $Res Function(_MeetingModel) _then) = __$MeetingModelCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String name, String? description, MemberRole role, int? memberCount
+@JsonKey(name: 'meetingId') int id, String name, String? description,@JsonKey(name: 'myRole', fromJson: MeetingModel._role, toJson: MeetingModel._roleJson) MemberRole role,@JsonKey(fromJson: MeetingModel._memberCount) int? memberCount
 });
 
 

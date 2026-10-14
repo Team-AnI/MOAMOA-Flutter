@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../domain/repositories/group_join_flow.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../providers/group_providers.dart';
@@ -31,9 +30,9 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
   final _description = TextEditingController();
   Uint8List? _photo;
   bool _pickingPhoto = false;
-  bool _previewing = false;
-  bool _approval = false;
-  bool _previewApproval = false;
+  final bool _previewing = false;
+  final bool _approval = false;
+  final bool _previewApproval = false;
   Group? _preview;
   int _step = 1;
   String? _error;
@@ -107,56 +106,6 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
       _error = null;
       _alreadyJoined = false;
     });
-    final repository = ref.read(groupRepositoryProvider);
-    final joinFlow = repository is GroupJoinFlow
-        ? repository as GroupJoinFlow
-        : null;
-    if (widget.isJoining &&
-        _step == 1 &&
-        ref.read(groupUseMockProvider) &&
-        joinFlow != null) {
-      FocusScope.of(context).unfocus();
-      setState(() => _previewing = true);
-      try {
-        final group = await joinFlow.previewInviteCode(_nameOrCode.text);
-        if (mounted) {
-          setState(() {
-            _preview = group;
-            _previewApproval = joinFlow.requiresApproval(group.id);
-            _step = 2;
-          });
-        }
-      } on GroupFailure catch (failure) {
-        if (mounted) {
-          setState(() {
-            _alreadyJoined = failure.reason == GroupFailureReason.alreadyJoined;
-            _error = _alreadyJoined ? '이미 가입한 모임입니다.' : '초대 코드를 확인해주세요.';
-          });
-        }
-      } finally {
-        if (mounted) setState(() => _previewing = false);
-      }
-      return;
-    }
-    if (widget.isJoining &&
-        _previewApproval &&
-        joinFlow != null &&
-        ref.read(groupUseMockProvider)) {
-      setState(() => _previewing = true);
-      try {
-        await joinFlow.requestJoin(_nameOrCode.text);
-        if (!mounted) return;
-        ref
-            .read(groupMockPendingProvider.notifier)
-            .update(joinFlow.pendingRequests);
-        context.go('/groups/requested');
-      } on GroupFailure {
-        if (mounted) setState(() => _error = '가입 요청을 보내지 못했습니다.');
-      } finally {
-        if (mounted) setState(() => _previewing = false);
-      }
-      return;
-    }
     final viewModel = ref.read(groupProvider.notifier);
     final result = widget.isJoining
         ? await viewModel.join(_nameOrCode.text)
@@ -166,19 +115,6 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           );
     if (!mounted) return;
     if (result != null) {
-      if (!widget.isJoining &&
-          _approval &&
-          ref.read(groupUseMockProvider) &&
-          joinFlow != null) {
-        joinFlow.setApprovalRequired(result.group.id);
-      }
-      if (!widget.isJoining &&
-          _photo != null &&
-          ref.read(groupUseMockProvider)) {
-        ref
-            .read(groupMockPhotosProvider.notifier)
-            .save(result.group.id, _photo!);
-      }
       context.go(widget.isJoining ? '/groups/joined' : '/groups/created');
     } else {
       setState(() {
@@ -244,9 +180,7 @@ class _GroupFormPageState extends ConsumerState<GroupFormPage> {
           alreadyJoined: _alreadyJoined,
           onPhotoAction: _pickPhoto,
           onChanged: (_) => setState(() {}),
-          onApprovalChanged: ref.watch(groupUseMockProvider)
-              ? (value) => setState(() => _approval = value)
-              : null,
+          onApprovalChanged: null,
           onEdit: busy ? null : () => setState(() => _step = 1),
         ),
       ),
@@ -368,11 +302,7 @@ class _FormSubmitButton extends ConsumerWidget {
     label: busy
         ? '처리 중…'
         : joining
-        ? (step == 1 && ref.watch(groupUseMockProvider)
-              ? '다음'
-              : approval
-              ? '가입 요청 보내기'
-              : '가입하기')
+        ? '가입하기'
         : step == 1
         ? '다음'
         : '모임 만들기',

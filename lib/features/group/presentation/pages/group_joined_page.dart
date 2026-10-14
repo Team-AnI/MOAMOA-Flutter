@@ -16,10 +16,7 @@ class GroupJoinedPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(groupProvider).currentGroup;
-    final pending = ref.watch(groupMockPendingProvider);
-    final group = requested
-        ? (pending.isEmpty ? null : pending.last)
-        : current?.group;
+    final group = current?.group;
     return GroupPageLayout(
       onClose: () => context.go('/groups'),
       bottom: GroupPrimaryButton(

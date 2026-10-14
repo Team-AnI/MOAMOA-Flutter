@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'group_photo_action.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
+import 'group_photo_action.dart';
 
 export 'group_photo_action.dart';
 

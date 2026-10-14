@@ -1,11 +1,11 @@
-import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/group/data/repositories/group_repository_impl.dart';
 import 'package:moamoa/features/group/data/datasources/group_remote_data_source_impl.dart';
+import 'package:moamoa/features/group/data/repositories/group_repository_impl.dart';
+import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 
@@ -96,12 +96,12 @@ void main() {
         baseUrl: base,
         authHeaders: () => {'Authorization': 'test-auth'},
       );
-      await source.request('GET', '/v1/meetings');
+      await source.fetchGroup(1);
       expect(
         adapter.requests.single.uri.toString(),
         base.contains('/api')
-            ? 'https://example.test/api/v1/meetings'
-            : 'https://example.test/v1/meetings',
+            ? 'https://example.test/api/v1/meetings/1'
+            : 'https://example.test/v1/meetings/1',
       );
     });
   }

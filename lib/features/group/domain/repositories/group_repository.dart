@@ -1,6 +1,6 @@
-import '../usecases/params/create_group_params.dart';
 import '../entities/current_group.dart';
 import '../entities/group_failure.dart';
+import '../usecases/params/create_group_params.dart';
 
 export '../usecases/params/create_group_params.dart';
 export '../entities/group_failure.dart';

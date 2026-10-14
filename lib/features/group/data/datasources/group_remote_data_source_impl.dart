@@ -1,25 +1,102 @@
 import 'package:dio/dio.dart';
 
 import '../models/group_api_failure.dart';
+import '../models/meeting_model.dart';
 import 'group_remote_data_source.dart';
 
 class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
+  // 명명된 인자로 의존성을 주입하고 구현 내부에 보관합니다.
   GroupRemoteDataSourceImpl({
-    required this.dio,
-    required this.baseUrl,
-    required this.authHeaders,
-  });
-  final Dio dio;
-  final String baseUrl;
-  final Map<String, String>? Function() authHeaders;
+    required Dio dio,
+    required String baseUrl,
+    required Map<String, String>? Function() authHeaders,
+    // ignore: prefer_initializing_formals
+  }) : _dio = dio,
+       // ignore: prefer_initializing_formals
+       _baseUrl = baseUrl,
+       // ignore: prefer_initializing_formals
+       _authHeaders = authHeaders;
+  final Dio _dio;
+  final String _baseUrl;
+  final Map<String, String>? Function() _authHeaders;
+
+  Future<T> _decode<T>(
+    Future<Map<String, dynamic>> response,
+    T Function(Map<String, dynamic>) parse,
+  ) async {
+    try {
+      return parse(await response);
+    } on FormatException {
+      throw const GroupApiFailure('UNAVAILABLE');
+    } on TypeError {
+      throw const GroupApiFailure('UNAVAILABLE');
+    }
+  }
 
   @override
-  Future<Map<String, dynamic>> request(
+  Future<List<MeetingModel>> fetchMyGroups() =>
+      _decode(_request('GET', '/v1/me/meetings'), (data) {
+        final meetings = data['meetings'];
+        if (meetings is! List) throw const FormatException('잘못된 모임 목록');
+        final result = <MeetingModel>[];
+        for (final entry in meetings) {
+          if (entry is! Map<String, dynamic>) {
+            throw const FormatException('잘못된 모임');
+          }
+          // 서버 역할 확장 시 권한을 추측하지 않고 해당 항목만 제외합니다.
+          if (entry['myRole'] is String &&
+              entry['myRole'] != 'ADMIN' &&
+              entry['myRole'] != 'MEMBER') {
+            continue;
+          }
+          result.add(MeetingModel.fromJson(entry));
+        }
+        return List.unmodifiable(result);
+      });
+
+  @override
+  Future<MeetingModel> fetchGroup(int groupId) =>
+      _decode(_request('GET', '/v1/meetings/$groupId'), MeetingModel.fromJson);
+
+  @override
+  Future<MeetingModel> createGroup({
+    required String name,
+    String? description,
+  }) => _decode(
+    _request(
+      'POST',
+      '/v1/meetings',
+      body: {
+        'name': name,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+      },
+    ),
+    MeetingModel.fromJson,
+  );
+
+  @override
+  Future<MeetingModel> joinGroup(String inviteCode) => _decode(
+    _request('POST', '/v1/me/meetings', body: {'inviteCode': inviteCode}),
+    MeetingModel.fromJson,
+  );
+
+  @override
+  Future<String> fetchInviteCode(int groupId) =>
+      _decode(_request('GET', '/v1/meetings/$groupId/invite-code'), (data) {
+        final code = data['inviteCode'];
+        if (code is! String || code.isEmpty) {
+          throw const FormatException('잘못된 초대 코드');
+        }
+        return code;
+      });
+
+  Future<Map<String, dynamic>> _request(
     String method,
     String path, {
     Map<String, dynamic>? body,
   }) async {
-    final cleanBase = baseUrl.endsWith('/') ? baseUrl : '$baseUrl/';
+    final cleanBase = _baseUrl.endsWith('/') ? _baseUrl : '$_baseUrl/';
     final cleanPath = path.startsWith('/') ? path.substring(1) : path;
     final uri = Uri.tryParse(cleanBase);
     if (uri == null ||
@@ -27,12 +104,12 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
         !['http', 'https'].contains(uri.scheme)) {
       throw const GroupApiFailure('UNAVAILABLE');
     }
-    final headers = authHeaders();
+    final headers = _authHeaders();
     if (headers == null) {
       throw const GroupApiFailure('UNAUTHORIZED');
     }
     try {
-      final response = await dio.request<Object?>(
+      final response = await _dio.request<Object?>(
         uri.resolve(cleanPath).toString(),
         data: body,
         options: Options(
