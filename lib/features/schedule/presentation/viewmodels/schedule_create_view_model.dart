@@ -7,7 +7,7 @@ import 'schedule_create_status.dart';
 
 /// 일정 만들기 ViewModel 입니다. [meetingId] 모임에 일정을 만들고 제출 과정을 [ScheduleCreateState] 로 알립니다.
 class ScheduleCreateViewModel extends Notifier<ScheduleCreateState> {
-  ScheduleCreateViewModel(this.meetingId);
+  ScheduleCreateViewModel({required this.meetingId});
 
   final int meetingId;
 

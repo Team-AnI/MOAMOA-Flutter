@@ -66,7 +66,7 @@ final scheduleDetailProvider =
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공 id, 오류)가 남지 않게 초기화합니다.
 final scheduleCreateProvider = NotifierProvider.autoDispose
     .family<ScheduleCreateViewModel, ScheduleCreateState, int>(
-      ScheduleCreateViewModel.new,
+      (meetingId) => ScheduleCreateViewModel(meetingId: meetingId),
     );
 
 /// 캘린더 탭의 월/선택 날짜. 목록 페이지가 구독을 유지하므로 탭을 오가도 값이 남습니다.

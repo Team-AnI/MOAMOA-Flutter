@@ -1,13 +1,13 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'schedule_response.dart';
+part of 'schedule_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_ScheduleResponse _$ScheduleResponseFromJson(Map<String, dynamic> json) =>
-    _ScheduleResponse(
+_ScheduleModel _$ScheduleModelFromJson(Map<String, dynamic> json) =>
+    _ScheduleModel(
       id: (json['scheduleId'] as num).toInt(),
       title: json['title'] as String,
       description: json['description'] as String? ?? '',
@@ -18,7 +18,7 @@ _ScheduleResponse _$ScheduleResponseFromJson(Map<String, dynamic> json) =>
       location: json['location'] as String? ?? '',
     );
 
-Map<String, dynamic> _$ScheduleResponseToJson(_ScheduleResponse instance) =>
+Map<String, dynamic> _$ScheduleModelToJson(_ScheduleModel instance) =>
     <String, dynamic>{
       'scheduleId': instance.id,
       'title': instance.title,

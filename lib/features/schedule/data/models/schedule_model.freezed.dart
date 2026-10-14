@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'schedule_response.dart';
+part of 'schedule_model.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -14,22 +14,22 @@ part of 'schedule_response.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
-mixin _$ScheduleResponse {
+mixin _$ScheduleModel {
 
 @JsonKey(name: 'scheduleId') int get id; String get title; String get description; DateTime get startAt; DateTime? get endAt; String get location;
-/// Create a copy of ScheduleResponse
+/// Create a copy of ScheduleModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$ScheduleResponseCopyWith<ScheduleResponse> get copyWith => _$ScheduleResponseCopyWithImpl<ScheduleResponse>(this as ScheduleResponse, _$identity);
+$ScheduleModelCopyWith<ScheduleModel> get copyWith => _$ScheduleModelCopyWithImpl<ScheduleModel>(this as ScheduleModel, _$identity);
 
-  /// Serializes this ScheduleResponse to a JSON map.
+  /// Serializes this ScheduleModel to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScheduleResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ScheduleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -38,15 +38,15 @@ int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,l
 
 @override
 String toString() {
-  return 'ScheduleResponse(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
+  return 'ScheduleModel(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $ScheduleResponseCopyWith<$Res>  {
-  factory $ScheduleResponseCopyWith(ScheduleResponse value, $Res Function(ScheduleResponse) _then) = _$ScheduleResponseCopyWithImpl;
+abstract mixin class $ScheduleModelCopyWith<$Res>  {
+  factory $ScheduleModelCopyWith(ScheduleModel value, $Res Function(ScheduleModel) _then) = _$ScheduleModelCopyWithImpl;
 @useResult
 $Res call({
 @JsonKey(name: 'scheduleId') int id, String title, String description, DateTime startAt, DateTime? endAt, String location
@@ -57,17 +57,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$ScheduleResponseCopyWithImpl<$Res>
-    implements $ScheduleResponseCopyWith<$Res> {
-  _$ScheduleResponseCopyWithImpl(this._self, this._then);
+class _$ScheduleModelCopyWithImpl<$Res>
+    implements $ScheduleModelCopyWith<$Res> {
+  _$ScheduleModelCopyWithImpl(this._self, this._then);
 
-  final ScheduleResponse _self;
-  final $Res Function(ScheduleResponse) _then;
+  final ScheduleModel _self;
+  final $Res Function(ScheduleModel) _then;
 
-/// Create a copy of ScheduleResponse
+/// Create a copy of ScheduleModel
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
-  return _then(ScheduleResponse(
+  return _then(ScheduleModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -81,8 +81,8 @@ as String,
 }
 
 
-/// Adds pattern-matching-related methods to [ScheduleResponse].
-extension ScheduleResponsePatterns on ScheduleResponse {
+/// Adds pattern-matching-related methods to [ScheduleModel].
+extension ScheduleModelPatterns on ScheduleModel {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -95,10 +95,10 @@ extension ScheduleResponsePatterns on ScheduleResponse {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ScheduleResponse value)?  $default,{required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ScheduleModel value)?  $default,{required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case _ScheduleResponse() when $default != null:
+case _ScheduleModel() when $default != null:
 return $default(_that);case _:
   return orElse();
 
@@ -117,10 +117,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ScheduleResponse value)  $default,){
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ScheduleModel value)  $default,){
 final _that = this;
 switch (_that) {
-case _ScheduleResponse():
+case _ScheduleModel():
 return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
@@ -138,10 +138,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ScheduleResponse value)?  $default,){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ScheduleModel value)?  $default,){
 final _that = this;
 switch (_that) {
-case _ScheduleResponse() when $default != null:
+case _ScheduleModel() when $default != null:
 return $default(_that);case _:
   return null;
 
@@ -161,7 +161,7 @@ return $default(_that);case _:
 
 @optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case _ScheduleResponse() when $default != null:
+case _ScheduleModel() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
   return orElse();
 
@@ -182,7 +182,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 
 @optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)  $default,) {final _that = this;
 switch (_that) {
-case _ScheduleResponse():
+case _ScheduleModel():
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
   throw StateError('Unexpected subclass');
 
@@ -202,7 +202,7 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 
 @optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'scheduleId')  int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,) {final _that = this;
 switch (_that) {
-case _ScheduleResponse() when $default != null:
+case _ScheduleModel() when $default != null:
 return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
   return null;
 
@@ -214,9 +214,9 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// @nodoc
 @JsonSerializable()
 
-class _ScheduleResponse implements ScheduleResponse {
-  const _ScheduleResponse({@JsonKey(name: 'scheduleId') required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = ''});
-  factory _ScheduleResponse.fromJson(Map<String, dynamic> json) => _$ScheduleResponseFromJson(json);
+class _ScheduleModel implements ScheduleModel {
+  const _ScheduleModel({@JsonKey(name: 'scheduleId') required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = ''});
+  factory _ScheduleModel.fromJson(Map<String, dynamic> json) => _$ScheduleModelFromJson(json);
 
 @override@JsonKey(name: 'scheduleId') final  int id;
 @override final  String title;
@@ -225,20 +225,20 @@ class _ScheduleResponse implements ScheduleResponse {
 @override final  DateTime? endAt;
 @override@JsonKey() final  String location;
 
-/// Create a copy of ScheduleResponse
+/// Create a copy of ScheduleModel
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-_$ScheduleResponseCopyWith<_ScheduleResponse> get copyWith => __$ScheduleResponseCopyWithImpl<_ScheduleResponse>(this, _$identity);
+_$ScheduleModelCopyWith<_ScheduleModel> get copyWith => __$ScheduleModelCopyWithImpl<_ScheduleModel>(this, _$identity);
 
 @override
 Map<String, dynamic> toJson() {
-  return _$ScheduleResponseToJson(this, );
+  return _$ScheduleModelToJson(this, );
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScheduleResponse&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ScheduleModel&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -247,15 +247,15 @@ int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,l
 
 @override
 String toString() {
-  return 'ScheduleResponse(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
+  return 'ScheduleModel(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$ScheduleResponseCopyWith<$Res> implements $ScheduleResponseCopyWith<$Res> {
-  factory _$ScheduleResponseCopyWith(_ScheduleResponse value, $Res Function(_ScheduleResponse) _then) = __$ScheduleResponseCopyWithImpl;
+abstract mixin class _$ScheduleModelCopyWith<$Res> implements $ScheduleModelCopyWith<$Res> {
+  factory _$ScheduleModelCopyWith(_ScheduleModel value, $Res Function(_ScheduleModel) _then) = __$ScheduleModelCopyWithImpl;
 @override @useResult
 $Res call({
 @JsonKey(name: 'scheduleId') int id, String title, String description, DateTime startAt, DateTime? endAt, String location
@@ -266,17 +266,17 @@ $Res call({
 
 }
 /// @nodoc
-class __$ScheduleResponseCopyWithImpl<$Res>
-    implements _$ScheduleResponseCopyWith<$Res> {
-  __$ScheduleResponseCopyWithImpl(this._self, this._then);
+class __$ScheduleModelCopyWithImpl<$Res>
+    implements _$ScheduleModelCopyWith<$Res> {
+  __$ScheduleModelCopyWithImpl(this._self, this._then);
 
-  final _ScheduleResponse _self;
-  final $Res Function(_ScheduleResponse) _then;
+  final _ScheduleModel _self;
+  final $Res Function(_ScheduleModel) _then;
 
-/// Create a copy of ScheduleResponse
+/// Create a copy of ScheduleModel
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
-  return _then(_ScheduleResponse(
+  return _then(_ScheduleModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
