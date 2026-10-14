@@ -35,7 +35,7 @@ class _StubAdapter implements HttpClientAdapter {
 NoticeRepositoryImpl _repositoryWith(int statusCode, String body) {
   final dio = Dio()..httpClientAdapter = _StubAdapter(statusCode, body);
   return NoticeRepositoryImpl(
-    remoteDataSource: NoticeRemoteDataSourceImpl(dio: dio),
+    noticeRemoteDataSource: NoticeRemoteDataSourceImpl(dio: dio),
   );
 }
 

@@ -17,10 +17,11 @@ import '../models/update_notice_request.dart';
 
 /// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
 class NoticeRepositoryImpl implements NoticeRepository {
-  const NoticeRepositoryImpl({required NoticeRemoteDataSource remoteDataSource})
-    : _remoteDataSource = remoteDataSource;
+  const NoticeRepositoryImpl({
+    required NoticeRemoteDataSource noticeRemoteDataSource,
+  }) : _noticeRemoteDataSource = noticeRemoteDataSource;
 
-  final NoticeRemoteDataSource _remoteDataSource;
+  final NoticeRemoteDataSource _noticeRemoteDataSource;
 
   @override
   Future<NoticeListResult> getNotices({
@@ -29,7 +30,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int size,
   }) {
     return _guard(() async {
-      final response = await _remoteDataSource.fetchNotices(
+      final response = await _noticeRemoteDataSource.fetchNotices(
         FetchNoticesRequest(meetingId: meetingId, page: page, size: size),
       );
       return response.toEntity();
@@ -42,7 +43,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required int noticeId,
   }) {
     return _guard(() async {
-      final response = await _remoteDataSource.fetchNoticeDetail(
+      final response = await _noticeRemoteDataSource.fetchNoticeDetail(
         FetchNoticeDetailRequest(meetingId: meetingId, noticeId: noticeId),
       );
       return response.toEntity();
@@ -56,7 +57,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     required String content,
   }) {
     return _guard(
-      () => _remoteDataSource.createNotice(
+      () => _noticeRemoteDataSource.createNotice(
         CreateNoticeRequest(
           meetingId: meetingId,
           title: title,
@@ -74,7 +75,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
     String? content,
   }) {
     return _guard(
-      () => _remoteDataSource.updateNotice(
+      () => _noticeRemoteDataSource.updateNotice(
         UpdateNoticeRequest(
           meetingId: meetingId,
           noticeId: noticeId,
@@ -88,7 +89,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   @override
   Future<void> deleteNotice({required int meetingId, required int noticeId}) {
     return _guard(
-      () => _remoteDataSource.deleteNotice(
+      () => _noticeRemoteDataSource.deleteNotice(
         DeleteNoticeRequest(meetingId: meetingId, noticeId: noticeId),
       ),
     );
@@ -97,7 +98,7 @@ class NoticeRepositoryImpl implements NoticeRepository {
   @override
   Future<MemberRole> getMyRole({required int meetingId}) {
     return _guard(() async {
-      final role = await _remoteDataSource.fetchMyRole(
+      final role = await _noticeRemoteDataSource.fetchMyRole(
         FetchMyRoleRequest(meetingId: meetingId),
       );
       return role == 'ADMIN' ? MemberRole.admin : MemberRole.member;

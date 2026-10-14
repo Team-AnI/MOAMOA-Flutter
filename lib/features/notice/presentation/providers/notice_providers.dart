@@ -26,7 +26,7 @@ final noticeRemoteDataSourceProvider = Provider<NoticeRemoteDataSource>(
 
 final noticeRepositoryProvider = Provider<NoticeRepository>(
   (ref) => NoticeRepositoryImpl(
-    remoteDataSource: ref.watch(noticeRemoteDataSourceProvider),
+    noticeRemoteDataSource: ref.watch(noticeRemoteDataSourceProvider),
   ),
 );
 
