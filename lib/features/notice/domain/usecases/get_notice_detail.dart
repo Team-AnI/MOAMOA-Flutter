@@ -1,16 +1,21 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../entities/notice.dart';
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
-/// GetNoticeDetail 전용 파라미터
-final class GetNoticeDetailParams extends Params {
-  const GetNoticeDetailParams({
-    required this.meetingId,
-    required this.noticeId,
-  });
+part 'get_notice_detail.freezed.dart';
 
-  final int meetingId;
-  final int noticeId;
+/// GetNoticeDetail 전용 파라미터
+@freezed
+abstract class GetNoticeDetailParams extends Params
+    with _$GetNoticeDetailParams {
+  const GetNoticeDetailParams._();
+
+  const factory GetNoticeDetailParams({
+    required int meetingId,
+    required int noticeId,
+  }) = _GetNoticeDetailParams;
 }
 
 /// 공지 상세 조회 (3-3)

@@ -1,20 +1,23 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
 import '../entities/notice_list_result.dart';
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
+part 'get_notices.freezed.dart';
+
 /// GetNotices 전용 파라미터
-final class GetNoticesParams extends Params {
-  const GetNoticesParams({
-    required this.meetingId,
-    this.page = 0,
-    this.size = 20,
-  });
+@freezed
+abstract class GetNoticesParams extends Params with _$GetNoticesParams {
+  const GetNoticesParams._();
 
-  final int meetingId;
+  const factory GetNoticesParams({
+    required int meetingId,
 
-  /// 0부터 시작
-  final int page;
-  final int size;
+    /// 0부터 시작
+    @Default(0) int page,
+    @Default(20) int size,
+  }) = _GetNoticesParams;
 }
 
 /// 공지 목록 조회 (3-2)
