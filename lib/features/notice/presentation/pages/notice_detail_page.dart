@@ -11,7 +11,7 @@ import '../widgets/notice_error_view.dart';
 import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 상세 화면
-class NoticeDetailPage extends ConsumerWidget {
+class NoticeDetailPage extends ConsumerStatefulWidget {
   const NoticeDetailPage({
     super.key,
     required this.meetingId,
@@ -21,32 +21,43 @@ class NoticeDetailPage extends ConsumerWidget {
   final int meetingId;
   final int noticeId;
 
-  NoticeDetailArgs get _args => (meetingId: meetingId, noticeId: noticeId);
+  @override
+  ConsumerState<NoticeDetailPage> createState() => _NoticeDetailPageState();
+}
 
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
+  /// 삭제 요청이 진행 중인 동안 버튼을 다시 누르지 못하게 합니다.
+  bool _isDeleting = false;
+
+  int get meetingId => widget.meetingId;
+
+  NoticeDetailArgs get _args =>
+      (meetingId: widget.meetingId, noticeId: widget.noticeId);
+
+  Future<void> _delete() async {
+    if (_isDeleting) return;
+
     final confirmed = await showNoticeConfirmDialog(
       context,
       title: '공지를 삭제할까요?',
       message: '삭제한 공지는 되돌릴 수 없어요.',
       confirmLabel: '삭제',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !mounted) return;
 
+    setState(() => _isDeleting = true);
     try {
       await ref.read(noticeDetailProvider(_args).notifier).delete();
-      if (context.mounted) context.pop();
+      if (mounted) context.pop();
     } catch (error) {
-      if (!context.mounted) return;
-      _showError(context, error);
+      if (!mounted) return;
+      setState(() => _isDeleting = false);
+      showNoticeSnackBar(context, noticeErrorMessage(error));
     }
   }
 
-  void _showError(BuildContext context, Object error) {
-    showNoticeSnackBar(context, noticeErrorMessage(error));
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final notice = ref.watch(noticeDetailProvider(_args));
     final role = ref.watch(noticeMyRoleProvider(meetingId));
     final isAdmin = role.value?.isAdmin ?? false;
@@ -60,11 +71,12 @@ class NoticeDetailPage extends ConsumerWidget {
             : null,
         // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
         onEdit: isAdmin && notice.hasValue
-            ? () => context.push('/meetings/$meetingId/notices/$noticeId/edit')
+            ? () => context.push(
+                '/meetings/$meetingId/notices/${widget.noticeId}/edit',
+              )
             : null,
-        onDelete: isAdmin && notice.hasValue
-            ? () => _delete(context, ref)
-            : null,
+        onDelete: isAdmin && notice.hasValue ? _delete : null,
+        isDeleting: _isDeleting,
       ),
       body: notice.when(
         data: (notice) => _NoticeContent(notice: notice),
@@ -93,12 +105,16 @@ class _DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onRetryRole,
     this.onEdit,
     this.onDelete,
+    this.isDeleting = false,
   });
 
   final VoidCallback onBack;
   final VoidCallback? onRetryRole;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+
+  /// true 이면 수정 · 삭제를 누를 수 없고, 삭제 버튼에 진행 표시를 보여줍니다.
+  final bool isDeleting;
 
   @override
   Size get preferredSize => const Size.fromHeight(56);
@@ -135,13 +151,14 @@ class _DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
           _CircleIconButton(
             icon: Icons.edit_outlined,
             tooltip: '공지 수정',
-            onPressed: onEdit,
+            onPressed: isDeleting ? null : onEdit,
           ),
           const SizedBox(width: 8),
           _CircleIconButton(
             icon: Icons.delete_outline,
             tooltip: '공지 삭제',
-            onPressed: onDelete,
+            onPressed: isDeleting ? null : onDelete,
+            isLoading: isDeleting,
           ),
           const SizedBox(width: 16),
         ],
@@ -156,11 +173,13 @@ class _CircleIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   final IconData icon;
   final String tooltip;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -169,8 +188,19 @@ class _CircleIconButton extends StatelessWidget {
       tooltip: tooltip,
       constraints: const BoxConstraints.tightFor(width: 40, height: 40),
       padding: EdgeInsets.zero,
-      style: IconButton.styleFrom(backgroundColor: NoticeColors.gray),
-      icon: Icon(icon, size: 20, color: NoticeColors.text),
+      style: IconButton.styleFrom(
+        backgroundColor: NoticeColors.gray,
+        disabledBackgroundColor: NoticeColors.gray,
+      ),
+      icon: isLoading
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: NoticeColors.text,
+              ),
+            )
+          : Icon(icon, size: 20, color: NoticeColors.text),
     );
   }
 }

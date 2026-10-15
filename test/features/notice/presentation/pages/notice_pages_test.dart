@@ -296,6 +296,101 @@ void main() {
       expect(find.text('10월 회비는 10일까지 내 주세요.'), findsOneWidget);
     });
 
+    testWidgets('삭제하는 동안에는 수정·삭제 버튼을 누를 수 없고 진행 표시를 보여준다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      )..deleteGate = Completer<void>();
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('공지 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pump();
+
+      final edit = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.edit_outlined),
+      );
+      expect(edit.onPressed, isNull);
+      expect(
+        find.descendant(
+          of: find.byTooltip('공지 삭제'),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+      final delete = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byType(CircularProgressIndicator),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(delete.onPressed, isNull);
+
+      repository.deleteGate!.complete();
+      repository.error = const NoticeException('삭제에 실패했어요.');
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('삭제에 실패하면 안내하고 버튼을 다시 누를 수 있다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      )..deleteGate = Completer<void>();
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('공지 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pump();
+      repository.error = const NoticeException('삭제에 실패했어요.');
+      repository.deleteGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('삭제에 실패했어요.'), findsOneWidget);
+      final edit = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.edit_outlined),
+      );
+      expect(edit.onPressed, isNotNull);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('삭제에 성공하면 상세 화면을 닫고 이전 화면으로 돌아간다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      );
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('이전 화면')),
+          ),
+          GoRoute(path: '/detail', builder: (_, _) => page),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          retry: (_, _) => null,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      unawaited(router.push('/detail'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('공지 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NoticeDetailPage), findsNothing);
+      expect(find.text('이전 화면'), findsOneWidget);
+      expect(repository.notices, isEmpty);
+    });
+
     // 예외처리 4-6
     testWidgets('삭제되었거나 없는 공지는 안내하고 목록으로 가는 버튼을 보여준다', (tester) async {
       await pumpPage(
