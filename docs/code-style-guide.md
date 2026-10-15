@@ -121,7 +121,11 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
 // Repository (domain/repositories/schedule_repository.dart, data/repositories/schedule_repository_impl.dart)
 // - DataSource 를 묶어 도메인에서 쓸 Entity 로 변환해 내려줍니다.
 abstract interface class ScheduleRepository {
-  Future<List<Schedule>> getSchedules();
+  Future<List<Schedule>> getSchedules({
+    required DateTime startDate,
+    required DateTime endDate,
+  });
+  Future<List<Schedule>> getAllSchedules();
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
@@ -131,7 +135,16 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
   final ScheduleRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<Schedule>> getSchedules() async {
+  Future<List<Schedule>> getSchedules({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final response = await _remoteDataSource.fetchSchedules();
+    return response.map((model) => model.toEntity()).toList();
+  }
+
+  @override
+  Future<List<Schedule>> getAllSchedules() async {
     final response = await _remoteDataSource.fetchSchedules();
     return response.map((model) => model.toEntity()).toList();
   }
@@ -173,14 +186,14 @@ abstract class GetSchedules extends Usecase<List<Schedule>, GetSchedulesParams> 
 
 // 실제 구현 클래스
 final class GetSchedulesImpl implements GetSchedules {
-  GetSchedulesImpl({required ScheduleRepository repository})
-      : _repository = repository;
+  GetSchedulesImpl({required ScheduleRepository scheduleRepository})
+      : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<List<Schedule>> call(GetSchedulesParams params) {
-    return _repository.getSchedules(
+    return _scheduleRepository.getSchedules(
       startDate: params.startDate,
       endDate: params.endDate,
     );
@@ -191,14 +204,14 @@ final class GetSchedulesImpl implements GetSchedules {
 abstract class GetAllSchedules extends Usecase<List<Schedule>, NoParams> {}
 
 final class GetAllSchedulesImpl implements GetAllSchedules {
-  GetAllSchedulesImpl({required ScheduleRepository repository})
-      : _repository = repository;
+  GetAllSchedulesImpl({required ScheduleRepository scheduleRepository})
+      : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<List<Schedule>> call(NoParams params) {
-    return _repository.getAllSchedules();
+    return _scheduleRepository.getAllSchedules();
   }
 }
 ```
@@ -209,11 +222,21 @@ final class GetAllSchedulesImpl implements GetAllSchedules {
 // - Riverpod 의 AsyncNotifier 를 상속하지만, 클래스/파일 명명은 Notifier 가 아닌 ViewModel 을 사용합니다.
 class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
   @override
-  Future<List<Schedule>> build() => ref.watch(getSchedulesProvider).call();
+  Future<List<Schedule>> build() => _fetch(ref.watch(getSchedulesProvider));
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(getSchedulesProvider).call());
+    state = await AsyncValue.guard(() => _fetch(ref.read(getSchedulesProvider)));
+  }
+
+  Future<List<Schedule>> _fetch(GetSchedules getSchedules) {
+    final now = DateTime.now();
+    return getSchedules(
+      GetSchedulesParams(
+        startDate: now,
+        endDate: now.add(const Duration(days: 7)),
+      ),
+    );
   }
 }
 ```
@@ -230,7 +253,7 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>(
 );
 
 final getSchedulesProvider = Provider<GetSchedules>(
-  (ref) => GetSchedules(ref.watch(scheduleRepositoryProvider)),
+  (ref) => GetSchedulesImpl(scheduleRepository: ref.watch(scheduleRepositoryProvider)),
 );
 
 final scheduleListProvider =
