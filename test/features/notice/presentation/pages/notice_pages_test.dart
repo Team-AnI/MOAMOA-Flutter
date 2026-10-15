@@ -72,6 +72,34 @@ void main() {
       expect(find.text('10월 회비 안내'), findsOneWidget);
     });
 
+    testWidgets('오래된 공지는 작성 시각을 개월·년 단위로 보여준다', (tester) async {
+      final now = DateTime.now();
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 2,
+              title: '석 달 전 공지',
+              content: '내용',
+              createdAt: now.subtract(const Duration(days: 95)),
+            ),
+            Notice(
+              id: 1,
+              title: '이 년 전 공지',
+              content: '내용',
+              createdAt: now.subtract(const Duration(days: 800)),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('3개월 전'), findsOneWidget);
+      expect(find.text('2년 전'), findsOneWidget);
+    });
+
     // 예외처리 4-2
     testWidgets('공지가 없으면 관리자에게는 작성 버튼을 보여준다', (tester) async {
       await pumpPage(
@@ -491,7 +519,7 @@ void main() {
               id: 1,
               title: '회식 정산 안내',
               content: '10월 회비는 10일까지 내 주세요.',
-              createdAt: DateTime(2026, 9, 12),
+              createdAt: DateTime(DateTime.now().year, 9, 12),
             ),
           ],
         ),
@@ -500,7 +528,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('회식 정산 안내'), findsOneWidget);
-      expect(find.text('9월 12일'), findsOneWidget);
+      expect(find.text('${DateTime.now().year}년 9월 12일'), findsOneWidget);
       expect(find.text('10월 회비는 10일까지 내 주세요.'), findsOneWidget);
     });
 
@@ -620,6 +648,26 @@ void main() {
       expect(find.text('이전 화면'), findsOneWidget);
       expect(find.text('공지를 삭제했어요.'), findsOneWidget);
       expect(repository.notices, isEmpty);
+    });
+
+    testWidgets('작년 공지도 작성일에 연도를 함께 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 1,
+              title: '작년 공지',
+              content: '내용',
+              createdAt: DateTime(DateTime.now().year - 1, 9, 12),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('${DateTime.now().year - 1}년 9월 12일'), findsOneWidget);
     });
 
     // 예외처리 4-6
