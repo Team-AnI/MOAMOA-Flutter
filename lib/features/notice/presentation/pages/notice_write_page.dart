@@ -48,7 +48,8 @@ class NoticeWritePage extends ConsumerWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: IconButton(
-            onPressed: () => context.pop(),
+            // maybePop 은 아래 폼의 PopScope(입력 중 취소 확인)를 거칩니다.
+            onPressed: () => Navigator.of(context).maybePop(),
             tooltip: '닫기',
             constraints: const BoxConstraints.tightFor(width: 40, height: 40),
             padding: EdgeInsets.zero,
@@ -112,6 +113,25 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
 
   bool get _isEdit => widget.initialNotice != null;
 
+  /// 처음 열렸을 때와 입력 내용이 다르면 true. (작성은 비어 있는 상태가 기준)
+  bool get _hasChanges {
+    final initial = widget.initialNotice;
+    return _titleController.text != (initial?.title ?? '') ||
+        _contentController.text != (initial?.content ?? '');
+  }
+
+  /// 입력 중에 뒤로 가면 내용이 사라지므로 한 번 확인합니다.
+  Future<void> _confirmLeave() async {
+    final leave = await showNoticeConfirmDialog(
+      context,
+      title: _isEdit ? '수정을 취소할까요?' : '작성을 취소할까요?',
+      message: '입력한 내용이 사라져요.',
+      confirmLabel: '나가기',
+      cancelLabel: '계속 작성',
+    );
+    if (leave == true && mounted) Navigator.of(context).pop();
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -153,7 +173,8 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
 
   /// 안내가 보이는 중에는 입력할 때마다 빠진 항목을 다시 확인합니다.
   void _onChanged(String _) {
-    if (_showMissing) setState(() {});
+    // 입력 내용이 바뀔 때마다 뒤로 가기 확인 여부(_hasChanges)를 다시 계산합니다.
+    setState(() {});
   }
 
   @override
@@ -162,25 +183,31 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
         .watch(noticeWriteProvider(widget.meetingId))
         .isLoading;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: _NoticeFormFields(
-            isEdit: _isEdit,
-            titleController: _titleController,
-            contentController: _contentController,
-            showTitleMissing: _showMissing && _isTitleMissing,
-            showContentMissing: _showMissing && _isContentMissing,
-            onChanged: _onChanged,
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmLeave();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _NoticeFormFields(
+              isEdit: _isEdit,
+              titleController: _titleController,
+              contentController: _contentController,
+              showTitleMissing: _showMissing && _isTitleMissing,
+              showContentMissing: _showMissing && _isContentMissing,
+              onChanged: _onChanged,
+            ),
           ),
-        ),
-        _SubmitBar(
-          label: _isEdit ? '수정 완료' : '공지 등록',
-          isLoading: isSubmitting,
-          onPressed: isSubmitting ? null : _submit,
-        ),
-      ],
+          _SubmitBar(
+            label: _isEdit ? '수정 완료' : '공지 등록',
+            isLoading: isSubmitting,
+            onPressed: isSubmitting ? null : _submit,
+          ),
+        ],
+      ),
     );
   }
 }
