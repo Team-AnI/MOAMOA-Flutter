@@ -618,6 +618,7 @@ void main() {
 
       expect(find.byType(NoticeDetailPage), findsNothing);
       expect(find.text('이전 화면'), findsOneWidget);
+      expect(find.text('공지를 삭제했어요.'), findsOneWidget);
       expect(repository.notices, isEmpty);
     });
 

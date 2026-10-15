@@ -48,7 +48,10 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
     setState(() => _isDeleting = true);
     try {
       await ref.read(noticeDetailProvider(_args).notifier).delete();
-      if (mounted) context.pop();
+      if (!mounted) return;
+      // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
+      showNoticeSnackBar(context, '공지를 삭제했어요.');
+      context.pop();
     } catch (error) {
       if (!mounted) return;
       setState(() => _isDeleting = false);
