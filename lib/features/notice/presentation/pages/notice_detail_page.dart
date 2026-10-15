@@ -6,6 +6,7 @@ import '../../domain/entities/notice.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
+import '../widgets/notice_date_format.dart';
 import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 import '../widgets/notice_role_retry_button.dart';
@@ -246,7 +247,7 @@ class _NoticeContent extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '${notice.createdAt.month}월 ${notice.createdAt.day}일',
+            formatNoticeDate(notice.createdAt),
             style: const TextStyle(
               fontSize: 14,
               height: 1.43,
