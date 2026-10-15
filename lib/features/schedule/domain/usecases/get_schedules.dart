@@ -22,13 +22,15 @@ abstract class GetSchedules
     extends Usecase<List<Schedule>, GetSchedulesParams> {}
 
 final class GetSchedulesImpl implements GetSchedules {
-  GetSchedulesImpl({required this._repository});
+  GetSchedulesImpl({required ScheduleRepository scheduleRepository})
+    // ignore: prefer_initializing_formals
+    : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<List<Schedule>> call(GetSchedulesParams params) async {
-    return _repository.getSchedules(
+    return _scheduleRepository.getSchedules(
       ScheduleListRequest(
         meetingId: params.meetingId,
         startDate: params.startDate,

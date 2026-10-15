@@ -28,13 +28,15 @@ abstract class CreateSchedule
     extends Usecase<CreatedSchedule, CreateScheduleParams> {}
 
 final class CreateScheduleImpl implements CreateSchedule {
-  CreateScheduleImpl({required this._repository});
+  CreateScheduleImpl({required ScheduleRepository scheduleRepository})
+    // ignore: prefer_initializing_formals
+    : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<CreatedSchedule> call(CreateScheduleParams params) async {
-    return _repository.createSchedule(
+    return _scheduleRepository.createSchedule(
       ScheduleCreateRequest(
         meetingId: params.meetingId,
         title: params.title.trim(),

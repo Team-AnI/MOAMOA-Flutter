@@ -20,16 +20,21 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>(
 );
 
 final createScheduleProvider = Provider<CreateSchedule>(
-  (ref) =>
-      CreateScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
+  (ref) => CreateScheduleImpl(
+    scheduleRepository: ref.watch(scheduleRepositoryProvider),
+  ),
 );
 
 final getSchedulesProvider = Provider<GetSchedules>(
-  (ref) => GetSchedulesImpl(repository: ref.watch(scheduleRepositoryProvider)),
+  (ref) => GetSchedulesImpl(
+    scheduleRepository: ref.watch(scheduleRepositoryProvider),
+  ),
 );
 
 final getScheduleProvider = Provider<GetSchedule>(
-  (ref) => GetScheduleImpl(repository: ref.watch(scheduleRepositoryProvider)),
+  (ref) => GetScheduleImpl(
+    scheduleRepository: ref.watch(scheduleRepositoryProvider),
+  ),
 );
 
 /// 현재 사용자가 이 모임의 관리자인지 알려줍니다.

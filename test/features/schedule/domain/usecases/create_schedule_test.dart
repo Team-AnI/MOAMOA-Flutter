@@ -14,7 +14,7 @@ void main() {
 
   setUp(() {
     repository = FakeScheduleRepository();
-    createSchedule = CreateScheduleImpl(repository: repository);
+    createSchedule = CreateScheduleImpl(scheduleRepository: repository);
   });
 
   test('올바른 입력이면 요청 객체로 저장하고 생성된 일정을 돌려준다', () async {
