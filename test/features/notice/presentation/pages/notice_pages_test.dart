@@ -504,6 +504,28 @@ void main() {
       expect(find.text('10월 회비는 10일까지 내 주세요.'), findsOneWidget);
     });
 
+    testWidgets('수정 후 상세를 다시 불러오는 동안에도 이전 내용을 그대로 보여준다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        myRole: MemberRole.admin,
+      );
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(NoticeDetailPage)),
+      );
+
+      repository.detailGate = Completer<void>();
+      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('10월 회비 안내'), findsOneWidget);
+
+      repository.detailGate!.complete();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('삭제하는 동안에는 수정·삭제 버튼을 누를 수 없고 진행 표시를 보여준다', (tester) async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1)],
