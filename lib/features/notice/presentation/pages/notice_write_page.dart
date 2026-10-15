@@ -182,6 +182,8 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     final isSubmitting = ref
         .watch(noticeWriteProvider(widget.meetingId))
         .isLoading;
+    // 수정 화면은 바뀐 내용이 없으면 저장할 것이 없으므로 버튼을 누를 수 없게 합니다.
+    final canSubmit = !isSubmitting && (!_isEdit || _hasChanges);
 
     return PopScope(
       canPop: !_hasChanges,
@@ -204,7 +206,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
           _SubmitBar(
             label: _isEdit ? '수정 완료' : '공지 등록',
             isLoading: isSubmitting,
-            onPressed: isSubmitting ? null : _submit,
+            onPressed: canSubmit ? _submit : null,
           ),
         ],
       ),

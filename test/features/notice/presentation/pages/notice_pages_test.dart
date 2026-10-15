@@ -365,6 +365,56 @@ void main() {
       expect(find.text('10일까지 납부'), findsOneWidget);
     });
 
+    testWidgets('내용을 바꾸지 않으면 수정 완료 버튼을 누를 수 없다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        ),
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<FilledButton>(find.byType(FilledButton));
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('내용을 바꾸면 수정 완료 버튼을 누를 수 있고, 원래대로 되돌리면 다시 막는다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        ),
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, '11월 회비 안내');
+      await tester.pump();
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNotNull,
+      );
+
+      await tester.enterText(find.byType(TextField).first, '10월 회비 안내');
+      await tester.pump();
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('작성 화면의 공지 등록 버튼은 입력 전에도 누를 수 있다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(),
+        const NoticeWritePage(meetingId: 1),
+      );
+
+      final button = tester.widget<FilledButton>(find.byType(FilledButton));
+      expect(button.onPressed, isNotNull);
+    });
+
     testWidgets('기존 내용을 불러오는 동안에는 로딩을 보여주고 입력·저장을 막는다', (tester) async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
