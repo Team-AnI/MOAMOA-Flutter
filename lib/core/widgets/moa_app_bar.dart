@@ -8,12 +8,15 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 /// [AppBar] 를 그대로 상속해서 높이(56), 상태 표시줄 처리 등 기본 동작은 AppBar 를 따릅니다.
 /// `Scaffold(appBar: MoaAppBar())` 처럼 씁니다. (AppBar 는 const 생성자가 아니라 `const` 를 붙일 수 없습니다.)
 /// 오른쪽에 버튼이 필요하면 [actions] 로 넘깁니다.
+/// [title] 을 주면 가운데에 제목을 보여주고, [showClose] 가 true 이면 왼쪽을 뒤로가기(<) 대신 닫기(X)로 바꿉니다.
 class MoaAppBar extends AppBar {
-  MoaAppBar({super.key, super.actions})
+  MoaAppBar({super.key, super.actions, String? title, bool showClose = false})
     : super(
         backgroundColor: MoaColors.page,
         surfaceTintColor: MoaColors.page,
         scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: title == null ? null : Text(title, style: MoaText.titleS),
         // Figma 의 왼쪽 여백(16px)에 맞춥니다.
         leadingWidth: 60,
         // 뒤로가기(context.pop)에 BuildContext 가 필요해서 Builder 로 감쌉니다.
@@ -22,7 +25,13 @@ class MoaAppBar extends AppBar {
             padding: const EdgeInsets.only(left: 12),
             child: IconButton(
               onPressed: context.pop,
-              icon: SvgPicture.asset('assets/icons/caret_left.svg'),
+              icon: SvgPicture.asset(
+                showClose
+                    ? 'assets/icons/x.svg'
+                    : 'assets/icons/caret_left.svg',
+                width: 20,
+                height: 20,
+              ),
             ),
           ),
         ),
