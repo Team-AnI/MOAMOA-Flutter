@@ -68,10 +68,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/group/
+    - assets/icons/
   fonts:
     - family: Pretendard
       fonts:
         - asset: assets/fonts/PretendardVariable.ttf
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
