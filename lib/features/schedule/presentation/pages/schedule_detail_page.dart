@@ -12,6 +12,10 @@ import '../schedule_format.dart';
 import '../viewmodels/schedule_delete_state.dart';
 import '../viewmodels/schedule_delete_status.dart';
 
+// Figma 의 alert/text, alert/tint 색입니다. 공통 테마(MoaColors)에 아직 없어서 이 화면에서만 씁니다.
+const _alertText = Color(0xFFE30000);
+const _alertTint = Color(0xFFFDECEC);
+
 /// 일정 상세 화면입니다. 목록이나 캘린더에서 일정을 누르면 열립니다.
 ///
 /// 위에서부터 뒤로가기 바, 제목(관리자는 수정 버튼), 일시·장소·메모 카드, 일정 취소하기 순서로 보여줍니다.
@@ -298,8 +302,8 @@ class _CancelButton extends ConsumerWidget {
           ref.read(scheduleDeleteProvider(request).notifier).cancel();
         },
         child: Text(
-          '일정 취소하기',
-          style: MoaText.subStrong.copyWith(color: MoaColors.error),
+          '이 일정 취소하기',
+          style: MoaText.subStrong.copyWith(color: _alertText),
         ),
       ),
     );
@@ -307,24 +311,97 @@ class _CancelButton extends ConsumerWidget {
 }
 
 /// 일정 취소 확인 팝업입니다. "일정 취소" 를 누르면 true, "닫기" 를 누르면 false 로 닫힙니다.
+///
+/// Figma 의 Dialog 를 따라 흰 바탕에 둥근 모서리, 제목·안내 문구, 같은 폭의 버튼 두 개로 구성합니다.
 class _CancelConfirmDialog extends StatelessWidget {
   const _CancelConfirmDialog();
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('이 일정을 취소할까요?'),
-      content: const Text('취소한 일정은 되돌릴 수 없어요.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('닫기'),
+    return Dialog(
+      backgroundColor: MoaColors.page,
+      surfaceTintColor: MoaColors.page,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(28)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 20,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 4,
+              children: [
+                Text('이 일정을 취소할까요?', style: MoaText.titleM),
+                Text(
+                  '취소한 일정은 되돌릴 수 없어요.',
+                  style: MoaText.body.copyWith(color: MoaColors.textSecondary),
+                ),
+              ],
+            ),
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: _DialogButton(
+                    label: '닫기',
+                    background: MoaColors.fill,
+                    foreground: MoaColors.textPrimary,
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                ),
+                Expanded(
+                  child: _DialogButton(
+                    label: '일정 취소',
+                    background: _alertTint,
+                    foreground: _alertText,
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('일정 취소', style: TextStyle(color: MoaColors.error)),
+      ),
+    );
+  }
+}
+
+/// 팝업 아래의 둥근 채움 버튼입니다. 높이 56, 가로는 부모([Expanded])가 정합니다.
+class _DialogButton extends StatelessWidget {
+  const _DialogButton({
+    required this.label,
+    required this.background,
+    required this.foreground,
+    required this.onPressed,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 56,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: foreground,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+          textStyle: MoaText.button,
         ),
-      ],
+        child: Text(label),
+      ),
     );
   }
 }
