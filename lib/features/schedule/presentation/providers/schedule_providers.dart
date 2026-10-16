@@ -4,6 +4,7 @@ import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
+import 'package:moamoa/features/schedule/domain/usecases/delete_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
@@ -11,6 +12,8 @@ import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calend
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_delete_state.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_delete_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_detail_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_view_model.dart';
@@ -42,6 +45,12 @@ final getScheduleProvider = Provider<GetSchedule>(
 
 final updateScheduleProvider = Provider<UpdateSchedule>(
   (ref) => UpdateScheduleImpl(
+    scheduleRepository: ref.watch(scheduleRepositoryProvider),
+  ),
+);
+
+final deleteScheduleProvider = Provider<DeleteSchedule>(
+  (ref) => DeleteScheduleImpl(
     scheduleRepository: ref.watch(scheduleRepositoryProvider),
   ),
 );
@@ -88,6 +97,20 @@ final scheduleCreateProvider = NotifierProvider.autoDispose
 final scheduleEditProvider = NotifierProvider.autoDispose
     .family<ScheduleEditViewModel, ScheduleEditState, ScheduleDetailRequest>(
       (request) => ScheduleEditViewModel(
+        meetingId: request.meetingId,
+        scheduleId: request.scheduleId,
+      ),
+    );
+
+/// 인자는 취소할 일정입니다.
+/// autoDispose: 화면을 닫으면 이전 요청 결과(성공, 오류)가 남지 않게 초기화합니다.
+final scheduleDeleteProvider = NotifierProvider.autoDispose
+    .family<
+      ScheduleDeleteViewModel,
+      ScheduleDeleteState,
+      ScheduleDetailRequest
+    >(
+      (request) => ScheduleDeleteViewModel(
         meetingId: request.meetingId,
         scheduleId: request.scheduleId,
       ),
