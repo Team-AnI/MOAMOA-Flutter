@@ -6,7 +6,6 @@ import '../../domain/entities/current_group.dart';
 import '../providers/group_providers.dart';
 import '../widgets/group_code_card.dart';
 import '../widgets/group_created_actions.dart';
-import '../widgets/group_created_title.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_page_layout.dart';
@@ -28,6 +27,14 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
   void initState() {
     super.initState();
     Future.microtask(_load);
+  }
+
+  String _createdTitle(String name) {
+    final trimmed = name.trim();
+    final code = trimmed.isEmpty ? 0 : trimmed.runes.last;
+    final isHangul = code >= 0xac00 && code <= 0xd7a3;
+    final particle = isHangul && (code - 0xac00) % 28 == 0 ? '가' : '이';
+    return '$trimmed$particle 만들어졌어요';
   }
 
   Future<void> _load() async {
@@ -95,7 +102,7 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
           ],
           GroupPageTitle(
             title: widget.created
-                ? groupCreatedTitle(current?.group.name ?? '모임')
+                ? _createdTitle(current?.group.name ?? '모임')
                 : '구성원 초대',
             subtitle: '구성원에게 초대 코드를 보내면 바로 함께할 수 있어요.',
           ),

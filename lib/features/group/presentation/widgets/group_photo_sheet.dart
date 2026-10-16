@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'group_design.dart';
 import 'group_icon.dart';
-import 'group_photo_action.dart';
 
-export 'group_photo_action.dart';
+/// 사진 선택 시트와 해당 UI를 사용하는 화면의 선택 결과입니다.
+enum GroupPhotoAction { gallery, camera, reset }
 
 class GroupPhotoSheet extends StatelessWidget {
   const GroupPhotoSheet({super.key});
