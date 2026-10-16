@@ -68,11 +68,20 @@ class _ScheduleFormState extends State<ScheduleForm> {
   /// [initial] 은 선택창이 처음 보여줄 값입니다(없으면 지금).
   Future<DateTime?> _pickDateTime(DateTime? initial) async {
     final now = DateTime.now();
+    final earliest = DateTime(now.year - 1);
+    final latest = DateTime(now.year + 5);
+    // 선택창은 처음 보여줄 날짜가 선택 범위 밖이면 오류가 납니다.
+    // 오래 지난(또는 먼 미래의) 일정을 수정할 때는 그 날짜까지 범위를 넓힙니다.
+    final initialDay = initial == null ? null : DateUtils.dateOnly(initial);
     final date = await showDatePicker(
       context: context,
       initialDate: initial ?? now,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 5),
+      firstDate: initialDay != null && initialDay.isBefore(earliest)
+          ? initialDay
+          : earliest,
+      lastDate: initialDay != null && initialDay.isAfter(latest)
+          ? initialDay
+          : latest,
     );
     if (date == null || !mounted) return null;
     final time = await showTimePicker(

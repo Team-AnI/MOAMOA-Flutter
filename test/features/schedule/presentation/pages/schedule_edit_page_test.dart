@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/presentation/pages/schedule_edit_page.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
+import 'package:moamoa/features/schedule/presentation/schedule_format.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -102,6 +103,30 @@ void main() {
       await pumpEditPage(tester);
 
       expect(find.text('일정을 불러오지 못했어요'), findsOneWidget);
+    });
+
+    testWidgets('3년 넘게 지난 일정도 시작 일시를 누르면 오류 없이 날짜 선택창이 열린다', (tester) async {
+      final oldStart = DateTime(DateTime.now().year - 3, 5, 10, 19);
+      repository.schedules = [run.copyWith(startAt: oldStart, endAt: null)];
+      await pumpEditPage(tester);
+
+      await tester.tap(find.text(oldStart.fieldLabel));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+    });
+
+    testWidgets('10년 뒤의 먼 일정도 시작 일시를 누르면 오류 없이 날짜 선택창이 열린다', (tester) async {
+      final farStart = DateTime(DateTime.now().year + 10, 5, 10, 19);
+      repository.schedules = [run.copyWith(startAt: farStart, endAt: null)];
+      await pumpEditPage(tester);
+
+      await tester.tap(find.text(farStart.fieldLabel));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
     });
   });
 }
