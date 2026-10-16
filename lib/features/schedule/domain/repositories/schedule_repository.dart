@@ -1,8 +1,10 @@
 import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_create_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_delete_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_update_request.dart';
 
 abstract interface class ScheduleRepository {
   /// 일정을 만들고 생성된 일정을 돌려줍니다.
@@ -13,4 +15,10 @@ abstract interface class ScheduleRepository {
 
   /// 요청한 일정 한 건을 돌려줍니다.
   Future<Schedule> getSchedule(ScheduleDetailRequest request);
+
+  /// 일정을 수정합니다. 요청에 값이 있는 필드만 바꿉니다.
+  Future<void> updateSchedule(ScheduleUpdateRequest request);
+
+  /// 일정을 취소(삭제)합니다.
+  Future<void> deleteSchedule(ScheduleDeleteRequest request);
 }
