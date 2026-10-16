@@ -14,6 +14,9 @@ final class GetSchedulesParams extends Params {
   final int meetingId;
   final DateTime startDate;
   final DateTime endDate;
+
+  @override
+  List<Object?> get props => [meetingId, startDate, endDate];
 }
 
 /// "기간 내 일정 목록 조회"를 담당합니다. 시작 일시 순으로 돌려줍니다.

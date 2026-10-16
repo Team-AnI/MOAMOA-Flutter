@@ -9,6 +9,9 @@ final class GetScheduleParams extends Params {
 
   final int meetingId;
   final int scheduleId;
+
+  @override
+  List<Object?> get props => [meetingId, scheduleId];
 }
 
 /// "일정 한 건 조회"를 담당합니다.
