@@ -11,6 +11,7 @@ import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
 import '../viewmodels/schedule_delete_state.dart';
 import '../viewmodels/schedule_delete_status.dart';
+import '../widgets/schedule_failure_snack_bar.dart';
 
 // Figma 의 alert/text, alert/tint 색입니다. 공통 테마(MoaColors)에 아직 없어서 이 화면에서만 씁니다.
 const _alertText = Color(0xFFE30000);
@@ -45,7 +46,7 @@ class ScheduleDetailPage extends ConsumerWidget {
     } else if (next.status == ScheduleDeleteStatus.failure) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('일정을 취소하지 못했어요')));
+      ).showSnackBar(ScheduleFailureSnackBar(message: '일정을 취소하지 못했어요'));
     }
   }
 

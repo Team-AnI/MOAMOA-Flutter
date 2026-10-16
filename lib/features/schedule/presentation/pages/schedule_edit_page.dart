@@ -8,6 +8,7 @@ import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request
 import '../providers/schedule_providers.dart';
 import '../viewmodels/schedule_edit_state.dart';
 import '../viewmodels/schedule_edit_status.dart';
+import '../widgets/schedule_failure_snack_bar.dart';
 import '../widgets/schedule_form.dart';
 
 /// 일정 수정 화면 (관리자). 기존 값을 채운 입력 폼을 보여주고 제출하면 바뀐 내용만 저장합니다.
@@ -37,7 +38,7 @@ class ScheduleEditPage extends ConsumerWidget {
     } else if (next.status == ScheduleEditStatus.failure) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('일정을 수정하지 못했어요')));
+      ).showSnackBar(ScheduleFailureSnackBar(message: '일정을 수정하지 못했어요'));
     }
   }
 
