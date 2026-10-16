@@ -57,11 +57,10 @@ class ScheduleEditPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: MoaAppBar(),
+      appBar: MoaAppBar(title: '일정 수정', showClose: true),
       body: SafeArea(
         child: schedule.when(
           data: (s) => ScheduleForm(
-            heading: '일정 수정',
             submitLabel: '수정 완료',
             isSubmitting: state.status == ScheduleEditStatus.submitting,
             initial: s,

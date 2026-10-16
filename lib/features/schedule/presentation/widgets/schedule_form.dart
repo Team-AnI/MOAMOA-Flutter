@@ -9,20 +9,20 @@ import '../schedule_format.dart';
 ///
 /// - 입력: 이름, 시작 일시(필수), 종료 일시(선택), 장소(선택), 설명(선택)
 /// - 제출: 아래 버튼. 이름이나 시작 일시가 비어 있거나 [isSubmitting] 이면 비활성화됩니다.
-/// - [heading]: 입력 영역 맨 위 제목. [submitLabel]: 하단 버튼 글자
+/// - [heading]: 입력 영역 맨 위 제목. 없으면 그리지 않습니다. [submitLabel]: 하단 버튼 글자
 /// - [initial]: 수정할 일정. 있으면 그 값으로 채워서 시작합니다.
 /// - [onSubmit]: 버튼을 누르면 현재 입력값과 함께 호출됩니다.
 class ScheduleForm extends StatefulWidget {
   const ScheduleForm({
     super.key,
-    required this.heading,
+    this.heading,
     required this.submitLabel,
     required this.isSubmitting,
     required this.onSubmit,
     this.initial,
   });
 
-  final String heading;
+  final String? heading;
   final String submitLabel;
   final bool isSubmitting;
   final Schedule? initial;
@@ -143,7 +143,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
 /// 일시 칸을 누르면 [onPickStart]/[onPickEnd] 가 호출됩니다.
 class _FormFields extends StatelessWidget {
   const _FormFields({
-    required this.heading,
+    this.heading,
     required this.titleController,
     required this.locationController,
     required this.descriptionController,
@@ -153,7 +153,7 @@ class _FormFields extends StatelessWidget {
     required this.onPickEnd,
   });
 
-  final String heading;
+  final String? heading;
   final TextEditingController titleController;
   final TextEditingController locationController;
   final TextEditingController descriptionController;
@@ -165,12 +165,13 @@ class _FormFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      // 제목이 없으면(상단 바에 제목이 있는 화면) 첫 입력칸이 상단 바 바로 아래에서 시작합니다.
+      padding: EdgeInsets.fromLTRB(20, heading == null ? 8 : 4, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 18,
         children: [
-          Text(heading, style: MoaText.titleXl),
+          if (heading != null) Text(heading!, style: MoaText.titleXl),
           _TextFormField(
             label: '일정 이름',
             controller: titleController,
