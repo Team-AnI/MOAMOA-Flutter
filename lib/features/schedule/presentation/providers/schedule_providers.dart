@@ -6,11 +6,14 @@ import 'package:moamoa/features/schedule/domain/repositories/schedule_repository
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
+import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_detail_view_model.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_state.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_list_view_model.dart';
 
 /// TODO: API 연동 시 실제 API 를 호출하는 구현체로 교체합니다.
@@ -33,6 +36,12 @@ final getSchedulesProvider = Provider<GetSchedules>(
 
 final getScheduleProvider = Provider<GetSchedule>(
   (ref) => GetScheduleImpl(
+    scheduleRepository: ref.watch(scheduleRepositoryProvider),
+  ),
+);
+
+final updateScheduleProvider = Provider<UpdateSchedule>(
+  (ref) => UpdateScheduleImpl(
     scheduleRepository: ref.watch(scheduleRepositoryProvider),
   ),
 );
@@ -72,6 +81,16 @@ final scheduleDetailProvider =
 final scheduleCreateProvider = NotifierProvider.autoDispose
     .family<ScheduleCreateViewModel, ScheduleCreateState, int>(
       (meetingId) => ScheduleCreateViewModel(meetingId: meetingId),
+    );
+
+/// 인자는 수정할 일정입니다.
+/// autoDispose: 화면을 닫으면 이전 제출 결과(성공, 오류)가 남지 않게 초기화합니다.
+final scheduleEditProvider = NotifierProvider.autoDispose
+    .family<ScheduleEditViewModel, ScheduleEditState, ScheduleDetailRequest>(
+      (request) => ScheduleEditViewModel(
+        meetingId: request.meetingId,
+        scheduleId: request.scheduleId,
+      ),
     );
 
 /// 캘린더 탭의 월/선택 날짜. 목록 페이지가 구독을 유지하므로 탭을 오가도 값이 남습니다.

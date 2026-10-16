@@ -18,6 +18,10 @@ class FakeScheduleRepository implements ScheduleRepository {
   final List<ScheduleUpdateRequest> updateCalls = [];
   final List<ScheduleDeleteRequest> deleteCalls = [];
   int listCallCount = 0;
+  int detailCallCount = 0;
+
+  /// 지정하면 이 Future 가 끝날 때까지 updateSchedule 이 완료되지 않습니다.
+  Completer<void>? updateCompleter;
 
   /// 지정하면 이 Future 가 끝날 때까지 createSchedule 이 완료되지 않습니다.
   Completer<int>? createCompleter;
@@ -46,6 +50,7 @@ class FakeScheduleRepository implements ScheduleRepository {
 
   @override
   Future<Schedule> getSchedule(ScheduleDetailRequest request) async {
+    detailCallCount++;
     if (error != null) throw error!;
     return schedules.firstWhere((s) => s.id == request.scheduleId);
   }
@@ -54,6 +59,7 @@ class FakeScheduleRepository implements ScheduleRepository {
   Future<void> updateSchedule(ScheduleUpdateRequest request) async {
     updateCalls.add(request);
     if (error != null) throw error!;
+    await updateCompleter?.future;
   }
 
   @override
