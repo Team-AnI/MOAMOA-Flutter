@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 
 import '../schedule_format.dart';
 
@@ -9,6 +10,7 @@ import '../schedule_format.dart';
 /// - 입력: 이름, 시작 일시(필수), 종료 일시(선택), 장소(선택), 설명(선택)
 /// - 제출: 아래 버튼. 이름이나 시작 일시가 비어 있거나 [isSubmitting] 이면 비활성화됩니다.
 /// - [heading]: 입력 영역 맨 위 제목. [submitLabel]: 하단 버튼 글자
+/// - [initial]: 수정할 일정. 있으면 그 값으로 채워서 시작합니다.
 /// - [onSubmit]: 버튼을 누르면 현재 입력값과 함께 호출됩니다.
 class ScheduleForm extends StatefulWidget {
   const ScheduleForm({
@@ -17,11 +19,13 @@ class ScheduleForm extends StatefulWidget {
     required this.submitLabel,
     required this.isSubmitting,
     required this.onSubmit,
+    this.initial,
   });
 
   final String heading;
   final String submitLabel;
   final bool isSubmitting;
+  final Schedule? initial;
   final void Function({
     required String title,
     required String description,
@@ -37,11 +41,13 @@ class ScheduleForm extends StatefulWidget {
 
 /// 글자 입력 컨트롤러 3개와 선택한 시작/종료 일시를 들고 있습니다.
 class _ScheduleFormState extends State<ScheduleForm> {
-  final _title = TextEditingController();
-  final _location = TextEditingController();
-  final _description = TextEditingController();
-  DateTime? _startAt;
-  DateTime? _endAt;
+  late final _title = TextEditingController(text: widget.initial?.title);
+  late final _location = TextEditingController(text: widget.initial?.location);
+  late final _description = TextEditingController(
+    text: widget.initial?.description,
+  );
+  late DateTime? _startAt = widget.initial?.startAt.toLocal();
+  late DateTime? _endAt = widget.initial?.endAt?.toLocal();
 
   @override
   void initState() {
