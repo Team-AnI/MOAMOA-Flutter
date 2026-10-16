@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:moamoa/features/schedule/domain/entities/created_schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_create_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_delete_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_update_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 
 /// 테스트용 Fake Repository. mocktail 대신 직접 구현합니다.
@@ -13,6 +15,8 @@ class FakeScheduleRepository implements ScheduleRepository {
 
   List<Schedule> schedules;
   final List<ScheduleCreateRequest> createCalls = [];
+  final List<ScheduleUpdateRequest> updateCalls = [];
+  final List<ScheduleDeleteRequest> deleteCalls = [];
   int listCallCount = 0;
 
   /// 지정하면 이 Future 가 끝날 때까지 createSchedule 이 완료되지 않습니다.
@@ -44,5 +48,17 @@ class FakeScheduleRepository implements ScheduleRepository {
   Future<Schedule> getSchedule(ScheduleDetailRequest request) async {
     if (error != null) throw error!;
     return schedules.firstWhere((s) => s.id == request.scheduleId);
+  }
+
+  @override
+  Future<void> updateSchedule(ScheduleUpdateRequest request) async {
+    updateCalls.add(request);
+    if (error != null) throw error!;
+  }
+
+  @override
+  Future<void> deleteSchedule(ScheduleDeleteRequest request) async {
+    deleteCalls.add(request);
+    if (error != null) throw error!;
   }
 }
