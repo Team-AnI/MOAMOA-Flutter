@@ -7,8 +7,9 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 ///
 /// [AppBar] 를 그대로 상속해서 높이(56), 상태 표시줄 처리 등 기본 동작은 AppBar 를 따릅니다.
 /// `Scaffold(appBar: MoaAppBar())` 처럼 씁니다. (AppBar 는 const 생성자가 아니라 `const` 를 붙일 수 없습니다.)
+/// 오른쪽에 버튼이 필요하면 [actions] 로 넘깁니다.
 class MoaAppBar extends AppBar {
-  MoaAppBar({super.key})
+  MoaAppBar({super.key, super.actions})
     : super(
         backgroundColor: MoaColors.page,
         surfaceTintColor: MoaColors.page,

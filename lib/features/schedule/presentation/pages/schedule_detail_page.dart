@@ -19,7 +19,7 @@ const _alertTint = Color(0xFFFDECEC);
 
 /// 일정 상세 화면입니다. 목록이나 캘린더에서 일정을 누르면 열립니다.
 ///
-/// 위에서부터 뒤로가기 바, 제목(관리자는 수정 버튼), 일시·장소·메모 카드, 일정 취소하기 순서로 보여줍니다.
+/// 위에서부터 뒤로가기 바(관리자는 오른쪽에 수정 버튼), 제목, 일시·장소·메모 카드, 일정 취소하기 순서로 보여줍니다.
 /// - [meetingId], [scheduleId]: 조회할 모임과 일정. 라우트(`…/schedules/:scheduleId`)에서 전달됩니다.
 /// - 불러오는 중에는 로딩 표시, 실패하면 안내 문구를 보여줍니다.
 /// - 관리자에게만 수정(연필) 버튼과 "일정 취소하기"가 보입니다. 구성원은 보기만 합니다.
@@ -63,7 +63,7 @@ class ScheduleDetailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: MoaAppBar(),
+      appBar: MoaAppBar(actions: [_EditButton(request: request)]),
       body: SafeArea(
         child: Column(
           children: [
@@ -88,10 +88,9 @@ class ScheduleDetailPage extends ConsumerWidget {
 
 /// 불러온 일정의 내용입니다. 길어질 수 있어서 스크롤됩니다.
 ///
-/// - 제목 줄: 제목과, 관리자에게만 보이는 수정 버튼
 /// - 카드: 날짜 배지, 요일과 시작 시각, 진행 시간(종료 일시가 있을 때만), 장소, 메모
 /// - 장소, 메모: 비어 있으면 그 줄을 그리지 않습니다.
-/// - 관리자에게는 카드 아래에 "일정 취소하기"가 붙습니다. ([request] 는 수정·취소할 일정)
+/// - 관리자에게는 카드 아래에 "일정 취소하기"가 붙습니다. ([request] 는 취소할 일정)
 class _Body extends StatelessWidget {
   const _Body({required this.schedule, required this.request});
 
@@ -101,17 +100,12 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 18,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text(schedule.title, style: MoaText.titleXl)),
-              _EditButton(request: request),
-            ],
-          ),
+          Text(schedule.title, style: MoaText.titleXl),
           _InfoCard(schedule: schedule),
           _CancelButton(request: request),
         ],
@@ -120,7 +114,7 @@ class _Body extends StatelessWidget {
   }
 }
 
-/// 관리자에게만 보이는 수정(연필) 버튼입니다. 누르면 [request] 일정의 수정 화면으로 이동합니다.
+/// 상단 바 오른쪽의 수정(연필) 버튼입니다. 관리자에게만 보이고, 누르면 [request] 일정의 수정 화면으로 이동합니다.
 class _EditButton extends ConsumerWidget {
   const _EditButton({required this.request});
 
@@ -130,12 +124,30 @@ class _EditButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
 
-    return IconButton(
-      key: const Key('schedule-edit-button'),
-      onPressed: () => context.push(
-        '/meetings/${request.meetingId}/schedules/${request.scheduleId}/edit',
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: Material(
+        color: MoaColors.fill,
+        shape: const CircleBorder(),
+        child: InkWell(
+          key: const Key('schedule-edit-button'),
+          customBorder: const CircleBorder(),
+          onTap: () => context.push(
+            '/meetings/${request.meetingId}/schedules/${request.scheduleId}/edit',
+          ),
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/icons/pencil_simple.svg',
+                width: 20,
+                height: 20,
+              ),
+            ),
+          ),
+        ),
       ),
-      icon: const Icon(Icons.edit_outlined),
     );
   }
 }
@@ -153,37 +165,63 @@ class _InfoCard extends StatelessWidget {
     final description = schedule.description;
     final location = schedule.location;
 
+    // 줄(날짜, 장소, 메모) 사이마다 흰 구분선을 넣습니다. 장소나 메모가 없으면 그 줄과 선은 없습니다.
+    final rows = [
+      Row(
+        spacing: 14,
+        children: [
+          _DateBadge(date: start),
+          _TimeLabel(start: start, end: end),
+        ],
+      ),
+      if (location.isNotEmpty)
+        _InfoRow(
+          icon: SvgPicture.asset('assets/icons/map_pin_field.svg'),
+          text: location,
+        ),
+      if (description.isNotEmpty)
+        _InfoRow(
+          icon: SvgPicture.asset(
+            'assets/icons/note.svg',
+            width: 18,
+            height: 18,
+          ),
+          label: '메모',
+          text: description,
+        ),
+    ];
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: const BoxDecoration(
         color: MoaColors.fill,
         borderRadius: BorderRadius.all(Radius.circular(24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 14,
+        spacing: 16,
         children: [
-          Row(
-            spacing: 14,
-            children: [
-              _DateBadge(date: start),
-              _TimeLabel(start: start, end: end),
-            ],
-          ),
-          if (location.isNotEmpty)
-            _InfoRow(
-              icon: SvgPicture.asset('assets/icons/map_pin_field.svg'),
-              text: location,
-            ),
-          if (description.isNotEmpty)
-            _InfoRow(
-              icon: const Icon(Icons.sticky_note_2_outlined, size: 20),
-              label: '메모',
-              text: description,
-            ),
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const _CardLine(),
+            rows[i],
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// 카드 안의 줄 사이 구분선입니다. 높이 1, 흰색입니다.
+class _CardLine extends StatelessWidget {
+  const _CardLine();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: double.infinity,
+      height: 1,
+      child: ColoredBox(color: MoaColors.page),
     );
   }
 }
@@ -246,7 +284,10 @@ class _TimeLabel extends StatelessWidget {
   }
 }
 
-/// 아이콘과 글자 한 줄입니다. [label] 이 있으면 글자 위에 작게 붙입니다.
+/// 흰 둥근 상자 안의 아이콘과 글자 한 줄입니다.
+///
+/// - [label] 이 없으면 한 줄 글자(굵게)를 상자와 세로 가운데에 맞추고,
+///   있으면 [label] 아래에 [text] 를 놓고 상자는 위쪽에 맞춥니다.
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.icon, required this.text, this.label});
 
@@ -256,26 +297,54 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = this.label;
+
     return Row(
-      spacing: 10,
+      spacing: 12,
+      crossAxisAlignment: label == null
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
-        icon,
+        _IconTile(child: icon),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (label != null)
-                Text(
-                  label!,
-                  style: MoaText.caption.copyWith(
-                    color: MoaColors.textTertiary,
-                  ),
+          child: label == null
+              ? Text(text, style: MoaText.bodyStrong)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    Text(
+                      label,
+                      style: MoaText.sub.copyWith(
+                        color: MoaColors.textSecondary,
+                      ),
+                    ),
+                    Text(text, style: MoaText.body),
+                  ],
                 ),
-              Text(text, style: MoaText.body),
-            ],
-          ),
         ),
       ],
+    );
+  }
+}
+
+/// 아이콘을 담는 36×36 흰 둥근 상자입니다.
+class _IconTile extends StatelessWidget {
+  const _IconTile({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: MoaColors.page,
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+      child: child,
     );
   }
 }
@@ -294,6 +363,11 @@ class _CancelButton extends ConsumerWidget {
     return Center(
       child: TextButton(
         key: const Key('schedule-cancel-button'),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
         onPressed: () async {
           final confirmed = await showDialog<bool>(
             context: context,
