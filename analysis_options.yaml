@@ -31,7 +31,7 @@ linter:
     avoid_print: true
     prefer_const_constructors: true
     sort_child_properties_last: true
-    # 가이드의 생성자 형태(`: _x = x`)와 충돌해 해제합니다. (#46)
+    # 코드 스타일 가이드의 생성자 형태(`: _x = x`)와 충돌해 해제합니다. (#53, docs/code-style-guide.md 2-1)
     prefer_initializing_formals: false
     # 필요한 규칙은 팀 논의 후 추가합니다.
 
