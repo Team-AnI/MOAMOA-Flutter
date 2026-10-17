@@ -48,7 +48,9 @@ final scheduleRepositoryProvider = Provider<ScheduleRepository>(
   (ref) => ScheduleRepositoryImpl(scheduleRemoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
 );
 final scheduleListProvider =
-    AsyncNotifierProvider<ScheduleListViewModel, List<Schedule>>(ScheduleListViewModel.new);
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
 ```
 
 **계층별 예시 코드 (schedule 기능 기준)**
@@ -101,7 +103,8 @@ extension ScheduleModelX on ScheduleModel {
 // DataSource (data/datasources/schedule_remote_data_source.dart, schedule_remote_data_source_impl.dart)
 // - 실제 API 호출만 담당합니다. 변환/비즈니스 로직은 넣지 않습니다.
 abstract interface class ScheduleRemoteDataSource {
-  Future<List<ScheduleModel>> fetchSchedules();
+  /// 기간을 주면 그 기간의 일정만, 주지 않으면 전체 일정을 조회합니다.
+  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate});
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
@@ -110,8 +113,14 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
   final Dio _dio;
 
   @override
-  Future<List<ScheduleModel>> fetchSchedules() async {
-    final response = await _dio.get<List<dynamic>>('/schedules');
+  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate}) async {
+    final response = await _dio.get<List<dynamic>>(
+      '/schedules',
+      queryParameters: {
+        if (startDate != null) 'startDate': startDate.toIso8601String(),
+        if (endDate != null) 'endDate': endDate.toIso8601String(),
+      },
+    );
     return (response.data ?? [])
         .whereType<Map<String, dynamic>>()
         .map(ScheduleModel.fromJson)
@@ -142,7 +151,10 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    final response = await _scheduleRemoteDataSource.fetchSchedules();
+    final response = await _scheduleRemoteDataSource.fetchSchedules(
+      startDate: startDate,
+      endDate: endDate,
+    );
     return response.map((model) => model.toEntity()).toList();
   }
 
@@ -211,10 +223,31 @@ final class GetAllSchedulesImpl implements GetAllSchedules {
 ```
 
 ```dart
+// Request (domain/entities/schedule_list_request.dart)
+// - family Provider 의 키로 쓰는 값 객체입니다. (2-2 참고)
+part 'schedule_list_request.freezed.dart';
+
+@freezed
+abstract class ScheduleListRequest with _$ScheduleListRequest {
+  const factory ScheduleListRequest({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) = _ScheduleListRequest;
+}
+```
+
+```dart
 // ViewModel (presentation/viewmodels/schedule_list_view_model.dart)
 // - UseCase 를 호출하고 화면에서 쓸 상태(AsyncValue)를 들고 있습니다.
 // - Riverpod 의 AsyncNotifier 를 상속하지만, 클래스/파일 명명은 Notifier 가 아닌 ViewModel 을 사용합니다.
 class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
+  ScheduleListViewModel({required DateTime startDate, required DateTime endDate})
+      : _startDate = startDate,
+        _endDate = endDate;
+
+  final DateTime _startDate;
+  final DateTime _endDate;
+
   @override
   Future<List<Schedule>> build() => _fetch(ref.watch(getSchedulesProvider));
 
@@ -224,12 +257,8 @@ class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
   }
 
   Future<List<Schedule>> _fetch(GetSchedules getSchedules) {
-    final now = DateTime.now();
     return getSchedules(
-      GetSchedulesParams(
-        startDate: now,
-        endDate: now.add(const Duration(days: 7)),
-      ),
+      GetSchedulesParams(startDate: _startDate, endDate: _endDate),
     );
   }
 }
@@ -251,18 +280,22 @@ final getSchedulesProvider = Provider<GetSchedules>(
 );
 
 final scheduleListProvider =
-    AsyncNotifierProvider<ScheduleListViewModel, List<Schedule>>(ScheduleListViewModel.new);
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
 ```
 
 ```dart
 // View — Page (presentation/pages/schedule_list_page.dart)
 // - ViewModel 을 watch 해서 화면을 그립니다. 비즈니스 로직은 두지 않습니다.
 class ScheduleListPage extends ConsumerWidget {
-  const ScheduleListPage({super.key});
+  const ScheduleListPage({super.key, required this.request});
+
+  final ScheduleListRequest request;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final schedules = ref.watch(scheduleListProvider);
+    final schedules = ref.watch(scheduleListProvider(request));
 
     return Scaffold(
       appBar: AppBar(title: const Text('일정')),
@@ -324,30 +357,17 @@ const NoticeRepositoryImpl({required NoticeRemoteDataSource noticeRemoteDataSour
 - `family` 키는 값 객체로 받습니다. 인자가 여러 개일 때는 요청 클래스(freezed) 또는 이름 있는 record(`typedef NoticeDetailArgs = ({int meetingId, int noticeId});`)로 묶습니다.
 - ViewModel 은 키 객체를 받지 않고, Provider 정의에서 값을 꺼내 **named 값**으로 생성자에 넘깁니다.
 
-```dart
-// domain/entities/schedule_list_request.dart
-@freezed
-abstract class ScheduleListRequest with _$ScheduleListRequest {
-  const factory ScheduleListRequest({
-    required int meetingId,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) = _ScheduleListRequest;
-}
+요청 클래스(`ScheduleListRequest`), ViewModel 생성자, Provider 는 위 계층별 예시와 같습니다. 핵심만 다시 보면 다음과 같습니다.
 
+```dart
 // presentation/providers/schedule_providers.dart
 final scheduleListProvider =
-    AsyncNotifierProvider.family<
-      ScheduleListViewModel,
-      List<Schedule>,
-      ScheduleListRequest
-    >(
-      (request) => ScheduleListViewModel(
-        meetingId: request.meetingId,
-        startDate: request.startDate,
-        endDate: request.endDate,
-      ),
-    );
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
+
+// 화면에서는 키를 넘겨 watch 합니다.
+final schedules = ref.watch(scheduleListProvider(request));
 ```
 
 ### 2-3. 예외 처리
