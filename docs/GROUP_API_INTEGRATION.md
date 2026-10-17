@@ -97,8 +97,12 @@ HTTP 상태 코드로 보완합니다. 미지원 코드·네트워크·잘못된
 
 ```bash
 flutter test
-flutter test test/features/group/presentation/group_layout_test.dart --dart-define=GROUP_SCREENSHOTS=/private/tmp/moamoa-group-screens
+flutter test test/features/group/presentation/group_layout_test.dart --dart-define=GROUP_SCREENSHOTS=build/group-screens
 ```
+
+캡처 명령은 프로젝트 루트에서 실행합니다. PNG는 프로젝트 안의
+`build/group-screens/`에 저장되며, `build/`는 Git 추적 대상에서 제외됩니다.
+OS별 절대 경로나 셸 환경변수 선언 대신 동일한 `--dart-define` 인자를 사용합니다.
 
 #39의 위 기준 커밋에서 정적 분석과 테스트 66개가 통과했고,
 393×852·320×568 화면의 레이아웃을 테스트했습니다.
