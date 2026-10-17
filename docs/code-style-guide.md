@@ -37,21 +37,20 @@
 
 **Provider 변수명**: 역할과 상관없이 반드시 `xxxProvider`로 끝냅니다.
 
-**Riverpod 작성 방식**: `@riverpod` 코드젠 애노테이션은 사용하지 않고, 아래처럼 수동(Inline)으로 선언합니다. `core/`(dio, apiClient, secureStorage 등) 레벨 Provider도 예외 없이 동일하게 Inline으로 작성합니다.
+**Riverpod 작성 방식**: `@riverpod` 코드젠 애노테이션은 사용하지 않고, 아래처럼 수동(Inline)으로 선언합니다. `core/`(dio, secureStorage 등) 레벨 Provider도 예외 없이 동일하게 Inline으로 작성합니다. (현재 `core/`에 남아 있는 `@riverpod` 코드는 Inline 으로 전환하고 `.g.dart` 를 삭제합니다.)
 
 ```dart
 // core/network/dio_provider.dart — core 레벨 Provider 예시
 final dioProvider = Provider<Dio>((ref) => buildDio());
 
-// core/network/api_client.dart
-final apiClientProvider = Provider<ApiClient>((ref) => ApiClient(ref.watch(dioProvider)));
-
 // features/schedule/presentation/providers/schedule_providers.dart — feature 레벨 Provider 예시
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
-  (ref) => ScheduleRepositoryImpl(remoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
+  (ref) => ScheduleRepositoryImpl(scheduleRemoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
 );
 final scheduleListProvider =
-    AsyncNotifierProvider<ScheduleListViewModel, List<Schedule>>(ScheduleListViewModel.new);
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
 ```
 
 **계층별 예시 코드 (schedule 기능 기준)**
@@ -61,33 +60,39 @@ final scheduleListProvider =
 ```dart
 // Entity (domain/entities/schedule.dart)
 // - 순수 도메인 모델. data/presentation 계층에 의존하지 않습니다.
-class Schedule {
-  const Schedule({required this.id, required this.title, required this.date});
+// - freezed 로 작성합니다. (2-4 참고)
+part 'schedule.freezed.dart';
 
-  final int id;
-  final String title;
-  final DateTime date;
+@freezed
+abstract class Schedule with _$Schedule {
+  const factory Schedule({
+    required int id,
+    required String title,
+    required DateTime date,
+  }) = _Schedule;
 }
 ```
 
 ```dart
 // Model (data/models/schedule_model.dart)
-// - 서버 응답(JSON)을 그대로 담는 모델. Entity 로 변환하는 역할까지 포함합니다.
-class ScheduleModel {
-  const ScheduleModel({required this.id, required this.title, required this.date});
+// - 서버 응답(JSON)을 그대로 담는 모델. freezed + json_serializable 로 작성합니다.
+part 'schedule_model.freezed.dart';
+part 'schedule_model.g.dart';
 
-  factory ScheduleModel.fromJson(Map<String, dynamic> json) {
-    return ScheduleModel(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      date: json['date'] as String,
-    );
-  }
+@freezed
+abstract class ScheduleModel with _$ScheduleModel {
+  const factory ScheduleModel({
+    required int id,
+    required String title,
+    required String date,
+  }) = _ScheduleModel;
 
-  final int id;
-  final String title;
-  final String date;
+  factory ScheduleModel.fromJson(Map<String, dynamic> json) =>
+      _$ScheduleModelFromJson(json);
+}
 
+// Entity 변환은 extension 으로 둡니다.
+extension ScheduleModelX on ScheduleModel {
   Schedule toEntity() => Schedule(id: id, title: title, date: DateTime.parse(date));
 }
 ```
@@ -98,20 +103,27 @@ class ScheduleModel {
 // DataSource (data/datasources/schedule_remote_data_source.dart, schedule_remote_data_source_impl.dart)
 // - 실제 API 호출만 담당합니다. 변환/비즈니스 로직은 넣지 않습니다.
 abstract interface class ScheduleRemoteDataSource {
-  Future<List<ScheduleModel>> fetchSchedules();
+  /// 기간을 주면 그 기간의 일정만, 주지 않으면 전체 일정을 조회합니다.
+  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate});
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
-  const ScheduleRemoteDataSourceImpl({required ApiClient apiClient})
-      : _apiClient = apiClient;
+  const ScheduleRemoteDataSourceImpl({required Dio dio}) : _dio = dio;
 
-  final ApiClient _apiClient;
+  final Dio _dio;
 
   @override
-  Future<List<ScheduleModel>> fetchSchedules() async {
-    final response = await _apiClient.get<List<dynamic>>('/schedules');
+  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate}) async {
+    final response = await _dio.get<List<dynamic>>(
+      '/schedules',
+      queryParameters: {
+        if (startDate != null) 'startDate': startDate.toIso8601String(),
+        if (endDate != null) 'endDate': endDate.toIso8601String(),
+      },
+    );
     return (response.data ?? [])
-        .map((json) => ScheduleModel.fromJson(json as Map<String, dynamic>))
+        .whereType<Map<String, dynamic>>()
+        .map(ScheduleModel.fromJson)
         .toList();
   }
 }
@@ -121,18 +133,34 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
 // Repository (domain/repositories/schedule_repository.dart, data/repositories/schedule_repository_impl.dart)
 // - DataSource 를 묶어 도메인에서 쓸 Entity 로 변환해 내려줍니다.
 abstract interface class ScheduleRepository {
-  Future<List<Schedule>> getSchedules();
+  Future<List<Schedule>> getSchedules({
+    required DateTime startDate,
+    required DateTime endDate,
+  });
+  Future<List<Schedule>> getAllSchedules();
 }
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  const ScheduleRepositoryImpl({required ScheduleRemoteDataSource remoteDataSource})
-      : _remoteDataSource = remoteDataSource;
+  const ScheduleRepositoryImpl({required ScheduleRemoteDataSource scheduleRemoteDataSource})
+      : _scheduleRemoteDataSource = scheduleRemoteDataSource;
 
-  final ScheduleRemoteDataSource _remoteDataSource;
+  final ScheduleRemoteDataSource _scheduleRemoteDataSource;
 
   @override
-  Future<List<Schedule>> getSchedules() async {
-    final response = await _remoteDataSource.fetchSchedules();
+  Future<List<Schedule>> getSchedules({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final response = await _scheduleRemoteDataSource.fetchSchedules(
+      startDate: startDate,
+      endDate: endDate,
+    );
+    return response.map((model) => model.toEntity()).toList();
+  }
+
+  @override
+  Future<List<Schedule>> getAllSchedules() async {
+    final response = await _scheduleRemoteDataSource.fetchSchedules();
     return response.map((model) => model.toEntity()).toList();
   }
 }
@@ -142,20 +170,11 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
 // UseCase (domain/usecases/get_schedules.dart)
 // - Repository 호출 1개 이상을 조합하는 단위. 파라미터가 필요하면 Params 를 통해 받습니다.
 
-// 파라미터 공통 추상 클래스
-abstract class Params {
-  const Params();
-}
-
-// 파라미터가 필요 없는 UseCase에서 사용
-final class NoParams extends Params {
-  const NoParams();
-}
-
-// UseCase 공통 추상 클래스
-abstract class Usecase<Result, P extends Params> {
-  Future<Result> call(P params);
-}
+// Params / NoParams / Usecase 는 공통 코드이므로 core/usecases/ 에 한 번만 정의하고 import 합니다.
+// (feature 마다 복사해 두지 않습니다)
+import 'package:moamoa/core/usecases/no_params.dart';
+import 'package:moamoa/core/usecases/params.dart';
+import 'package:moamoa/core/usecases/usecase.dart';
 
 // GetSchedules 전용 파라미터
 final class GetSchedulesParams extends Params {
@@ -173,14 +192,14 @@ abstract class GetSchedules extends Usecase<List<Schedule>, GetSchedulesParams> 
 
 // 실제 구현 클래스
 final class GetSchedulesImpl implements GetSchedules {
-  GetSchedulesImpl({required ScheduleRepository repository})
-      : _repository = repository;
+  GetSchedulesImpl({required ScheduleRepository scheduleRepository})
+      : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<List<Schedule>> call(GetSchedulesParams params) {
-    return _repository.getSchedules(
+    return _scheduleRepository.getSchedules(
       startDate: params.startDate,
       endDate: params.endDate,
     );
@@ -191,15 +210,29 @@ final class GetSchedulesImpl implements GetSchedules {
 abstract class GetAllSchedules extends Usecase<List<Schedule>, NoParams> {}
 
 final class GetAllSchedulesImpl implements GetAllSchedules {
-  GetAllSchedulesImpl({required ScheduleRepository repository})
-      : _repository = repository;
+  GetAllSchedulesImpl({required ScheduleRepository scheduleRepository})
+      : _scheduleRepository = scheduleRepository;
 
-  final ScheduleRepository _repository;
+  final ScheduleRepository _scheduleRepository;
 
   @override
   Future<List<Schedule>> call(NoParams params) {
-    return _repository.getAllSchedules();
+    return _scheduleRepository.getAllSchedules();
   }
+}
+```
+
+```dart
+// Request (domain/entities/schedule_list_request.dart)
+// - family Provider 의 키로 쓰는 값 객체입니다. (2-2 참고)
+part 'schedule_list_request.freezed.dart';
+
+@freezed
+abstract class ScheduleListRequest with _$ScheduleListRequest {
+  const factory ScheduleListRequest({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) = _ScheduleListRequest;
 }
 ```
 
@@ -208,12 +241,25 @@ final class GetAllSchedulesImpl implements GetAllSchedules {
 // - UseCase 를 호출하고 화면에서 쓸 상태(AsyncValue)를 들고 있습니다.
 // - Riverpod 의 AsyncNotifier 를 상속하지만, 클래스/파일 명명은 Notifier 가 아닌 ViewModel 을 사용합니다.
 class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
+  ScheduleListViewModel({required DateTime startDate, required DateTime endDate})
+      : _startDate = startDate,
+        _endDate = endDate;
+
+  final DateTime _startDate;
+  final DateTime _endDate;
+
   @override
-  Future<List<Schedule>> build() => ref.watch(getSchedulesProvider).call();
+  Future<List<Schedule>> build() => _fetch(ref.watch(getSchedulesProvider));
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => ref.read(getSchedulesProvider).call());
+    state = await AsyncValue.guard(() => _fetch(ref.read(getSchedulesProvider)));
+  }
+
+  Future<List<Schedule>> _fetch(GetSchedules getSchedules) {
+    return getSchedules(
+      GetSchedulesParams(startDate: _startDate, endDate: _endDate),
+    );
   }
 }
 ```
@@ -222,30 +268,34 @@ class ScheduleListViewModel extends AsyncNotifier<List<Schedule>> {
 // Provider 모음 (presentation/providers/schedule_providers.dart)
 // - 계층별 객체를 Riverpod 에 등록합니다. 아래로 갈수록 상위 계층이 하위 계층을 watch 합니다.
 final scheduleRemoteDataSourceProvider = Provider<ScheduleRemoteDataSource>(
-  (ref) => ScheduleRemoteDataSourceImpl(apiClient: ref.watch(apiClientProvider)),
+  (ref) => ScheduleRemoteDataSourceImpl(dio: ref.watch(dioProvider)),
 );
 
 final scheduleRepositoryProvider = Provider<ScheduleRepository>(
-  (ref) => ScheduleRepositoryImpl(remoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
+  (ref) => ScheduleRepositoryImpl(scheduleRemoteDataSource: ref.watch(scheduleRemoteDataSourceProvider)),
 );
 
 final getSchedulesProvider = Provider<GetSchedules>(
-  (ref) => GetSchedules(ref.watch(scheduleRepositoryProvider)),
+  (ref) => GetSchedulesImpl(scheduleRepository: ref.watch(scheduleRepositoryProvider)),
 );
 
 final scheduleListProvider =
-    AsyncNotifierProvider<ScheduleListViewModel, List<Schedule>>(ScheduleListViewModel.new);
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
 ```
 
 ```dart
 // View — Page (presentation/pages/schedule_list_page.dart)
 // - ViewModel 을 watch 해서 화면을 그립니다. 비즈니스 로직은 두지 않습니다.
 class ScheduleListPage extends ConsumerWidget {
-  const ScheduleListPage({super.key});
+  const ScheduleListPage({super.key, required this.request});
+
+  final ScheduleListRequest request;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final schedules = ref.watch(scheduleListProvider);
+    final schedules = ref.watch(scheduleListProvider(request));
 
     return Scaffold(
       appBar: AppBar(title: const Text('일정')),
@@ -254,13 +304,15 @@ class ScheduleListPage extends ConsumerWidget {
           children: list.map((s) => _ScheduleCard(schedule: s)).toList(),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('오류: $e')),
+        error: (e, _) => Center(
+          child: Text(e is ScheduleException ? e.message : '일시적인 오류가 발생했어요.'),
+        ),
       ),
     );
   }
 }
 
-// View — Widget (같은 화면에서만 쓰면 같은 파일에 private 로 둡니다. 2번 파일 구성 규칙 참고)
+// View — Widget (같은 화면에서만 쓰면 같은 파일에 private 로 둡니다. 3번 파일 구성 규칙 참고)
 class _ScheduleCard extends StatelessWidget {
   const _ScheduleCard({required this.schedule});
 
@@ -284,16 +336,72 @@ class _ScheduleCard extends StatelessWidget {
 }
 ```
 
-## 2. 파일 구성 규칙
+## 2. 작성 규칙
 
-> 전체 폴더 구조(Feature-First + Layered Architecture)는 [프로젝트 아키텍처](../README.md#프로젝트-아키텍처) 섹션을 따릅니다. 여기서는 그 구조 안에서 파일을 나누는 기준만 정의합니다.
+### 2-1. 생성자와 의존성 주입
+
+의존성은 이름 있는 `required` 파라미터로 받고, 초기화 리스트로 private 필드에 대입합니다. 모든 계층(DataSource, Repository, UseCase, ViewModel)에 동일하게 적용합니다.
+
+```dart
+const NoticeRepositoryImpl({required NoticeRemoteDataSource noticeRemoteDataSource})
+    : _noticeRemoteDataSource = noticeRemoteDataSource;
+```
+
+- 파라미터 이름은 타입을 드러내는 이름을 씁니다 (`repository` ✕ → `noticeRepository` ○).
+- 이 형태는 `prefer_initializing_formals` 린트와 충돌하므로 해당 규칙을 해제합니다 (5. lint 규칙 참고).
+
+### 2-2. family(인자를 받는) ViewModel
+
+> 이슈 #51 의 제안(wjddns0122)입니다. 팀 확정 전까지 "제안" 으로 둡니다.
+
+- `family` 키는 값 객체로 받습니다. 인자가 여러 개일 때는 요청 클래스(freezed) 또는 이름 있는 record(`typedef NoticeDetailArgs = ({int meetingId, int noticeId});`)로 묶습니다.
+- ViewModel 은 키 객체를 받지 않고, Provider 정의에서 값을 꺼내 **named 값**으로 생성자에 넘깁니다.
+
+요청 클래스(`ScheduleListRequest`), ViewModel 생성자, Provider 는 위 계층별 예시와 같습니다. 핵심만 다시 보면 다음과 같습니다.
+
+```dart
+// presentation/providers/schedule_providers.dart
+final scheduleListProvider =
+    AsyncNotifierProvider.family<ScheduleListViewModel, List<Schedule>, ScheduleListRequest>(
+  (request) => ScheduleListViewModel(startDate: request.startDate, endDate: request.endDate),
+);
+
+// 화면에서는 키를 넘겨 watch 합니다.
+final schedules = ref.watch(scheduleListProvider(request));
+```
+
+### 2-3. 예외 처리
+
+> 이슈 #50 은 아직 결정되지 않았습니다. 아래는 공지(notice)에서 쓰는 현재 방식이며, 확정 규칙이 아닙니다.
+
+현재 방식 (참고)
+
+- `DioException` 은 Repository 구현체의 `_guard` 에서 잡아 도메인 예외로 바꿔 던집니다. UseCase, ViewModel, 화면은 `DioException` 을 알지 못합니다.
+- 서버 실패 응답의 `error.message` 를 사용자 메시지로 쓰고, 응답 자체가 없으면(연결 실패 등) 공통 문구를 씁니다.
+- 화면에는 `'오류: $e'` 처럼 예외 객체를 출력하지 않고 메시지만 보여줍니다.
+
+팀 결정이 필요한 항목
+
+- 공통 예외 타입과 변환 함수를 `core/` 로 옮길지, feature 별로 둘지
+- 오류 코드, HTTP 상태, 네트워크 오류 처리 규칙
+
+### 2-4. Model / Entity / Request
+
+- Entity, Model, Request, State 는 `freezed` 로 작성합니다 (불변 + `==`/`copyWith` 자동 생성).
+- Model → Entity 변환은 `extension NoticeModelX { Notice toEntity() }` 로 둡니다.
+- DataSource 메서드의 인자는 `XxxRequest` DTO 로 받습니다. 경로 변수(`meetingId` 등)는 `@JsonKey(includeToJson: false)` 로 본문에서 뺍니다. 일부만 보내는 수정 요청은 `@JsonKey(includeIfNull: false)` 를 씁니다.
+- 팀 결정 필요: Repository 인터페이스가 낱개 인자를 받을지, UseCase 의 `XxxParams` 를 받을지는 아직 정해지지 않았습니다.
+
+## 3. 파일 구성 규칙
+
+> 전체 폴더 구조(Feature-First + Layered Architecture)는 프로젝트 README 의 아키텍처 섹션을 따릅니다. (README 에 해당 섹션이 작성되면 링크로 교체) 여기서는 그 구조 안에서 파일을 나누는 기준만 정의합니다.
 
 - **위젯 분리 기준**: `build()` 내부가 3~4 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
-- 파일 하나에는 public 클래스 1개만 둡니다 (private 헬퍼 위젯/클래스는 예외).
+- 파일 하나에는 public 클래스 1개만 둡니다. 예외: private 헬퍼 위젯/클래스, 그리고 한 UseCase 파일 안의 `XxxParams` / 추상 `Xxx` / `XxxImpl` 세트(아래 UseCase 예시).
 
 다른 화면에서도 재사용한다면 `_ScheduleCard` 대신 `ScheduleCard`로 public 클래스를 만들고 `widgets/schedule_card.dart`로 옮깁니다.
 
-## 3. import 순서
+## 4. import 순서
 
 1. `dart:` core 라이브러리
 2. `package:` 라이브러리 (Flutter SDK, 외부 패키지, 프로젝트 패키지 포함, 알파벳순)
@@ -310,7 +418,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 ```
 
-## 4. lint 규칙 (`analysis_options.yaml`)
+## 5. lint 규칙 (`analysis_options.yaml`)
 
 ```yaml
 include: package:flutter_lints/flutter.yaml
@@ -322,17 +430,20 @@ linter:
     avoid_print: true
     prefer_const_constructors: true
     sort_child_properties_last: true
+    prefer_initializing_formals: false
 ```
+
+`prefer_initializing_formals` 는 해제합니다. 이 가이드의 생성자 형태(`const Foo({required Dio dio}) : _dio = dio;`)는 SDK 3.12 부터 이 규칙에 걸립니다. 파라미터 이름이 필드 이름에서 `_` 만 뺀 것과 같고 값을 그대로 대입하면 걸리는데, 이 형태가 모든 계층(DataSource, Repository, UseCase, ViewModel)의 표준이라 규칙 쪽을 해제합니다. (#46 → #53)
 
 필요한 규칙은 `linter.rules` 아래에 팀 논의 후 추가합니다.
 
-## 5. 테스트 설명 작성 컨벤션 (제안)
+## 6. 테스트 설명 작성 컨벤션 (제안)
 
 관련 이슈: [#45](https://github.com/Team-AnI/MOAMOA-Flutter/issues/45).
 아래 규칙은 팀 리뷰를 위한 제안입니다. 승인 후 확정된 기준으로 적용합니다.
 테스트가 검증하는 동작을 설명하며, API의 미확정 정책을 이 문서로 확정하지 않습니다.
 
-### 5-1. `test` / `testWidgets` 설명
+### 6-1. `test` / `testWidgets` 설명
 
 - 모든 `test`와 `testWidgets`는 대상별 `group` 안에 선언합니다. 최상위에 단독으로 두지 않습니다.
 - `group`에는 테스트 대상, 하위 테스트에는 조건·행동·기대 결과를 적어 터미널에서 대상을 구분합니다.
@@ -407,7 +518,7 @@ void main() {
 }
 ```
 
-### 5-2. `group` 설명
+### 6-2. `group` 설명
 
 - 모든 테스트를 대상별 `group`으로 묶습니다. 단일 테스트만 있는 파일도 동일합니다.
 - 테스트 대상 클래스·메서드·기능명을 사용합니다.
@@ -429,7 +540,7 @@ void main() {
 }
 ```
 
-### 5-3. 경계값·반복 테스트
+### 6-3. 경계값·반복 테스트
 
 - 경계값은 구체적인 값과 허용·거부 결과를 설명에 포함합니다.
 - 서버 계약이나 팀이 확정한 제한을 기준으로 작성합니다.
@@ -457,7 +568,7 @@ void main() {
 }
 ```
 
-### 5-4. 적용 범위 및 리뷰 기준
+### 6-4. 적용 범위 및 리뷰 기준
 
 - 합의 이후 새로 작성하거나 수정하는 테스트부터 적용합니다.
 - 기존 테스트 전체를 일괄 변경하는 것은 이번 문서 PR의 범위에서 제외합니다.
@@ -466,7 +577,7 @@ void main() {
 - 리뷰 시 모든 테스트가 대상별 `group` 안에 있는지, 설명의 조건·행동·결과가 실제 테스트 코드와 일치하는지 확인합니다.
 - 규칙 적용을 위한 lint·정규식 검사는 이번 범위에 포함하지 않습니다.
 
-### 5-5. 팀 합의 요청
+### 6-5. 팀 합의 요청
 
 - 한국어 설명과 위 문장 형식을 기본으로 사용할지 확인합니다.
 - 모든 `test`·`testWidgets`를 `group`으로 묶고 반복 테스트 사례를 표기하는 기준을 확인합니다.
