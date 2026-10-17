@@ -10,9 +10,15 @@ import '../widgets/group_entry_choices.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_list_section.dart';
 import '../widgets/group_tab_bar.dart';
+import '../widgets/group_todo_card.dart';
+import '../widgets/group_todo_tile.dart';
+import '../viewmodels/group_list_preferences.dart';
+import '../providers/group_list_preferences_provider.dart';
+import 'group_list_manage_page.dart';
 
 class GroupListPage extends ConsumerStatefulWidget {
-  const GroupListPage({super.key});
+  const GroupListPage({super.key, this.tasks = const []});
+  final List<GroupTodoTile> tasks;
   @override
   ConsumerState<GroupListPage> createState() => _GroupListPageState();
 }
@@ -62,7 +68,9 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
         child: Column(
           children: [
             _ListHeader(onAdd: _add),
-            Expanded(child: _ListBody(onSelect: _select)),
+            Expanded(
+              child: _ListBody(onSelect: _select, tasks: widget.tasks),
+            ),
           ],
         ),
       ),
@@ -77,11 +85,34 @@ class _ListHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(groupProvider);
+    final name = ref.watch(groupCurrentUserNameProvider)?.trim();
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Expanded(child: Text('내 모임', style: GroupDesign.title)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name == null || name.isEmpty ? '안녕하세요' : '$name님, 안녕하세요',
+                  style: GroupDesign.sub,
+                ),
+                const SizedBox(height: 4),
+                const Text('내 모임', style: GroupDesign.title),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: '알림 (연결 예정)',
+            onPressed: null,
+            style: IconButton.styleFrom(
+              disabledBackgroundColor: GroupDesign.fill,
+            ),
+            icon: const GroupIcon('list_bell', size: 20),
+          ),
+          const SizedBox(width: 8),
           if (state.groups.isNotEmpty)
             IconButton(
               tooltip: '모임 추가',
@@ -97,41 +128,76 @@ class _ListHeader extends ConsumerWidget {
 
 /// 새로고침·오류·승인 대기·역할별 목록을 구성합니다.
 class _ListBody extends ConsumerWidget {
-  const _ListBody({required this.onSelect});
+  const _ListBody({required this.onSelect, required this.tasks});
   final ValueChanged<int> onSelect;
+  final List<GroupTodoTile> tasks;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(groupProvider);
-    final admins = state.groups
-        .where((group) => group.canViewInviteCode)
-        .toList();
-    final members = state.groups
-        .where((group) => !group.canViewInviteCode)
-        .toList();
+    final preferences = ref.watch(groupListPreferencesProvider);
+    final visible = preferences.arrange(
+      state.groups.where(
+        (current) => !preferences.archivedIds.contains(current.group.id),
+      ),
+    );
+    final admins = visible.where((group) => group.canViewInviteCode).toList();
+    final members = visible.where((group) => !group.canViewInviteCode).toList();
     return RefreshIndicator(
       onRefresh: () => ref.read(groupProvider.notifier).loadGroups(),
       color: GroupDesign.ink,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const _ListStatus(),
+          if (tasks.isNotEmpty) GroupTodoCard(items: tasks),
           if (admins.isNotEmpty)
             GroupListSection(
               title: '관리 중인 모임',
+              topPadding: 20,
               groups: admins,
               onSelect: state.isLoading ? null : onSelect,
             ),
           if (members.isNotEmpty)
             GroupListSection(
               title: '참여 중인 모임',
+              topPadding: admins.isEmpty ? 20 : 24,
               groups: members,
               onSelect: state.isLoading ? null : onSelect,
             ),
+          if (state.groups.isNotEmpty)
+            _ManageFooter(archivedCount: state.groups.length - visible.length),
         ],
       ),
     );
   }
+}
+
+class _ManageFooter extends StatelessWidget {
+  const _ManageFooter({required this.archivedCount});
+  final int archivedCount;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 20),
+    child: TextButton(
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (context) => const GroupListManagePage()),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const GroupIcon('list_sort', size: 16),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '모임 관리 · 보관한 모임 $archivedCount',
+              style: GroupDesign.sub,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// 목록 조회 상태와 첫 모임 진입 선택지를 표시합니다.

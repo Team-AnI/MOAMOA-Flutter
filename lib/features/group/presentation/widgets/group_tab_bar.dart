@@ -18,7 +18,7 @@ class GroupTabBar extends StatelessWidget {
       child: const Row(
         children: [
           _Tab(name: '모임', icon: 'groups', active: true),
-          _Tab(name: '알림', icon: 'bell', active: false),
+          _Tab(name: '캘린더', icon: 'list_calendar', active: false),
           _Tab(name: '내 계정', icon: 'user', active: false),
         ],
       ),
