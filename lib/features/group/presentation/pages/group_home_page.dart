@@ -170,21 +170,10 @@ class _HomeContent extends ConsumerWidget {
 class _HomeSettings extends StatelessWidget {
   const _HomeSettings();
   @override
-  Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: '모임 설정',
-    onSelected: (_) => context.push('/groups/invite'),
-    itemBuilder: (_) => [
-      const PopupMenuItem(value: 'invite', child: Text('초대 코드 확인')),
-    ],
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        color: GroupDesign.fill,
-        shape: BoxShape.circle,
-      ),
-      child: const Center(child: GroupIcon('gear', size: 20)),
-    ),
+  Widget build(BuildContext context) => _HeaderButton(
+    icon: 'gear',
+    label: '모임 설정',
+    onPressed: () => context.push('/groups/settings'),
   );
 }
 

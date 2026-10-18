@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 
 import '../models/group_api_failure.dart';
+import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
+import '../requests/update_group_request.dart';
 import 'group_remote_data_source.dart';
 
 class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
@@ -32,6 +34,27 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
       throw const GroupApiFailure('UNAVAILABLE');
     }
   }
+
+  @override
+  Future<GroupUpdateModel> updateGroup({
+    required int groupId,
+    required UpdateGroupRequest request,
+  }) => _decode(
+    _request('PATCH', '/v1/meetings/$groupId', body: request.toJson()),
+    (data) {
+      final model = GroupUpdateModel.fromJson(data);
+      if (model.meetingId != groupId) throw const FormatException('모임 ID 불일치');
+      return model;
+    },
+  );
+
+  @override
+  Future<void> deleteGroup(int groupId) =>
+      _decode(_request('DELETE', '/v1/meetings/$groupId'), (data) {
+        if (data['meetingId'] != groupId) {
+          throw const FormatException('모임 ID 불일치');
+        }
+      });
 
   @override
   Future<List<MeetingModel>> fetchMyGroups() =>

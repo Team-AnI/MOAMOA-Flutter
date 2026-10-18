@@ -7,6 +7,24 @@ import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 
 class FakeGroupRepository implements GroupRepository {
+  @override
+  Future<Group> updateGroup({
+    required int groupId,
+    String? name,
+    String? description,
+  }) async {
+    final current = groups.firstWhere((entry) => entry.group.id == groupId);
+    return current.group.copyWith(
+      name: name ?? current.group.name,
+      description: description ?? current.group.description,
+    );
+  }
+
+  @override
+  Future<void> deleteGroup({required int groupId}) async {
+    groups = groups.where((entry) => entry.group.id != groupId).toList();
+  }
+
   int createCalls = 0;
   String? lastName;
   String? lastDescription;

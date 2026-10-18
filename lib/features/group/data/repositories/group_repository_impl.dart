@@ -1,8 +1,11 @@
 import '../../domain/entities/current_group.dart';
+import '../../domain/entities/group.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../datasources/group_remote_data_source.dart';
 import '../models/group_api_failure.dart';
+import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
+import '../requests/update_group_request.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
   // 명명된 public 인자로 주입하고 내부 참조만 보관합니다.
@@ -27,12 +30,30 @@ class GroupRepositoryImpl implements GroupRepository {
         'UNAUTHORIZED' => GroupFailureReason.unauthorized,
         'FORBIDDEN' => GroupFailureReason.forbidden,
         'NOT_FOUND' when isJoining => GroupFailureReason.invalidCode,
+        'NOT_FOUND' => GroupFailureReason.notFound,
         'CONFLICT' when isJoining => GroupFailureReason.alreadyJoined,
         'VALIDATION_ERROR' ||
         'INPUT_ERROR' ||
         'MISSING_REQUIRED_VALUE' => GroupFailureReason.validation,
         _ => GroupFailureReason.unavailable,
       });
+
+  @override
+  Future<Group> updateGroup({
+    required int groupId,
+    String? name,
+    String? description,
+  }) => _execute(() async {
+    final model = await _remoteDataSource.updateGroup(
+      groupId: groupId,
+      request: UpdateGroupRequest(name: name, description: description),
+    );
+    return model.toEntity();
+  });
+
+  @override
+  Future<void> deleteGroup({required int groupId}) =>
+      _execute(() => _remoteDataSource.deleteGroup(groupId));
 
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {
