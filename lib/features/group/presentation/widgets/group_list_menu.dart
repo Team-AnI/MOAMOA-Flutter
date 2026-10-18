@@ -144,10 +144,16 @@ class _MenuAction extends StatelessWidget {
             height: 36,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: destructive ? const Color(0xfffdecec) : Colors.white,
+              color: destructive && onTap != null
+                  ? const Color(0xfffdecec)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: GroupIcon(icon, size: 18),
+            child: GroupIcon(
+              icon,
+              size: 18,
+              color: onTap == null ? GroupDesign.muted : null,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -158,10 +164,10 @@ class _MenuAction extends StatelessWidget {
                   title,
                   style: GroupDesign.body.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: destructive
-                        ? const Color(0xffe30000)
-                        : onTap == null
+                    color: onTap == null
                         ? GroupDesign.muted
+                        : destructive
+                        ? const Color(0xffe30000)
                         : GroupDesign.ink,
                   ),
                 ),
