@@ -20,6 +20,16 @@ final class CreateScheduleParams extends Params {
   final DateTime startAt;
   final DateTime? endAt;
   final String location;
+
+  @override
+  List<Object?> get props => [
+    meetingId,
+    title,
+    description,
+    startAt,
+    endAt,
+    location,
+  ];
 }
 
 /// "일정 생성"을 담당합니다. 생성된 일정을 돌려줍니다.
