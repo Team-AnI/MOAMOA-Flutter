@@ -14,6 +14,10 @@ class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
   /// 다음 페이지 응답이 늦게 도착했을 때, 그사이 새로고침이 있었는지 확인하는 데 씁니다.
   int _generation = 0;
 
+  /// 첫 페이지를 불러오는 요청이 진행 중인 개수입니다. (처음 로딩, 새로고침, Provider 무효화 포함)
+  /// 0보다 크면 목록이 곧 새 내용으로 바뀌므로 다음 페이지 요청을 보내지 않습니다.
+  int _firstPageRequests = 0;
+
   @override
   Future<NoticeListState> build() => _fetchFirstPage();
 
@@ -26,11 +30,14 @@ class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
 
   /// 다음 페이지를 불러와 목록 뒤에 붙입니다.
   ///
-  /// 요청 중에 새로고침이 일어나면, 늦게 도착한 이 응답은 버립니다.
+  /// 새로고침 중에는 요청하지 않고, 요청 중에 새로고침이 일어나면 늦게 도착한 응답은 버립니다.
   /// 실패하면 목록은 그대로 두고 NoticeException 을 던집니다.
   Future<void> loadMore() async {
     final current = state.value;
     if (current == null || !current.hasNext || current.isLoadingMore) return;
+    // 새로고침 중에 시작한 요청은 새로고침 전의 목록(current)에 이어 붙이게 되어
+    // 새 목록을 덮어쓰므로, 첫 페이지 요청이 끝날 때까지 기다립니다.
+    if (_firstPageRequests > 0) return;
 
     final generation = _generation;
     bool isStale() => !ref.mounted || generation != _generation;
@@ -58,13 +65,18 @@ class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
 
   Future<NoticeListState> _fetchFirstPage() async {
     _generation++;
-    final result = await ref.read(getNoticesProvider)(
-      GetNoticesParams(meetingId: _meetingId),
-    );
-    return NoticeListState(
-      notices: result.notices,
-      page: result.page,
-      hasNext: result.hasNext,
-    );
+    _firstPageRequests++;
+    try {
+      final result = await ref.read(getNoticesProvider)(
+        GetNoticesParams(meetingId: _meetingId),
+      );
+      return NoticeListState(
+        notices: result.notices,
+        page: result.page,
+        hasNext: result.hasNext,
+      );
+    } finally {
+      _firstPageRequests--;
+    }
   }
 }

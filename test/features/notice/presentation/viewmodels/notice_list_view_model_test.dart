@@ -119,6 +119,59 @@ void main() {
     expect(state.page, 1);
   });
 
+  test('새로고침 중에 시작한 다음 페이지 요청은 보내지 않아 새 목록이 유지된다', () async {
+    await openList();
+    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+
+    // 1. 새 공지가 등록된 뒤 새로고침을 시작하고, 첫 페이지 응답은 붙잡아 둔다.
+    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+    final page0Gate = Completer<void>();
+    repository.pageGates[0] = page0Gate;
+    final refresh = viewModel.refresh();
+    final callsBeforeLoadMore = repository.getNoticesCallCount;
+
+    // 2. 새로고침 중에 스크롤로 다음 페이지를 요청한다.
+    await viewModel.loadMore();
+    expect(repository.getNoticesCallCount, callsBeforeLoadMore);
+
+    // 3. 새로고침 응답이 도착한다.
+    page0Gate.complete();
+    await refresh;
+
+    final state = container.read(noticeListProvider(meetingId)).requireValue;
+    expect(state.notices.first.title, '새 공지');
+    expect(state.notices, hasLength(20));
+    expect(state.page, 0);
+    expect(state.isLoadingMore, isFalse);
+
+    // 4. 새로고침이 끝난 뒤에는 다음 페이지를 이어 붙일 수 있고 중복이 없다.
+    await viewModel.loadMore();
+    final next = container.read(noticeListProvider(meetingId)).requireValue;
+    expect(next.notices, hasLength(26));
+    expect(next.notices.map((notice) => notice.id).toSet(), hasLength(26));
+  });
+
+  test('목록이 다시 만들어지는 중에는 다음 페이지 요청을 보내지 않는다', () async {
+    await openList();
+    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+    final page0Gate = Completer<void>();
+    repository.pageGates[0] = page0Gate;
+
+    // 공지 등록 뒤처럼 목록 Provider 를 무효화하면 첫 페이지를 다시 불러온다.
+    container.invalidate(noticeListProvider(meetingId));
+    await Future<void>.delayed(Duration.zero);
+    final callsBeforeLoadMore = repository.getNoticesCallCount;
+
+    await viewModel.loadMore();
+    expect(repository.getNoticesCallCount, callsBeforeLoadMore);
+
+    page0Gate.complete();
+    final state = await container.read(noticeListProvider(meetingId).future);
+    expect(state.notices.first.title, '새 공지');
+    expect(state.notices, hasLength(20));
+  });
+
   test('조회에 실패하면 에러 상태가 된다', () async {
     repository.error = const NoticeException('모임 구성원이 아닙니다.');
 
