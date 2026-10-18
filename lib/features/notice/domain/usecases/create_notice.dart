@@ -1,21 +1,18 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import '../entities/notice_exception.dart';
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
-part 'create_notice.freezed.dart';
-
 /// CreateNotice 전용 파라미터
-@freezed
-abstract class CreateNoticeParams extends Params with _$CreateNoticeParams {
-  const CreateNoticeParams._();
+final class CreateNoticeParams extends Params {
+  const CreateNoticeParams({
+    required this.meetingId,
+    required this.title,
+    required this.content,
+  });
 
-  const factory CreateNoticeParams({
-    required int meetingId,
-    required String title,
-    required String content,
-  }) = _CreateNoticeParams;
+  final int meetingId;
+  final String title;
+  final String content;
 }
 
 /// 공지 작성 (3-1). 생성된 noticeId 를 반환합니다.

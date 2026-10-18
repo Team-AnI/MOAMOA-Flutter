@@ -1,22 +1,20 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import '../entities/notice_exception.dart';
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
-part 'update_notice.freezed.dart';
-
 /// UpdateNotice 전용 파라미터. null 인 필드는 수정하지 않습니다.
-@freezed
-abstract class UpdateNoticeParams extends Params with _$UpdateNoticeParams {
-  const UpdateNoticeParams._();
+final class UpdateNoticeParams extends Params {
+  const UpdateNoticeParams({
+    required this.meetingId,
+    required this.noticeId,
+    this.title,
+    this.content,
+  });
 
-  const factory UpdateNoticeParams({
-    required int meetingId,
-    required int noticeId,
-    String? title,
-    String? content,
-  }) = _UpdateNoticeParams;
+  final int meetingId;
+  final int noticeId;
+  final String? title;
+  final String? content;
 }
 
 /// 공지 수정 (3-4)

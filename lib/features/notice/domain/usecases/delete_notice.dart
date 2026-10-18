@@ -1,19 +1,12 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
-part 'delete_notice.freezed.dart';
-
 /// DeleteNotice 전용 파라미터
-@freezed
-abstract class DeleteNoticeParams extends Params with _$DeleteNoticeParams {
-  const DeleteNoticeParams._();
+final class DeleteNoticeParams extends Params {
+  const DeleteNoticeParams({required this.meetingId, required this.noticeId});
 
-  const factory DeleteNoticeParams({
-    required int meetingId,
-    required int noticeId,
-  }) = _DeleteNoticeParams;
+  final int meetingId;
+  final int noticeId;
 }
 
 /// 공지 삭제 (3-5)

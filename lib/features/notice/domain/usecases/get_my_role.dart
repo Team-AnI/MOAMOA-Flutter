@@ -1,17 +1,12 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
 import '../entities/member_role.dart';
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
-part 'get_my_role.freezed.dart';
-
 /// GetMyRole 전용 파라미터
-@freezed
-abstract class GetMyRoleParams extends Params with _$GetMyRoleParams {
-  const GetMyRoleParams._();
+final class GetMyRoleParams extends Params {
+  const GetMyRoleParams({required this.meetingId});
 
-  const factory GetMyRoleParams({required int meetingId}) = _GetMyRoleParams;
+  final int meetingId;
 }
 
 /// 모임에서 내 역할 조회 (1-4 의 myRole)
