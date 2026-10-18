@@ -183,6 +183,7 @@ class _ManageSection extends ConsumerWidget {
             buildDefaultDragHandles: false,
             itemCount: ordered.length,
             onReorderItem: (oldIndex, newIndex) {
+              // Flutter가 삭제 후의 인덱스로 보정하므로 다시 감소시키지 않습니다.
               final reordered = [...ordered];
               reordered.insert(newIndex, reordered.removeAt(oldIndex));
               ref

@@ -37,8 +37,8 @@ void main() {
     makeDesignGroup(3, '주말 등산 모임', MemberRole.member),
     makeDesignGroup(4, '사이드 프로젝트 팀', MemberRole.member),
   ];
-  ProviderContainer container() {
-    final repo = FakeGroupRepository()..groups = groups;
+  ProviderContainer container({List<CurrentGroup>? entries}) {
+    final repo = FakeGroupRepository()..groups = entries ?? groups;
     final value = ProviderContainer(
       overrides: [
         groupRepositoryProvider.overrideWithValue(repo),
@@ -110,10 +110,20 @@ void main() {
     testWidgets('역할별 드래그 정렬 후 새로고침해도 순서와 고정이 유지된다', (tester) async {
       final value = container();
       await open(tester, value, page: const GroupListManagePage());
-      final reorder = tester
-          .widgetList<ReorderableListView>(find.byType(ReorderableListView))
-          .first;
-      reorder.onReorderItem!(0, 1);
+      final handles = find.descendant(
+        of: find.byType(ReorderableListView).first,
+        matching: find.byType(ReorderableDragStartListener),
+      );
+      final gesture = await tester.startGesture(
+        tester.getCenter(handles.first),
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await gesture.moveTo(
+        tester.getCenter(handles.last) + const Offset(0, 80),
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+      await gesture.up();
+      await tester.pumpAndSettle();
       value.read(groupListPreferencesProvider.notifier).togglePin(3);
       await value.read(groupProvider.notifier).loadGroups();
       await tester.pumpAndSettle();
@@ -123,6 +133,46 @@ void main() {
         tester.getTopLeft(find.text('독서 클럽')).dy,
         lessThan(tester.getTopLeft(find.text('스터디 모아')).dy),
       );
+    });
+
+    testWidgets('세 모임을 맨 아래·맨 위로 드래그하고 같은 위치에 놓아도 정상이다', (tester) async {
+      final value = container(
+        entries: [
+          ...groups,
+          makeDesignGroup(5, '세 번째 관리자 모임', MemberRole.admin),
+        ],
+      );
+      await open(tester, value, page: const GroupListManagePage());
+      final handles = find.descendant(
+        of: find.byType(ReorderableListView).first,
+        matching: find.byType(ReorderableDragStartListener),
+      );
+      Future<void> drag(Finder handle, double distance) async {
+        final gesture = await tester.startGesture(tester.getCenter(handle));
+        await tester.pump(const Duration(milliseconds: 500));
+        await gesture.moveBy(Offset(0, distance));
+        await tester.pump(const Duration(milliseconds: 600));
+        await gesture.up();
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+
+      final separation =
+          tester.getCenter(handles.last).dy -
+          tester.getCenter(handles.first).dy;
+      await drag(handles.first, separation + 100);
+      expect(value.read(groupListPreferencesProvider).orderedIds, [2, 5, 1]);
+      await drag(handles.last, -separation - 100);
+      expect(value.read(groupListPreferencesProvider).orderedIds, [1, 2, 5]);
+      await drag(handles.first, 0);
+      expect(value.read(groupListPreferencesProvider).orderedIds, [1, 2, 5]);
+      expect(value.read(groupProvider).groups.map((entry) => entry.group.id), [
+        1,
+        2,
+        3,
+        4,
+        5,
+      ]);
     });
 
     testWidgets('처리할 일을 접고 펼칠 수 있고 연결된 작업을 누를 수 있다', (tester) async {
