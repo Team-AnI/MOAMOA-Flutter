@@ -7,11 +7,11 @@
 
 - 관련 이슈: [#29](https://github.com/Team-AnI/MOAMOA-Flutter/issues/29)
 - 기능 PR: [#39](https://github.com/Team-AnI/MOAMOA-Flutter/pull/39)
-- 구현 기준: [b683ef3](https://github.com/Team-AnI/MOAMOA-Flutter/commit/b683ef3b5b4dc78964d9457bbdb1d669c1391a90)
+- 구현 기준: #39가 머지된 [c576488](https://github.com/Team-AnI/MOAMOA-Flutter/commit/c5764885277e8db3a55b313b58c5418f7d86d647)의 `develop` 코드
 - 명세 기준: 2026-10-17 전달받은 모임·일정·공지 P0 초기 계약과 후순위 목록. 별도 버전 번호는 제공되지 않았습니다.
 - 공유 엔티티 PR #35와 일정 PR #41을 반영한 기능 코드 기준입니다.
 
-기능 PR #39 머지 전 develop에서는 아래 기능·Provider·테스트 명령을 바로 사용할 수 없습니다.
+기능 PR #39는 `develop`에 머지됐습니다. 아래 기능·Provider·테스트 명령은 해당 모임 코드가 포함된 프로젝트 루트에서 실행합니다.
 이 문서는 기능 코드나 서버 계약을 변경하지 않습니다. #56에서 검토 중인 DI·공통 예외 규칙이
 확정되면 #39의 적용 결과와 함께 다시 대조해야 합니다.
 
@@ -114,7 +114,7 @@ flutter run --dart-define=API_BASE_URL=https://your-development-server
 ## 6. 검증 방법과 결과
 
 Fake Repository 또는 HTTP 어댑터를 주입해 검사합니다. 실서버 성공 검증과 구분합니다.
-#39 기준 코드가 있는 프로젝트 루트에서 실행합니다.
+#39가 머지된 `develop` 기준 프로젝트 루트에서 실행합니다.
 
 ```bash
 flutter analyze
@@ -122,11 +122,11 @@ flutter test
 flutter test test/features/group/presentation/group_layout_test.dart --dart-define=GROUP_SCREENSHOTS=build/group-screens
 ```
 
-- 구현 기준 커밋에서 정적 분석 정상·모임과 일정 전체 테스트 **109개** 통과 기록을 확인했습니다.
+- #39가 머지된 `develop` 기준으로 정적 분석 정상·모임과 일정 전체 테스트 **109개** 통과를 재확인했습니다.
 - 상대 경로 캡처 명령은 macOS에서 테스트 **8개** 통과, PNG **24개** 생성을 확인했습니다. 이 명령은 파일을 생성하며 레이아웃 검증과 별개의 픽셀 단위 Figma 일치 검사는 아닙니다.
 - 화면 크기: 393×852·320×568.
 - PNG 경로: `build/group-screens/`. `build/`는 Git 추적에서 제외됩니다.
-- Windows 환경의 상대 경로 재실행은 이 문서 작성자가 직접 검증하지 않았습니다.
+- Windows는 용현님(`yhKim26`)이 기준 커밋 `9fa6f2e`에서 PowerShell·Git Bash 모두 상대 경로 명령으로 테스트 **8개** 통과·PNG **24개** 생성과 `build/` Git 제외를 확인했다고 PR #49에 공유했습니다. 이 결과는 동료의 검증 보고이며, 문서 작성자가 Windows에서 직접 재실행한 결과는 아닙니다.
 - 테스트 수는 기준 커밋의 결과이며 이후 변경에 따라 달라질 수 있습니다.
 - 실서버 생성·가입·권한 검증은 미완료입니다. 서버 주소·인증 연동·테스트 계정이 필요합니다.
 
@@ -144,7 +144,7 @@ flutter test test/features/group/presentation/group_layout_test.dart --dart-defi
 | QR·초대 링크 가입·코드 재발급·비활성화 | 미구현 | 후순위 계약·정책 확인 |
 | DI·Repository 인자·공통 예외 | #56 검토 대상 | 확정 후 #39와 본 문서 대조 |
 | 이름 상한·오류 대응·서버 중복 방지 | 후속 확인 | #29 백엔드 담당자와 확인 |
-| 전역 테마 | #39에서 제외, #55 Draft로 분리 | 폰트 의존성과 실제 화면 확인 |
+| 전역 테마 | #39에서 제외, #55에서 별도 리뷰 | 폰트 의존성과 실제 화면 확인 |
 
 `MemoryGroupRepository`·`GROUP_USE_MOCK`·`MOA-JOIN`·`MOA-WAIT` 앱 실행 경로는 제거됐습니다.
 사진은 서버 전송·생성된 모임 저장을 하지 않으며, 취소 시 미리보기를 유지하고 권한 오류를 안내합니다.
