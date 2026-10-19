@@ -3,22 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../providers/group_list_preferences_provider.dart';
 import '../providers/group_providers.dart';
+import '../viewmodels/group_list_preferences.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_empty_state.dart';
 import '../widgets/group_entry_choices.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_list_section.dart';
 import '../widgets/group_tab_bar.dart';
-import '../widgets/group_todo_card.dart';
-import '../widgets/group_todo_tile.dart';
-import '../viewmodels/group_list_preferences.dart';
-import '../providers/group_list_preferences_provider.dart';
 import 'group_list_manage_page.dart';
 
 class GroupListPage extends ConsumerStatefulWidget {
-  const GroupListPage({super.key, this.tasks = const []});
-  final List<GroupTodoTile> tasks;
+  const GroupListPage({super.key});
   @override
   ConsumerState<GroupListPage> createState() => _GroupListPageState();
 }
@@ -68,9 +65,7 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
         child: Column(
           children: [
             _ListHeader(onAdd: _add),
-            Expanded(
-              child: _ListBody(onSelect: _select, tasks: widget.tasks),
-            ),
+            Expanded(child: _ListBody(onSelect: _select)),
           ],
         ),
       ),
@@ -128,9 +123,8 @@ class _ListHeader extends ConsumerWidget {
 
 /// 새로고침·오류·승인 대기·역할별 목록을 구성합니다.
 class _ListBody extends ConsumerWidget {
-  const _ListBody({required this.onSelect, required this.tasks});
+  const _ListBody({required this.onSelect});
   final ValueChanged<int> onSelect;
-  final List<GroupTodoTile> tasks;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(groupProvider);
@@ -150,27 +144,67 @@ class _ListBody extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const _ListStatus(),
-          if (tasks.isNotEmpty) GroupTodoCard(items: tasks),
-          if (admins.isNotEmpty)
-            GroupListSection(
-              title: '관리 중인 모임',
-              topPadding: 20,
-              groups: admins,
-              onSelect: state.isLoading ? null : onSelect,
-            ),
-          if (members.isNotEmpty)
-            GroupListSection(
-              title: '참여 중인 모임',
-              topPadding: admins.isEmpty ? 20 : 24,
-              groups: members,
-              onSelect: state.isLoading ? null : onSelect,
-            ),
+          if (state.groups.isNotEmpty &&
+              visible.isEmpty &&
+              !state.isLoading &&
+              state.errorMessage == null)
+            const _ArchivedGroupsNotice(),
+          _RoleSections(
+            admins: admins,
+            members: members,
+            onSelect: state.isLoading ? null : onSelect,
+          ),
           if (state.groups.isNotEmpty)
             _ManageFooter(archivedCount: state.groups.length - visible.length),
         ],
       ),
     );
   }
+}
+
+class _RoleSections extends StatelessWidget {
+  const _RoleSections({
+    required this.admins,
+    required this.members,
+    required this.onSelect,
+  });
+  final List<CurrentGroup> admins, members;
+  final ValueChanged<int>? onSelect;
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      if (admins.isNotEmpty)
+        GroupListSection(
+          title: '관리 중인 모임',
+          topPadding: 20,
+          groups: admins,
+          onSelect: onSelect,
+        ),
+      if (members.isNotEmpty)
+        GroupListSection(
+          title: '참여 중인 모임',
+          topPadding: admins.isEmpty ? 20 : 24,
+          groups: members,
+          onSelect: onSelect,
+        ),
+    ],
+  );
+}
+
+class _ArchivedGroupsNotice extends StatelessWidget {
+  const _ArchivedGroupsNotice();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 28),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('표시할 모임이 없어요.', style: GroupDesign.heading),
+        SizedBox(height: 8),
+        Text('보관한 모임은 아래 모임 관리에서 다시 표시할 수 있어요.', style: GroupDesign.body),
+      ],
+    ),
+  );
 }
 
 class _ManageFooter extends StatelessWidget {

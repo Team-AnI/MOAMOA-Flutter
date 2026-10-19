@@ -15,7 +15,6 @@ import 'package:moamoa/features/group/presentation/pages/group_list_manage_page.
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/group/presentation/providers/group_list_preferences_provider.dart';
 import 'package:moamoa/features/group/presentation/widgets/group_list_section.dart';
-import 'package:moamoa/features/group/presentation/widgets/group_todo_tile.dart';
 
 import '../fake_group_repository.dart';
 
@@ -96,6 +95,8 @@ void main() {
       }
       await tester.pumpAndSettle();
       expect(find.byType(GroupListSection), findsNothing);
+      expect(find.text('표시할 모임이 없어요.'), findsOneWidget);
+      expect(find.text('보관한 모임은 아래 모임 관리에서 다시 표시할 수 있어요.'), findsOneWidget);
       await tester.tap(find.text('모임 관리 · 보관한 모임 4'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('보관한 모임'));
@@ -104,6 +105,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(value.read(groupListPreferencesProvider).archivedIds, [2, 3, 4]);
       expect(value.read(groupProvider).groups.length, 4);
+      await tester.tap(find.text('완료'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('완료'));
+      await tester.pumpAndSettle();
+      expect(find.text('표시할 모임이 없어요.'), findsNothing);
+      expect(find.byType(GroupListSection), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -175,57 +182,6 @@ void main() {
       ]);
     });
 
-    testWidgets('처리할 일을 접고 펼칠 수 있고 연결된 작업을 누를 수 있다', (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(393, 852);
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      var tapped = false;
-      final value = container();
-      final boundary = GlobalKey();
-      await open(
-        tester,
-        value,
-        boundary: boundary,
-        page: GroupListPage(
-          tasks: [
-            GroupTodoTile(
-              title: '납부 확인 2건',
-              subtitle: '스터디 모아 · 관리자',
-              icon: 'list_receipt',
-              onTap: () => tapped = true,
-            ),
-            const GroupTodoTile(
-              title: '가입 요청 2건',
-              subtitle: '스터디 모아 · 관리자',
-              icon: 'list_user_plus',
-            ),
-            const GroupTodoTile(
-              title: '납부하기 15,000원',
-              subtitle: '주말 등산 모임',
-              icon: 'list_receipt',
-            ),
-            const GroupTodoTile(
-              title: '일정 투표 · 9월 18일 마감',
-              subtitle: '주말 등산 모임',
-              icon: 'list_calendar_check',
-            ),
-          ],
-        ),
-      );
-      await capture(tester, boundary, 'list-with-tasks');
-      await tester.tap(find.text('납부 확인 2건'));
-      expect(tapped, isTrue);
-      await tester.tap(find.byTooltip('처리할 일 접기'));
-      await tester.pumpAndSettle();
-      expect(find.text('납부 확인 2건 외 3개'), findsOneWidget);
-      expect(find.text('가입 요청 2건'), findsNothing);
-      await capture(tester, boundary, 'list-collapsed');
-      await tester.tap(find.byTooltip('처리할 일 펼치기'));
-      await tester.pumpAndSettle();
-      expect(find.text('가입 요청 2건'), findsOneWidget);
-    });
-
     for (final size in [const Size(393, 852), const Size(320, 568)]) {
       testWidgets('목록·메뉴·관리가 ${size.width} 폭에서 잘리지 않는다', (tester) async {
         tester.view.devicePixelRatio = 1;
@@ -251,6 +207,21 @@ void main() {
           boundary: manageBoundary,
         );
         await capture(tester, manageBoundary, 'manage-${size.width.toInt()}');
+        expect(tester.takeException(), isNull);
+        for (final current in groups) {
+          value
+              .read(groupListPreferencesProvider.notifier)
+              .toggleArchive(current.group.id);
+        }
+        final archivedBoundary = GlobalKey();
+        await open(tester, value, boundary: archivedBoundary);
+        expect(find.text('표시할 모임이 없어요.'), findsOneWidget);
+        expect(find.text('모임 관리 · 보관한 모임 4'), findsOneWidget);
+        await capture(
+          tester,
+          archivedBoundary,
+          'all-archived-${size.width.toInt()}',
+        );
         expect(tester.takeException(), isNull);
       });
     }

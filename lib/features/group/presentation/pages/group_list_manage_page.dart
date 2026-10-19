@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../providers/group_list_preferences_provider.dart';
 import '../providers/group_providers.dart';
 import '../viewmodels/group_list_preferences.dart';
-import '../providers/group_list_preferences_provider.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
@@ -94,14 +94,7 @@ class _ManageContent extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       children: [
-        if (groups.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            child: Text(
-              archivedOnly ? '보관한 모임이 없어요.' : '표시할 모임이 없어요.',
-              style: GroupDesign.body,
-            ),
-          ),
+        if (groups.isEmpty) _ManageEmptyState(archivedOnly: archivedOnly),
         for (final admin in [true, false])
           if (groups.any((current) => current.canViewInviteCode == admin))
             _ManageSection(
@@ -127,6 +120,19 @@ class _ManageContent extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _ManageEmptyState extends StatelessWidget {
+  const _ManageEmptyState({required this.archivedOnly});
+  final bool archivedOnly;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 28),
+    child: Text(
+      archivedOnly ? '보관한 모임이 없어요.' : '표시할 모임이 없어요.',
+      style: GroupDesign.body,
+    ),
+  );
 }
 
 class _ArchivedLink extends StatelessWidget {
@@ -205,7 +211,7 @@ class _ManageSection extends ConsumerWidget {
   }
 }
 
-class _ManageRow extends ConsumerWidget {
+class _ManageRow extends StatelessWidget {
   const _ManageRow({
     super.key,
     required this.current,
@@ -216,66 +222,99 @@ class _ManageRow extends ConsumerWidget {
   final int index;
   final bool archivedOnly;
   @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    child: Row(
+      children: [
+        if (!archivedOnly) _DragHandle(index: index),
+        GroupMark(name: current.group.name, size: 44),
+        const SizedBox(width: 12),
+        Expanded(child: _ManageGroupInfo(current: current)),
+        _ManageButtons(groupId: current.group.id, archivedOnly: archivedOnly),
+      ],
+    ),
+  );
+}
+
+class _DragHandle extends StatelessWidget {
+  const _DragHandle({required this.index});
+  final int index;
+  @override
+  Widget build(BuildContext context) => ReorderableDragStartListener(
+    index: index,
+    child: const Padding(
+      padding: EdgeInsets.only(right: 8),
+      child: GroupIcon('list_drag', size: 16),
+    ),
+  );
+}
+
+class _ManageGroupInfo extends StatelessWidget {
+  const _ManageGroupInfo({required this.current});
+  final CurrentGroup current;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        current.group.name,
+        style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
+      ),
+      if (current.group.memberCount != null)
+        Text('구성원 ${current.group.memberCount}명', style: GroupDesign.sub),
+    ],
+  );
+}
+
+class _ManageButtons extends StatelessWidget {
+  const _ManageButtons({required this.groupId, required this.archivedOnly});
+  final int groupId;
+  final bool archivedOnly;
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (!archivedOnly) _PinButton(groupId: groupId),
+      _ArchiveButton(groupId: groupId, archivedOnly: archivedOnly),
+    ],
+  );
+}
+
+class _PinButton extends ConsumerWidget {
+  const _PinButton({required this.groupId});
+  final int groupId;
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pinned = ref
         .watch(groupListPreferencesProvider)
         .pinnedIds
-        .contains(current.group.id);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          if (!archivedOnly)
-            ReorderableDragStartListener(
-              index: index,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: GroupIcon('list_drag', size: 16),
-              ),
-            ),
-          GroupMark(name: current.group.name, size: 44),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  current.group.name,
-                  style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
-                ),
-                if (current.group.memberCount != null)
-                  Text(
-                    '구성원 ${current.group.memberCount}명',
-                    style: GroupDesign.sub,
-                  ),
-              ],
-            ),
-          ),
-          if (!archivedOnly)
-            IconButton(
-              tooltip: pinned ? '고정 해제' : '맨 위에 고정',
-              onPressed: () => ref
-                  .read(groupListPreferencesProvider.notifier)
-                  .togglePin(current.group.id),
-              style: IconButton.styleFrom(
-                backgroundColor: pinned ? GroupDesign.tint : Colors.white,
-              ),
-              icon: GroupIcon(
-                'list_pin',
-                size: 18,
-                color: pinned ? GroupDesign.blue : GroupDesign.ink,
-              ),
-            ),
-          IconButton(
-            tooltip: archivedOnly ? '목록에 다시 표시' : '보관하기',
-            onPressed: () => ref
-                .read(groupListPreferencesProvider.notifier)
-                .toggleArchive(current.group.id),
-            style: IconButton.styleFrom(backgroundColor: Colors.white),
-            icon: const GroupIcon('list_archive', size: 18),
-          ),
-        ],
+        .contains(groupId);
+    return IconButton(
+      tooltip: pinned ? '고정 해제' : '맨 위에 고정',
+      onPressed: () =>
+          ref.read(groupListPreferencesProvider.notifier).togglePin(groupId),
+      style: IconButton.styleFrom(
+        backgroundColor: pinned ? GroupDesign.tint : Colors.white,
+      ),
+      icon: GroupIcon(
+        'list_pin',
+        size: 18,
+        color: pinned ? GroupDesign.blue : GroupDesign.ink,
       ),
     );
   }
+}
+
+class _ArchiveButton extends ConsumerWidget {
+  const _ArchiveButton({required this.groupId, required this.archivedOnly});
+  final int groupId;
+  final bool archivedOnly;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => IconButton(
+    tooltip: archivedOnly ? '목록에 다시 표시' : '보관하기',
+    onPressed: () =>
+        ref.read(groupListPreferencesProvider.notifier).toggleArchive(groupId),
+    style: IconButton.styleFrom(backgroundColor: Colors.white),
+    icon: const GroupIcon('list_archive', size: 18),
+  );
 }
