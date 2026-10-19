@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/usecases/delete_schedule.dart';
 
 import '../providers/schedule_providers.dart';
@@ -32,11 +31,6 @@ class ScheduleDeleteViewModel extends Notifier<ScheduleDeleteState> {
 
     if (!ref.mounted) return; // 요청 중에 화면이 닫힌 경우
     if (result == ScheduleDeleteStatus.success) {
-      ref.invalidate(
-        scheduleDetailProvider(
-          ScheduleDetailRequest(meetingId: meetingId, scheduleId: scheduleId),
-        ),
-      );
       ref.invalidate(scheduleListProvider);
     }
     state = ScheduleDeleteState(status: result);
