@@ -37,7 +37,7 @@
 
 **Provider 변수명**: 역할과 상관없이 반드시 `xxxProvider`로 끝냅니다.
 
-**Riverpod 작성 방식**: `@riverpod` 코드젠 애노테이션은 사용하지 않고, 아래처럼 수동(Inline)으로 선언합니다. `core/`(dio, secureStorage 등) 레벨 Provider도 예외 없이 동일하게 Inline으로 작성합니다. (현재 `core/`에 남아 있는 `@riverpod` 코드는 Inline 으로 전환하고 `.g.dart` 를 삭제합니다.)
+**Riverpod 작성 방식**: `@riverpod` 코드젠 애노테이션은 사용하지 않고, 아래처럼 수동(Inline)으로 선언합니다. `core/`(dio, secureStorage 등) 레벨 Provider도 예외 없이 동일하게 Inline으로 작성합니다.
 
 ```dart
 // core/network/dio_provider.dart — core 레벨 Provider 예시
