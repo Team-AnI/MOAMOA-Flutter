@@ -23,6 +23,9 @@ class FakeScheduleRepository implements ScheduleRepository {
   /// 지정하면 이 Future 가 끝날 때까지 updateSchedule 이 완료되지 않습니다.
   Completer<void>? updateCompleter;
 
+  /// 지정하면 이 Future 가 끝날 때까지 deleteSchedule 이 완료되지 않습니다.
+  Completer<void>? deleteCompleter;
+
   /// 지정하면 이 Future 가 끝날 때까지 createSchedule 이 완료되지 않습니다.
   Completer<int>? createCompleter;
 
@@ -66,5 +69,6 @@ class FakeScheduleRepository implements ScheduleRepository {
   Future<void> deleteSchedule(ScheduleDeleteRequest request) async {
     deleteCalls.add(request);
     if (error != null) throw error!;
+    await deleteCompleter?.future;
   }
 }

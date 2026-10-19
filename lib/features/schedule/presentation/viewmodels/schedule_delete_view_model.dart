@@ -18,6 +18,8 @@ class ScheduleDeleteViewModel extends Notifier<ScheduleDeleteState> {
   Future<void> cancel() async {
     if (state.status == ScheduleDeleteStatus.submitting) return; // 중복 탭 방지
     state = const ScheduleDeleteState(status: ScheduleDeleteStatus.submitting);
+    // 요청 중에 화면이 닫혀도 성공 후 캐시를 갱신할 수 있게, 끝날 때까지 유지합니다.
+    final keepAliveLink = ref.keepAlive();
 
     ScheduleDeleteStatus result;
     try {
@@ -29,10 +31,11 @@ class ScheduleDeleteViewModel extends Notifier<ScheduleDeleteState> {
       result = ScheduleDeleteStatus.failure;
     }
 
-    if (!ref.mounted) return; // 요청 중에 화면이 닫힌 경우
+    if (!ref.mounted) return; // 요청 중에 container 가 정리된 경우
     if (result == ScheduleDeleteStatus.success) {
       ref.invalidate(scheduleListProvider);
     }
     state = ScheduleDeleteState(status: result);
+    keepAliveLink.close();
   }
 }

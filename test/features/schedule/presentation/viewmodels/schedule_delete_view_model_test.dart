@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
@@ -65,6 +67,37 @@ void main() {
 
       await cancel();
       await container.read(scheduleListProvider(args).future);
+
+      expect(repository.listCallCount, 2);
+    });
+
+    test('요청 중에 화면이 닫혀도 취소에 성공하면 일정 목록을 다시 불러온다', () async {
+      final args = ScheduleListRequest(
+        meetingId: 1,
+        startDate: DateTime(2026, 10),
+        endDate: DateTime(2026, 10, 31),
+      );
+      // 공용 container 는 구독을 끊을 수 없어서 따로 만든다.
+      final isolated = ProviderContainer(
+        overrides: [scheduleRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(isolated.dispose);
+      final subscription = isolated.listen(
+        scheduleDeleteProvider(request),
+        (_, _) {},
+      );
+      await isolated.read(scheduleListProvider(args).future);
+      repository.deleteCompleter = Completer<void>();
+
+      final pending = isolated
+          .read(scheduleDeleteProvider(request).notifier)
+          .cancel();
+      await pumpEventQueue();
+      subscription.close(); // 요청 중에 화면이 닫힌 상황
+      await isolated.pump();
+      repository.deleteCompleter!.complete();
+      await pending;
+      await isolated.read(scheduleListProvider(args).future);
 
       expect(repository.listCallCount, 2);
     });
