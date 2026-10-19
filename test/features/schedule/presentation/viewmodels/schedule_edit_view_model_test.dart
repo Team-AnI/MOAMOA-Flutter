@@ -100,5 +100,36 @@ void main() {
 
       expect(repository.listCallCount, 2);
     });
+
+    test('요청 중에 화면이 닫혀도 수정에 성공하면 일정 목록을 다시 불러온다', () async {
+      final args = ScheduleListRequest(
+        meetingId: 1,
+        startDate: DateTime(2026, 10),
+        endDate: DateTime(2026, 10, 31),
+      );
+      // 공용 container 는 구독을 끊을 수 없어서 따로 만든다.
+      final isolated = ProviderContainer(
+        overrides: [scheduleRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(isolated.dispose);
+      final subscription = isolated.listen(
+        scheduleEditProvider(request),
+        (_, _) {},
+      );
+      await isolated.read(scheduleListProvider(args).future);
+      repository.updateCompleter = Completer<void>();
+
+      final pending = isolated
+          .read(scheduleEditProvider(request).notifier)
+          .submit(title: '새 정모', startAt: startAt);
+      await pumpEventQueue();
+      subscription.close(); // 요청 중에 화면이 닫힌 상황
+      await isolated.pump();
+      repository.updateCompleter!.complete();
+      await pending;
+      await isolated.read(scheduleListProvider(args).future);
+
+      expect(repository.listCallCount, 2);
+    });
   });
 }

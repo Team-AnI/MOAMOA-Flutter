@@ -25,6 +25,8 @@ class ScheduleEditViewModel extends Notifier<ScheduleEditState> {
   }) async {
     if (state.status == ScheduleEditStatus.submitting) return; // 중복 탭 방지
     state = const ScheduleEditState(status: ScheduleEditStatus.submitting);
+    // 요청 중에 화면이 닫혀도 성공 후 캐시를 갱신할 수 있게, 끝날 때까지 유지합니다.
+    final keepAliveLink = ref.keepAlive();
 
     ScheduleEditStatus result;
     try {
@@ -49,11 +51,12 @@ class ScheduleEditViewModel extends Notifier<ScheduleEditState> {
       result = ScheduleEditStatus.failure;
     }
 
-    if (!ref.mounted) return; // 제출 중에 화면이 닫힌 경우
+    if (!ref.mounted) return; // 요청 중에 container 가 정리된 경우
     if (result == ScheduleEditStatus.success) {
       ref.invalidate(scheduleDetailProvider);
       ref.invalidate(scheduleListProvider);
     }
     state = ScheduleEditState(status: result);
+    keepAliveLink.close();
   }
 }
