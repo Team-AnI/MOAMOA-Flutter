@@ -103,8 +103,7 @@ extension ScheduleModelX on ScheduleModel {
 // DataSource (data/datasources/schedule_remote_data_source.dart, schedule_remote_data_source_impl.dart)
 // - 실제 API 호출만 담당합니다. 변환/비즈니스 로직은 넣지 않습니다.
 abstract interface class ScheduleRemoteDataSource {
-  /// 기간을 주면 그 기간의 일정만, 주지 않으면 전체 일정을 조회합니다.
-  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate});
+  Future<List<ScheduleModel>> fetchSchedules();
 }
 
 class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
@@ -113,14 +112,8 @@ class ScheduleRemoteDataSourceImpl implements ScheduleRemoteDataSource {
   final Dio _dio;
 
   @override
-  Future<List<ScheduleModel>> fetchSchedules({DateTime? startDate, DateTime? endDate}) async {
-    final response = await _dio.get<List<dynamic>>(
-      '/schedules',
-      queryParameters: {
-        if (startDate != null) 'startDate': startDate.toIso8601String(),
-        if (endDate != null) 'endDate': endDate.toIso8601String(),
-      },
-    );
+  Future<List<ScheduleModel>> fetchSchedules() async {
+    final response = await _dio.get<List<dynamic>>('/schedules');
     return (response.data ?? [])
         .whereType<Map<String, dynamic>>()
         .map(ScheduleModel.fromJson)
@@ -151,11 +144,11 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    final response = await _scheduleRemoteDataSource.fetchSchedules(
-      startDate: startDate,
-      endDate: endDate,
-    );
-    return response.map((model) => model.toEntity()).toList();
+    final response = await _scheduleRemoteDataSource.fetchSchedules();
+    return response
+        .map((model) => model.toEntity())
+        .where((schedule) => !schedule.date.isBefore(startDate) && schedule.date.isBefore(endDate))
+        .toList();
   }
 
   @override
