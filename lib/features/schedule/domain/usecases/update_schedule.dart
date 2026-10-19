@@ -48,8 +48,10 @@ final class UpdateScheduleImpl implements UpdateSchedule {
       scheduleId: original.id,
       title: title == original.title ? null : title,
       description: description == original.description ? null : description,
-      startAt: params.startAt == original.startAt ? null : params.startAt,
-      endAt: params.endAt == original.endAt ? null : params.endAt,
+      startAt: _isSameMoment(params.startAt, original.startAt)
+          ? null
+          : params.startAt,
+      endAt: _isSameMoment(params.endAt, original.endAt) ? null : params.endAt,
       location: location == original.location ? null : location,
     );
     if (request ==
@@ -61,4 +63,11 @@ final class UpdateScheduleImpl implements UpdateSchedule {
     }
     await _scheduleRepository.updateSchedule(request);
   }
+}
+
+/// 두 일시가 같은 순간인지 비교합니다. 둘 다 null 이면 같습니다.
+/// 서버 응답은 UTC, 입력 폼은 로컬 시각이라 `==` 로는 같은 순간도 다르게 판단됩니다.
+bool _isSameMoment(DateTime? a, DateTime? b) {
+  if (a == null || b == null) return a == b;
+  return a.isAtSameMomentAs(b);
 }

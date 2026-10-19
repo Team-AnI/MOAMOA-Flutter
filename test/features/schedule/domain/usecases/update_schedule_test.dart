@@ -89,5 +89,36 @@ void main() {
       expect(request.description, '');
       expect(request.location, '');
     });
+
+    // 서버 응답의 시각은 UTC 로, 입력 폼의 시각은 로컬로 들어온다.
+    UpdateScheduleParams paramsFromUtcOriginal({String title = '10월 정기 러닝'}) {
+      return UpdateScheduleParams(
+        meetingId: 1,
+        original: original.copyWith(
+          startAt: startAt.toUtc(),
+          endAt: endAt.toUtc(),
+        ),
+        title: title,
+        description: '반포 한강공원 집합',
+        startAt: startAt.toLocal(),
+        endAt: endAt.toLocal(),
+        location: '반포 한강공원',
+      );
+    }
+
+    test('UTC 로 받은 일정과 같은 순간의 로컬 일시이면 일시가 바뀌지 않은 것으로 본다', () async {
+      await updateSchedule(paramsFromUtcOriginal(title: '11월 정기 러닝'));
+
+      final request = repository.updateCalls.single;
+      expect(request.title, '11월 정기 러닝');
+      expect(request.startAt, isNull);
+      expect(request.endAt, isNull);
+    });
+
+    test('UTC 로 받은 일정을 바꾸지 않고 저장하면 저장하지 않는다', () async {
+      await updateSchedule(paramsFromUtcOriginal());
+
+      expect(repository.updateCalls, isEmpty);
+    });
   });
 }
