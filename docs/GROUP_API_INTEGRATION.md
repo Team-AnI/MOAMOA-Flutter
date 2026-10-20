@@ -12,8 +12,15 @@
 - 공유 엔티티 PR #35와 일정 PR #41을 반영한 기능 코드 기준입니다.
 
 기능 PR #39는 `develop`에 머지됐습니다. 아래 기능·Provider·테스트 명령은 해당 모임 코드가 포함된 프로젝트 루트에서 실행합니다.
-이 문서는 기능 코드나 서버 계약을 변경하지 않습니다. #56에서 검토 중인 DI·공통 예외 규칙이
-확정되면 #39의 적용 결과와 함께 다시 대조해야 합니다.
+이 문서는 기능 코드나 서버 계약을 변경하지 않습니다.
+[코드 스타일 가이드 #56](https://github.com/Team-AnI/MOAMOA-Flutter/pull/56)은 `main`의
+[e711c5b](https://github.com/Team-AnI/MOAMOA-Flutter/commit/e711c5b2b94f20cd7b430cfd0b64cf075ada0feb)에 머지됐으며,
+아래는 해당 가이드와 #39 구현 기준을 재대조한 결과입니다. `main` 머지가 `develop`의 기능 코드 변경을 뜻하지는 않습니다.
+
+- 현재 일치하는 구조: core·feature Provider의 inline 선언, 명명된 DI 인자, Freezed Entity·Model·State, Model → Entity의 extension 변환입니다.
+- 후속 코드 적용: 가이드는 DataSource 인자를 `XxxRequest` DTO로 받도록 명시하지만, #39 구현의 DataSource는 현재 문자열·정수 등 낱개 인자를 받습니다. 본 문서는 현재 구현을 기록하며 DTO 전환 코드를 추가하지 않습니다.
+- 아직 확정되지 않은 정책: 가이드 2-3의 공통 예외와 2-4의 Repository 인자 형태는 여전히 결정 필요로 표시됩니다. family 인자와 테스트 설명 절차도 문서의 제안 표시를 유지합니다.
+- #56의 `prefer_initializing_formals: false`는 `main` 설정이며, 이 문서 PR에서 `develop`의 lint 설정을 변경하지 않습니다.
 
 ## 2. API 범위와 구현 상태
 
@@ -142,7 +149,7 @@ flutter test test/features/group/presentation/group_layout_test.dart --dart-defi
 | 관리자 나가기 | 명세상 불가, 422 | 관리자 양도는 후순위이며 현재 명세에서는 삭제만 가능 |
 | 미리보기·승인 요청·승인/거절 | 후순위, 미구현 | 현재 즉시 가입과 구분 |
 | QR·초대 링크 가입·코드 재발급·비활성화 | 미구현 | 후순위 계약·정책 확인 |
-| DI·Repository 인자·공통 예외 | #56 검토 대상 | 확정 후 #39와 본 문서 대조 |
+| 가이드 적용·미결정 정책 | #56 `main` 머지 후 재대조 완료 | DataSource Request DTO 전환은 후속 코드 작업, Repository 인자·공통 예외는 팀 결정 필요 |
 | 이름 상한·오류 대응·서버 중복 방지 | 후속 확인 | #29 백엔드 담당자와 확인 |
 | 전역 테마 | #39에서 제외, #55에서 별도 리뷰 | 폰트 의존성과 실제 화면 확인 |
 
