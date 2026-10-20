@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +39,10 @@ void main() {
           path: '/detail',
           builder: (_, _) =>
               const ScheduleDetailPage(meetingId: 1, scheduleId: 20),
+        ),
+        GoRoute(
+          path: '/meetings/1/schedules/20/edit',
+          builder: (_, _) => const Scaffold(body: Text('수정 화면')),
         ),
       ],
     );
@@ -123,6 +129,34 @@ void main() {
 
       expect(find.text('일정을 취소하지 못했어요'), findsOneWidget);
       expect(find.byType(ScheduleDetailPage), findsOneWidget);
+    });
+
+    testWidgets('취소 요청 중에는 일정 취소하기를 눌러도 확인 팝업이 다시 열리지 않는다', (tester) async {
+      repository.deleteCompleter = Completer<void>();
+      await pumpDetailPage(tester);
+
+      await tapCancelAndConfirm(tester);
+      await tester.tap(find.byKey(const Key('schedule-cancel-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('이 일정을 취소할까요?'), findsNothing);
+
+      repository.deleteCompleter!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.deleteCalls, hasLength(1));
+      expect(find.byType(ScheduleDetailPage), findsNothing);
+    });
+
+    testWidgets('취소 요청 중에는 수정 버튼을 눌러도 수정 화면으로 이동하지 않는다', (tester) async {
+      repository.deleteCompleter = Completer<void>();
+      await pumpDetailPage(tester);
+
+      await tapCancelAndConfirm(tester);
+      await tester.tap(find.byKey(const Key('schedule-edit-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('수정 화면'), findsNothing);
     });
 
     testWidgets('일정을 불러오지 못하면 안내 문구를 보여준다', (tester) async {

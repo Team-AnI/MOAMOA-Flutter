@@ -123,6 +123,11 @@ class _EditButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
+    final isCancelling = ref.watch(
+      scheduleDeleteProvider(
+        request,
+      ).select((s) => s.status == ScheduleDeleteStatus.submitting),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(right: 16),
@@ -132,9 +137,11 @@ class _EditButton extends ConsumerWidget {
         child: InkWell(
           key: const Key('schedule-edit-button'),
           customBorder: const CircleBorder(),
-          onTap: () => context.push(
-            '/meetings/${request.meetingId}/schedules/${request.scheduleId}/edit',
-          ),
+          onTap: isCancelling
+              ? null
+              : () => context.push(
+                  '/meetings/${request.meetingId}/schedules/${request.scheduleId}/edit',
+                ),
           child: SizedBox(
             width: 40,
             height: 40,
@@ -359,6 +366,11 @@ class _CancelButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
+    final isCancelling = ref.watch(
+      scheduleDeleteProvider(
+        request,
+      ).select((s) => s.status == ScheduleDeleteStatus.submitting),
+    );
 
     return Center(
       child: TextButton(
@@ -368,14 +380,16 @@ class _CancelButton extends ConsumerWidget {
           minimumSize: Size.zero,
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
-        onPressed: () async {
-          final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (_) => const _CancelConfirmDialog(),
-          );
-          if (confirmed != true) return;
-          ref.read(scheduleDeleteProvider(request).notifier).cancel();
-        },
+        onPressed: isCancelling
+            ? null
+            : () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => const _CancelConfirmDialog(),
+                );
+                if (confirmed != true) return;
+                ref.read(scheduleDeleteProvider(request).notifier).cancel();
+              },
         child: Text(
           '이 일정 취소하기',
           style: MoaText.subStrong.copyWith(color: _alertText),
