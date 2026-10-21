@@ -44,6 +44,31 @@ void main() {
       expect(format(const Duration(days: 190)), '6개월 전');
     });
 
+    test('59초는 방금 전, 1분부터는 1분 전으로 표시한다', () {
+      expect(format(const Duration(seconds: 59)), '방금 전');
+      expect(format(const Duration(minutes: 1)), '1분 전');
+    });
+
+    test('59분은 59분 전, 1시간부터는 1시간 전으로 표시한다', () {
+      expect(format(const Duration(minutes: 59)), '59분 전');
+      expect(format(const Duration(hours: 1)), '1시간 전');
+    });
+
+    test('23시간은 23시간 전, 1일부터는 1일 전으로 표시한다', () {
+      expect(format(const Duration(hours: 23)), '23시간 전');
+      expect(format(const Duration(days: 1)), '1일 전');
+    });
+
+    test('6일은 6일 전, 7일부터는 1주 전으로 표시한다', () {
+      expect(format(const Duration(days: 6)), '6일 전');
+      expect(format(const Duration(days: 7)), '1주 전');
+    });
+
+    test('29일은 4주 전, 30일부터는 1개월 전으로 표시한다', () {
+      expect(format(const Duration(days: 29)), '4주 전');
+      expect(format(const Duration(days: 30)), '1개월 전');
+    });
+
     test('364일은 1년이 되기 전이라 12개월 전으로 표시한다', () {
       expect(format(const Duration(days: 364)), '12개월 전');
     });
