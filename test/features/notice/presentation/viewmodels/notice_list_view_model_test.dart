@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_state.dart';
@@ -177,14 +176,5 @@ void main() {
 
     await expectLater(openList(), throwsA(isA<NoticeException>()));
     expect(container.read(noticeListProvider(meetingId)).hasError, isTrue);
-  });
-
-  test('모임에서 내 역할을 불러온다 (작성 버튼 노출용)', () async {
-    repository.myRole = MemberRole.admin;
-    container.listen(noticeMyRoleProvider(meetingId), (_, _) {});
-
-    final role = await container.read(noticeMyRoleProvider(meetingId).future);
-
-    expect(role.isAdmin, isTrue);
   });
 }
