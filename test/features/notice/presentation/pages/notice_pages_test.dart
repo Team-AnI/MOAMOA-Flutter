@@ -806,6 +806,36 @@ void main() {
     });
   });
 
+  group('내 역할 조회 대상 모임', () {
+    testWidgets('상세 화면은 공지 ID가 아니라 모임 ID로 내 역할을 조회한다', (tester) async {
+      final myRole = FakeGroupMyRole.admin();
+
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(notices: [buildNotice(9)]),
+        const NoticeDetailPage(meetingId: 5, noticeId: 9),
+        myRole: myRole,
+      );
+      await tester.pumpAndSettle();
+
+      expect(myRole.requestedGroupIds, [5]);
+    });
+
+    testWidgets('목록 화면은 화면의 모임 ID로 내 역할을 조회한다', (tester) async {
+      final myRole = FakeGroupMyRole.admin();
+
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(),
+        const NoticeListPage(meetingId: 5),
+        myRole: myRole,
+      );
+      await tester.pumpAndSettle();
+
+      expect(myRole.requestedGroupIds, [5]);
+    });
+  });
+
   group('내 역할 조회 실패', () {
     const roleError = GroupFailure(GroupFailureReason.unavailable);
 
@@ -938,6 +968,20 @@ void main() {
       );
 
       expect(find.text('공지 작성'), findsNothing);
+    });
+
+    testWidgets('주소의 모임 ID로 관리자 여부를 확인한다', (tester) async {
+      final myRole = FakeGroupMyRole.admin();
+
+      await openByUrl(
+        tester,
+        FakeNoticeRepository(notices: [buildNotice(9)]),
+        '/meetings/5/notices/9/edit',
+        myRole: myRole,
+      );
+
+      expect(myRole.requestedGroupIds, isNotEmpty);
+      expect(myRole.requestedGroupIds, everyElement(5));
     });
   });
 }

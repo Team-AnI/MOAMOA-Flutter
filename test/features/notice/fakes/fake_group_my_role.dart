@@ -14,8 +14,13 @@ class FakeGroupMyRole {
   /// 값이 있으면 역할 조회가 이 오류로 실패합니다. (역할 조회만 실패하는 상황)
   Object? error;
 
-  Override get override => groupMyRoleProvider.overrideWith((ref, _) async {
-    if (error != null) throw error!;
-    return role;
-  });
+  /// 역할 조회를 요청받은 모임 ID (요청 순서대로)
+  final requestedGroupIds = <int>[];
+
+  Override get override =>
+      groupMyRoleProvider.overrideWith((ref, groupId) async {
+        requestedGroupIds.add(groupId);
+        if (error != null) throw error!;
+        return role;
+      });
 }
