@@ -190,26 +190,65 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _confirmLeave();
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: _NoticeFormFields(
-              isEdit: _isEdit,
-              titleController: _titleController,
-              contentController: _contentController,
-              showTitleMissing: _showMissing && _isTitleMissing,
-              showContentMissing: _showMissing && _isContentMissing,
-              onChanged: _onChanged,
-            ),
-          ),
-          _SubmitBar(
-            label: _isEdit ? '수정 완료' : '공지 등록',
-            isLoading: isSubmitting,
-            onPressed: canSubmit ? _submit : null,
-          ),
-        ],
+      child: _NoticeFormBody(
+        isEdit: _isEdit,
+        titleController: _titleController,
+        contentController: _contentController,
+        showTitleMissing: _showMissing && _isTitleMissing,
+        showContentMissing: _showMissing && _isContentMissing,
+        onChanged: _onChanged,
+        isSubmitting: isSubmitting,
+        onSubmit: canSubmit ? _submit : null,
       ),
+    );
+  }
+}
+
+/// 입력칸과 등록(수정 완료) 버튼. 상태는 들고 있지 않고 [_NoticeFormState] 가 넘겨 준 값으로만 그립니다.
+class _NoticeFormBody extends StatelessWidget {
+  const _NoticeFormBody({
+    required this.isEdit,
+    required this.titleController,
+    required this.contentController,
+    required this.showTitleMissing,
+    required this.showContentMissing,
+    required this.onChanged,
+    required this.isSubmitting,
+    required this.onSubmit,
+  });
+
+  final bool isEdit;
+  final TextEditingController titleController;
+  final TextEditingController contentController;
+  final bool showTitleMissing;
+  final bool showContentMissing;
+  final ValueChanged<String> onChanged;
+  final bool isSubmitting;
+
+  /// null 이면 버튼을 누를 수 없습니다.
+  final VoidCallback? onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: _NoticeFormFields(
+            isEdit: isEdit,
+            titleController: titleController,
+            contentController: contentController,
+            showTitleMissing: showTitleMissing,
+            showContentMissing: showContentMissing,
+            onChanged: onChanged,
+          ),
+        ),
+        _SubmitBar(
+          label: isEdit ? '수정 완료' : '공지 등록',
+          isLoading: isSubmitting,
+          onPressed: onSubmit,
+        ),
+      ],
     );
   }
 }
