@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
@@ -806,7 +807,7 @@ void main() {
   });
 
   group('내 역할 조회 실패', () {
-    const roleError = NoticeException('권한을 확인하지 못했어요');
+    const roleError = GroupFailure(GroupFailureReason.unavailable);
 
     testWidgets('공지가 있어도 다시 시도 버튼을 보여주고, 성공하면 작성 버튼이 나타난다', (tester) async {
       final myRole = FakeGroupMyRole.admin()..error = roleError;
@@ -933,7 +934,7 @@ void main() {
         FakeNoticeRepository(notices: notices),
         '/meetings/1/notices/new',
         myRole: FakeGroupMyRole.admin()
-          ..error = const NoticeException('권한을 확인하지 못했어요'),
+          ..error = const GroupFailure(GroupFailureReason.unavailable),
       );
 
       expect(find.text('공지 작성'), findsNothing);
