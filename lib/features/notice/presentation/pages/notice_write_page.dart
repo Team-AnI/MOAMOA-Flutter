@@ -173,11 +173,9 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     );
   }
 
-  /// 안내가 보이는 중에는 입력할 때마다 빠진 항목을 다시 확인합니다.
-  void _onChanged(String _) {
-    // 입력 내용이 바뀔 때마다 뒤로 가기 확인 여부(_hasChanges)를 다시 계산합니다.
-    setState(() {});
-  }
+  /// 입력할 때마다 화면을 다시 그려, 빠진 항목 안내와 닫기 확인 여부(_hasChanges),
+  /// 수정 완료 버튼의 활성 여부를 최신 입력값 기준으로 맞춥니다.
+  void _onChanged(String _) => setState(() {});
 
   @override
   Widget build(BuildContext context) {

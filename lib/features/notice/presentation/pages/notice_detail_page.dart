@@ -33,6 +33,9 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
   NoticeDetailArgs get _args =>
       (meetingId: widget.meetingId, noticeId: widget.noticeId);
 
+  /// 이 모임의 공지 목록 경로
+  String get _listPath => '/meetings/${widget.meetingId}/notices';
+
   Future<void> _delete() async {
     if (_isDeleting) return;
 
@@ -54,7 +57,7 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
       if (context.canPop()) {
         context.pop();
       } else {
-        context.go('/meetings/${widget.meetingId}/notices');
+        context.go(_listPath);
       }
     } catch (error) {
       if (!mounted) return;
@@ -94,8 +97,7 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
                 error: error,
                 message: '삭제되었거나 존재하지 않는 공지입니다.',
                 actionLabel: '목록으로',
-                onAction: () =>
-                    context.go('/meetings/${widget.meetingId}/notices'),
+                onAction: () => context.go(_listPath),
               )
             : NoticeErrorView(
                 error: error,
