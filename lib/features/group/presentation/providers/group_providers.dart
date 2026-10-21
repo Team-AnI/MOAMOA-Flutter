@@ -5,6 +5,7 @@ import '../../../../core/network/dio_provider.dart';
 import '../../data/datasources/group_remote_data_source.dart';
 import '../../data/datasources/group_remote_data_source_impl.dart';
 import '../../data/repositories/group_repository_impl.dart';
+import '../../domain/entities/member_role.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/usecases/create_group.dart';
 import '../../domain/usecases/create_group_impl.dart';
@@ -16,6 +17,7 @@ import '../../domain/usecases/get_my_groups.dart';
 import '../../domain/usecases/get_my_groups_impl.dart';
 import '../../domain/usecases/join_group.dart';
 import '../../domain/usecases/join_group_impl.dart';
+import '../../domain/usecases/params/get_group_params.dart';
 import '../viewmodels/group_state.dart';
 import '../viewmodels/group_view_model.dart';
 
@@ -60,3 +62,16 @@ final getMyGroupsProvider = Provider<GetMyGroups>(
 final groupProvider = NotifierProvider<GroupViewModel, GroupState>(
   GroupViewModel.new,
 );
+
+/// 모임(groupId)에서 내 역할.
+///
+/// 역할을 아직 확인하지 못한 상태를 MEMBER 로 보지 않도록, 로딩·오류와 구분되는 AsyncValue 로 노출합니다.
+final groupMyRoleProvider = FutureProvider.autoDispose.family<MemberRole, int>((
+  ref,
+  groupId,
+) async {
+  final current = await ref.watch(getGroupProvider)(
+    GetGroupParams(groupId: groupId),
+  );
+  return current.membership.role;
+});
