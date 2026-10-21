@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../providers/group_list_preferences_provider.dart';
 import '../providers/group_providers.dart';
+import '../viewmodels/group_list_preferences.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_empty_state.dart';
 import '../widgets/group_entry_choices.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_list_section.dart';
 import '../widgets/group_tab_bar.dart';
+import 'group_list_manage_page.dart';
 
 class GroupListPage extends ConsumerStatefulWidget {
   const GroupListPage({super.key});
@@ -77,11 +80,34 @@ class _ListHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(groupProvider);
+    final name = ref.watch(groupCurrentUserNameProvider)?.trim();
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Expanded(child: Text('내 모임', style: GroupDesign.title)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name == null || name.isEmpty ? '안녕하세요' : '$name님, 안녕하세요',
+                  style: GroupDesign.sub,
+                ),
+                const SizedBox(height: 4),
+                const Text('내 모임', style: GroupDesign.title),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: '알림 (연결 예정)',
+            onPressed: null,
+            style: IconButton.styleFrom(
+              disabledBackgroundColor: GroupDesign.fill,
+            ),
+            icon: const GroupIcon('list_bell', size: 20),
+          ),
+          const SizedBox(width: 8),
           if (state.groups.isNotEmpty)
             IconButton(
               tooltip: '모임 추가',
@@ -102,36 +128,110 @@ class _ListBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(groupProvider);
-    final admins = state.groups
-        .where((group) => group.canViewInviteCode)
-        .toList();
-    final members = state.groups
-        .where((group) => !group.canViewInviteCode)
-        .toList();
+    final preferences = ref.watch(groupListPreferencesProvider);
+    final visible = preferences.arrange(
+      state.groups.where(
+        (current) => !preferences.archivedIds.contains(current.group.id),
+      ),
+    );
+    final admins = visible.where((group) => group.canViewInviteCode).toList();
+    final members = visible.where((group) => !group.canViewInviteCode).toList();
     return RefreshIndicator(
       onRefresh: () => ref.read(groupProvider.notifier).loadGroups(),
       color: GroupDesign.ink,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           const _ListStatus(),
-          if (admins.isNotEmpty)
-            GroupListSection(
-              title: '관리 중인 모임',
-              groups: admins,
-              onSelect: state.isLoading ? null : onSelect,
-            ),
-          if (members.isNotEmpty)
-            GroupListSection(
-              title: '참여 중인 모임',
-              groups: members,
-              onSelect: state.isLoading ? null : onSelect,
-            ),
+          if (state.groups.isNotEmpty &&
+              visible.isEmpty &&
+              !state.isLoading &&
+              state.errorMessage == null)
+            const _ArchivedGroupsNotice(),
+          _RoleSections(
+            admins: admins,
+            members: members,
+            onSelect: state.isLoading ? null : onSelect,
+          ),
+          if (state.groups.isNotEmpty)
+            _ManageFooter(archivedCount: state.groups.length - visible.length),
         ],
       ),
     );
   }
+}
+
+class _RoleSections extends StatelessWidget {
+  const _RoleSections({
+    required this.admins,
+    required this.members,
+    required this.onSelect,
+  });
+  final List<CurrentGroup> admins, members;
+  final ValueChanged<int>? onSelect;
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      if (admins.isNotEmpty)
+        GroupListSection(
+          title: '관리 중인 모임',
+          topPadding: 20,
+          groups: admins,
+          onSelect: onSelect,
+        ),
+      if (members.isNotEmpty)
+        GroupListSection(
+          title: '참여 중인 모임',
+          topPadding: admins.isEmpty ? 20 : 24,
+          groups: members,
+          onSelect: onSelect,
+        ),
+    ],
+  );
+}
+
+class _ArchivedGroupsNotice extends StatelessWidget {
+  const _ArchivedGroupsNotice();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 28),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('표시할 모임이 없어요.', style: GroupDesign.heading),
+        SizedBox(height: 8),
+        Text('보관한 모임은 아래 모임 관리에서 다시 표시할 수 있어요.', style: GroupDesign.body),
+      ],
+    ),
+  );
+}
+
+class _ManageFooter extends StatelessWidget {
+  const _ManageFooter({required this.archivedCount});
+  final int archivedCount;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 20),
+    child: TextButton(
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (context) => const GroupListManagePage()),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const GroupIcon('list_sort', size: 16),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '모임 관리 · 보관한 모임 $archivedCount',
+              style: GroupDesign.sub,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// 목록 조회 상태와 첫 모임 진입 선택지를 표시합니다.
