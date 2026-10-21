@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 
 import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
-import '../models/fetch_my_role_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
 import '../models/notice_list_model.dart';
@@ -59,14 +58,6 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
     await _dio.delete<Map<String, dynamic>>(
       '/v1/meetings/${request.meetingId}/notices/${request.noticeId}',
     );
-  }
-
-  @override
-  Future<String> fetchMyRole(FetchMyRoleRequest request) async {
-    final response = await _dio.get<Map<String, dynamic>>(
-      '/v1/meetings/${request.meetingId}',
-    );
-    return _data(response)['myRole'] as String;
   }
 
   /// 공통 응답 { success, data, error, timestamp } 에서 data 를 꺼냅니다.

@@ -1,4 +1,3 @@
-import '../entities/member_role.dart';
 import '../entities/notice.dart';
 import '../entities/notice_list_result.dart';
 
@@ -36,8 +35,4 @@ abstract interface class NoticeRepository {
 
   /// 3-5 공지 삭제
   Future<void> deleteNotice({required int meetingId, required int noticeId});
-
-  /// 1-4 모임 상세의 myRole. 작성·수정·삭제 버튼 노출에 사용합니다.
-  // TODO(#44): 역할 조회는 모임 기능의 책임이므로 group feature 로 이동
-  Future<MemberRole> getMyRole({required int meetingId});
 }
