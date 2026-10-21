@@ -10,11 +10,11 @@ import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 import '../widgets/group_tab_bar.dart';
 
-class GroupListManagePage extends ConsumerWidget {
+class GroupListManagePage extends StatelessWidget {
   const GroupListManagePage({super.key, this.archivedOnly = false});
   final bool archivedOnly;
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+  Widget build(BuildContext context) => Scaffold(
     backgroundColor: Colors.white,
     bottomNavigationBar: const GroupTabBar(),
     body: SafeArea(
@@ -226,25 +226,20 @@ class _ManageRow extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     child: Row(
       children: [
-        if (!archivedOnly) _DragHandle(index: index),
+        if (!archivedOnly)
+          ReorderableDragStartListener(
+            index: index,
+            child: const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: GroupIcon('list_drag', size: 16),
+            ),
+          ),
         GroupMark(name: current.group.name, size: 44),
         const SizedBox(width: 12),
         Expanded(child: _ManageGroupInfo(current: current)),
-        _ManageButtons(groupId: current.group.id, archivedOnly: archivedOnly),
+        if (!archivedOnly) _PinButton(groupId: current.group.id),
+        _ArchiveButton(groupId: current.group.id, archivedOnly: archivedOnly),
       ],
-    ),
-  );
-}
-
-class _DragHandle extends StatelessWidget {
-  const _DragHandle({required this.index});
-  final int index;
-  @override
-  Widget build(BuildContext context) => ReorderableDragStartListener(
-    index: index,
-    child: const Padding(
-      padding: EdgeInsets.only(right: 8),
-      child: GroupIcon('list_drag', size: 16),
     ),
   );
 }
@@ -262,20 +257,6 @@ class _ManageGroupInfo extends StatelessWidget {
       ),
       if (current.group.memberCount != null)
         Text('구성원 ${current.group.memberCount}명', style: GroupDesign.sub),
-    ],
-  );
-}
-
-class _ManageButtons extends StatelessWidget {
-  const _ManageButtons({required this.groupId, required this.archivedOnly});
-  final int groupId;
-  final bool archivedOnly;
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      if (!archivedOnly) _PinButton(groupId: groupId),
-      _ArchiveButton(groupId: groupId, archivedOnly: archivedOnly),
     ],
   );
 }

@@ -14,7 +14,7 @@ abstract class GroupListPreferences with _$GroupListPreferences {
   }) = _GroupListPreferences;
 }
 
-extension GroupListPreferencesOrdering on GroupListPreferences {
+extension GroupListPreferencesX on GroupListPreferences {
   List<CurrentGroup> arrange(
     Iterable<CurrentGroup> groups, {
     bool pinnedFirst = true,

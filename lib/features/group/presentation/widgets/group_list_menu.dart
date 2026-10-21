@@ -20,31 +20,35 @@ class GroupListMenu extends StatelessWidget {
         children: [
           _MenuHeading(current: current),
           const SizedBox(height: 12),
-          _ActionsCard(groupId: current.group.id),
+          _MenuCard(
+            children: [
+              _PinAction(groupId: current.group.id),
+              const Divider(height: 1, color: Colors.white),
+              const _MenuAction(
+                title: '이 모임 알림 끄기',
+                icon: 'list_mute',
+                subtitle: '알림 기능 연결 후 사용할 수 있어요',
+              ),
+              const Divider(height: 1, color: Colors.white),
+              _ArchiveAction(groupId: current.group.id),
+            ],
+          ),
           const SizedBox(height: 12),
-          _LeaveCard(current: current),
+          _MenuCard(
+            children: [
+              _MenuAction(
+                title: '모임 나가기',
+                icon: 'list_leave',
+                destructive: true,
+                subtitle: current.canViewInviteCode
+                    ? '관리자는 모임을 나갈 수 없어요'
+                    : '탈퇴 기능 연결 후 사용할 수 있어요',
+              ),
+            ],
+          ),
         ],
       ),
     ),
-  );
-}
-
-class _ActionsCard extends StatelessWidget {
-  const _ActionsCard({required this.groupId});
-  final int groupId;
-  @override
-  Widget build(BuildContext context) => _MenuCard(
-    children: [
-      _PinAction(groupId: groupId),
-      const Divider(height: 1, color: Colors.white),
-      const _MenuAction(
-        title: '이 모임 알림 끄기',
-        icon: 'list_mute',
-        subtitle: '알림 기능 연결 후 사용할 수 있어요',
-      ),
-      const Divider(height: 1, color: Colors.white),
-      _ArchiveAction(groupId: groupId),
-    ],
   );
 }
 
@@ -80,24 +84,6 @@ class _ArchiveAction extends ConsumerWidget {
       ref.read(groupListPreferencesProvider.notifier).toggleArchive(groupId);
       Navigator.pop(context);
     },
-  );
-}
-
-class _LeaveCard extends StatelessWidget {
-  const _LeaveCard({required this.current});
-  final CurrentGroup current;
-  @override
-  Widget build(BuildContext context) => _MenuCard(
-    children: [
-      _MenuAction(
-        title: '모임 나가기',
-        icon: 'list_leave',
-        destructive: true,
-        subtitle: current.canViewInviteCode
-            ? '관리자는 모임을 나갈 수 없어요'
-            : '탈퇴 기능 연결 후 사용할 수 있어요',
-      ),
-    ],
   );
 }
 
