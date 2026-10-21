@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/notice.dart';
+import '../notice_format.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
-import '../widgets/notice_date_format.dart';
 import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 import '../widgets/notice_role_retry_button.dart';
