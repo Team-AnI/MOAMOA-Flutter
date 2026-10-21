@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../group/domain/entities/member_role.dart';
+import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/notice.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
@@ -59,11 +61,11 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   @override
   Widget build(BuildContext context) {
     final notices = ref.watch(noticeListProvider(widget.meetingId));
-    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
-    final isAdmin = role.value?.isAdmin ?? false;
+    final role = ref.watch(groupMyRoleProvider(widget.meetingId));
+    final canWrite = role.value?.canWriteNotices ?? false;
     // 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
     final VoidCallback? retryRole = role.hasError
-        ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
+        ? () => ref.invalidate(groupMyRoleProvider(widget.meetingId))
         : null;
 
     return Scaffold(
@@ -72,12 +74,15 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(onWrite: isAdmin ? _goWrite : null, onRetryRole: retryRole),
+            _Header(
+              onWrite: canWrite ? _goWrite : null,
+              onRetryRole: retryRole,
+            ),
             Expanded(
               child: notices.when(
                 data: (state) => state.isEmpty
                     ? _EmptyView(
-                        onWrite: isAdmin ? _goWrite : null,
+                        onWrite: canWrite ? _goWrite : null,
                         onRetryRole: retryRole,
                         onRefresh: () => ref
                             .read(noticeListProvider(widget.meetingId).notifier)

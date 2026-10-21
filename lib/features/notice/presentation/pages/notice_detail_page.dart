@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../group/domain/entities/member_role.dart';
+import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/notice.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
@@ -74,8 +76,8 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
   @override
   Widget build(BuildContext context) {
     final notice = ref.watch(noticeDetailProvider(_args));
-    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
-    final isAdmin = role.value?.isAdmin ?? false;
+    final role = ref.watch(groupMyRoleProvider(widget.meetingId));
+    final canWrite = role.value?.canWriteNotices ?? false;
 
     // 삭제 요청 중에는 화면을 닫지 않습니다. 닫으면 삭제 결과 안내와 목록 새로고침이 빠집니다.
     return PopScope(
@@ -85,15 +87,15 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
         appBar: _DetailAppBar(
           onBack: _isDeleting ? null : () => context.pop(),
           onRetryRole: role.hasError && notice.hasValue
-              ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
+              ? () => ref.invalidate(groupMyRoleProvider(widget.meetingId))
               : null,
           // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
-          onEdit: isAdmin && notice.hasValue
+          onEdit: canWrite && notice.hasValue
               ? () => context.push(
                   '/meetings/${widget.meetingId}/notices/${widget.noticeId}/edit',
                 )
               : null,
-          onDelete: isAdmin && notice.hasValue ? _delete : null,
+          onDelete: canWrite && notice.hasValue ? _delete : null,
           isDeleting: _isDeleting,
         ),
         body: notice.when(

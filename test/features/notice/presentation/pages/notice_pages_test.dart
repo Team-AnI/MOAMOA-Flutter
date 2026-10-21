@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
@@ -13,6 +12,7 @@ import 'package:moamoa/features/notice/presentation/pages/notice_list_page.dart'
 import 'package:moamoa/features/notice/presentation/pages/notice_write_page.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 
+import '../../fakes/fake_group_my_role.dart';
 import '../../fakes/fake_notice_repository.dart';
 
 void main() {
@@ -27,11 +27,15 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester,
     FakeNoticeRepository repository,
-    Widget page,
-  ) {
+    Widget page, {
+    FakeGroupMyRole? myRole,
+  }) {
     return tester.pumpWidget(
       ProviderScope(
-        overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          noticeRepositoryProvider.overrideWithValue(repository),
+          (myRole ?? FakeGroupMyRole()).override,
+        ],
         retry: (_, _) => null,
         child: MaterialApp(home: page),
       ),
@@ -42,11 +46,15 @@ void main() {
   Future<void> pumpPushedPage(
     WidgetTester tester,
     FakeNoticeRepository repository,
-    Widget page,
-  ) async {
+    Widget page, {
+    FakeGroupMyRole? myRole,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          noticeRepositoryProvider.overrideWithValue(repository),
+          (myRole ?? FakeGroupMyRole()).override,
+        ],
         retry: (_, _) => null,
         child: MaterialApp(
           home: Builder(
@@ -112,8 +120,9 @@ void main() {
     testWidgets('공지가 없으면 관리자에게는 작성 버튼을 보여준다', (tester) async {
       await pumpPage(
         tester,
-        FakeNoticeRepository(myRole: MemberRole.admin),
+        FakeNoticeRepository(),
         page,
+        myRole: FakeGroupMyRole.admin(),
       );
       await tester.pumpAndSettle();
 
@@ -678,11 +687,9 @@ void main() {
     testWidgets('관리자에게는 삭제 버튼 옆에 수정 버튼을 보여준다', (tester) async {
       await pumpPage(
         tester,
-        FakeNoticeRepository(
-          notices: [buildNotice(1)],
-          myRole: MemberRole.admin,
-        ),
+        FakeNoticeRepository(notices: [buildNotice(1)]),
         page,
+        myRole: FakeGroupMyRole.admin(),
       );
       await tester.pumpAndSettle();
 
@@ -728,9 +735,8 @@ void main() {
     testWidgets('수정 후 상세를 다시 불러오는 동안에도 이전 내용을 그대로 보여준다', (tester) async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
-        myRole: MemberRole.admin,
       );
-      await pumpPage(tester, repository, page);
+      await pumpPage(tester, repository, page, myRole: FakeGroupMyRole.admin());
       await tester.pumpAndSettle();
       final container = ProviderScope.containerOf(
         tester.element(find.byType(NoticeDetailPage)),
@@ -748,10 +754,7 @@ void main() {
     });
 
     testWidgets('삭제에 성공했을 때 닫을 화면이 없으면 목록으로 이동한다', (tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      );
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
       final router = GoRouter(
         initialLocation: '/meetings/1/notices/1',
         routes: [
@@ -767,7 +770,10 @@ void main() {
       );
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          overrides: [
+            noticeRepositoryProvider.overrideWithValue(repository),
+            FakeGroupMyRole.admin().override,
+          ],
           retry: (_, _) => null,
           child: MaterialApp.router(routerConfig: router),
         ),
@@ -786,11 +792,9 @@ void main() {
 
     /// 삭제 확인까지 눌러 삭제 요청이 끝나지 않고 진행 중인 상태를 만듭니다.
     Future<FakeNoticeRepository> startDeleting(WidgetTester tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      )..deleteGate = Completer<void>();
-      await pumpPage(tester, repository, page);
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+        ..deleteGate = Completer<void>();
+      await pumpPage(tester, repository, page, myRole: FakeGroupMyRole.admin());
       await tester.pumpAndSettle();
 
       await tester.tap(find.byTooltip('공지 삭제'));
@@ -895,10 +899,7 @@ void main() {
 
     /// 이전 화면 위에 상세를 띄우고 삭제를 끝까지 진행합니다.
     Future<FakeNoticeRepository> deleteSuccessfully(WidgetTester tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      );
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
       final router = GoRouter(
         routes: [
           GoRoute(
@@ -910,7 +911,10 @@ void main() {
       );
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          overrides: [
+            noticeRepositoryProvider.overrideWithValue(repository),
+            FakeGroupMyRole.admin().override,
+          ],
           retry: (_, _) => null,
           child: MaterialApp.router(routerConfig: router),
         ),
@@ -977,17 +981,19 @@ void main() {
     const roleError = NoticeException('권한을 확인하지 못했어요');
 
     testWidgets('공지가 있어도 다시 시도 버튼을 보여주고, 성공하면 작성 버튼이 나타난다', (tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      )..myRoleError = roleError;
-      await pumpPage(tester, repository, const NoticeListPage(meetingId: 1));
+      final myRole = FakeGroupMyRole.admin()..error = roleError;
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(notices: [buildNotice(1)]),
+        const NoticeListPage(meetingId: 1),
+        myRole: myRole,
+      );
       await tester.pumpAndSettle();
 
       expect(find.byTooltip('권한 확인 다시 시도'), findsOneWidget);
       expect(find.byTooltip('공지 작성'), findsNothing);
 
-      repository.myRoleError = null;
+      myRole.error = null;
       await tester.tap(find.byTooltip('권한 확인 다시 시도'));
       await tester.pumpAndSettle();
 
@@ -996,9 +1002,12 @@ void main() {
     });
 
     testWidgets('공지가 없을 때도 관리자 확인을 다시 시도할 수 있다', (tester) async {
-      final repository = FakeNoticeRepository(myRole: MemberRole.admin)
-        ..myRoleError = roleError;
-      await pumpPage(tester, repository, const NoticeListPage(meetingId: 1));
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(),
+        const NoticeListPage(meetingId: 1),
+        myRole: FakeGroupMyRole.admin()..error = roleError,
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('아직 등록된 공지가 없어요'), findsOneWidget);
@@ -1007,14 +1016,11 @@ void main() {
     });
 
     testWidgets('상세 화면에서도 다시 시도 버튼을 보여준다', (tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      )..myRoleError = roleError;
       await pumpPage(
         tester,
-        repository,
+        FakeNoticeRepository(notices: [buildNotice(1)]),
         const NoticeDetailPage(meetingId: 1, noticeId: 1),
+        myRole: FakeGroupMyRole.admin()..error = roleError,
       );
       await tester.pumpAndSettle();
 
@@ -1027,11 +1033,15 @@ void main() {
     Future<void> openByUrl(
       WidgetTester tester,
       FakeNoticeRepository repository,
-      String location,
-    ) async {
+      String location, {
+      FakeGroupMyRole? myRole,
+    }) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          overrides: [
+            noticeRepositoryProvider.overrideWithValue(repository),
+            (myRole ?? FakeGroupMyRole()).override,
+          ],
           retry: (_, _) => null,
           child: MaterialApp.router(
             routerConfig: GoRouter(
@@ -1069,24 +1079,33 @@ void main() {
     });
 
     testWidgets('관리자는 작성·수정 화면에 들어갈 수 있다', (tester) async {
-      final repository = FakeNoticeRepository(
-        notices: notices,
-        myRole: MemberRole.admin,
-      );
+      final repository = FakeNoticeRepository(notices: notices);
+      final myRole = FakeGroupMyRole.admin();
 
-      await openByUrl(tester, repository, '/meetings/1/notices/new');
+      await openByUrl(
+        tester,
+        repository,
+        '/meetings/1/notices/new',
+        myRole: myRole,
+      );
       expect(find.text('공지 작성'), findsOneWidget);
 
-      await openByUrl(tester, repository, '/meetings/1/notices/1/edit');
+      await openByUrl(
+        tester,
+        repository,
+        '/meetings/1/notices/1/edit',
+        myRole: myRole,
+      );
       expect(find.text('공지 수정'), findsOneWidget);
     });
 
     testWidgets('관리자 여부를 확인하지 못하면 작성 화면에 들여보내지 않는다', (tester) async {
       await openByUrl(
         tester,
-        FakeNoticeRepository(notices: notices, myRole: MemberRole.admin)
-          ..myRoleError = const NoticeException('권한을 확인하지 못했어요'),
+        FakeNoticeRepository(notices: notices),
         '/meetings/1/notices/new',
+        myRole: FakeGroupMyRole.admin()
+          ..error = const NoticeException('권한을 확인하지 못했어요'),
       );
 
       expect(find.text('공지 작성'), findsNothing);
