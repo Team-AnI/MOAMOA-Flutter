@@ -114,10 +114,12 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
   bool get _isEdit => widget.initialNotice != null;
 
   /// 처음 열렸을 때와 입력 내용이 다르면 true. (작성은 비어 있는 상태가 기준)
+  ///
+  /// 서버로 보낼 때 앞뒤 공백을 지우므로, 공백만 다른 경우는 바뀐 것으로 보지 않습니다.
   bool get _hasChanges {
     final initial = widget.initialNotice;
-    return _titleController.text != (initial?.title ?? '') ||
-        _contentController.text != (initial?.content ?? '');
+    return _titleController.text.trim() != (initial?.title ?? '').trim() ||
+        _contentController.text.trim() != (initial?.content ?? '').trim();
   }
 
   /// 입력 중에 뒤로 가면 내용이 사라지므로 한 번 확인합니다.

@@ -30,8 +30,6 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
   /// 삭제 요청이 진행 중인 동안 버튼을 다시 누르지 못하게 합니다.
   bool _isDeleting = false;
 
-  int get meetingId => widget.meetingId;
-
   NoticeDetailArgs get _args =>
       (meetingId: widget.meetingId, noticeId: widget.noticeId);
 
@@ -52,7 +50,12 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
       if (!mounted) return;
       // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
       showNoticeSnackBar(context, '공지를 삭제했어요.');
-      context.pop();
+      // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/meetings/${widget.meetingId}/notices');
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() => _isDeleting = false);
@@ -63,7 +66,7 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
   @override
   Widget build(BuildContext context) {
     final notice = ref.watch(noticeDetailProvider(_args));
-    final role = ref.watch(noticeMyRoleProvider(meetingId));
+    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
     final isAdmin = role.value?.isAdmin ?? false;
 
     return Scaffold(
@@ -71,12 +74,12 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
       appBar: _DetailAppBar(
         onBack: () => context.pop(),
         onRetryRole: role.hasError && notice.hasValue
-            ? () => ref.invalidate(noticeMyRoleProvider(meetingId))
+            ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
             : null,
         // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
         onEdit: isAdmin && notice.hasValue
             ? () => context.push(
-                '/meetings/$meetingId/notices/${widget.noticeId}/edit',
+                '/meetings/${widget.meetingId}/notices/${widget.noticeId}/edit',
               )
             : null,
         onDelete: isAdmin && notice.hasValue ? _delete : null,
@@ -91,7 +94,8 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
                 error: error,
                 message: '삭제되었거나 존재하지 않는 공지입니다.',
                 actionLabel: '목록으로',
-                onAction: () => context.go('/meetings/$meetingId/notices'),
+                onAction: () =>
+                    context.go('/meetings/${widget.meetingId}/notices'),
               )
             : NoticeErrorView(
                 error: error,
