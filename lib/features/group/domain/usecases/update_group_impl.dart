@@ -5,10 +5,10 @@ import 'params/update_group_params.dart';
 import 'update_group.dart';
 
 final class UpdateGroupImpl implements UpdateGroup {
-  const UpdateGroupImpl({required GroupRepository repository})
+  const UpdateGroupImpl({required GroupRepository groupRepository})
     // ignore: prefer_initializing_formals
-    : _repository = repository;
-  final GroupRepository _repository;
+    : _groupRepository = groupRepository;
+  final GroupRepository _groupRepository;
 
   @override
   Future<Group> call(UpdateGroupParams params) {
@@ -19,7 +19,7 @@ final class UpdateGroupImpl implements UpdateGroup {
         params.name == null && params.description == null) {
       throw const GroupFailure(GroupFailureReason.validation);
     }
-    return _repository.updateGroup(
+    return _groupRepository.updateGroup(
       groupId: params.currentGroup.group.id,
       name: params.name?.trim(),
       description: params.description,

@@ -5,6 +5,7 @@ import '../datasources/group_remote_data_source.dart';
 import '../models/group_api_failure.dart';
 import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
+import '../requests/delete_group_request.dart';
 import '../requests/update_group_request.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
@@ -45,15 +46,19 @@ class GroupRepositoryImpl implements GroupRepository {
     String? description,
   }) => _execute(() async {
     final model = await _remoteDataSource.updateGroup(
-      groupId: groupId,
-      request: UpdateGroupRequest(name: name, description: description),
+      UpdateGroupRequest(
+        meetingId: groupId,
+        name: name,
+        description: description,
+      ),
     );
     return model.toEntity();
   });
 
   @override
-  Future<void> deleteGroup({required int groupId}) =>
-      _execute(() => _remoteDataSource.deleteGroup(groupId));
+  Future<void> deleteGroup({required int groupId}) => _execute(
+    () => _remoteDataSource.deleteGroup(DeleteGroupRequest(meetingId: groupId)),
+  );
 
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {

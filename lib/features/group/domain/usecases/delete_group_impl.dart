@@ -4,16 +4,16 @@ import 'delete_group.dart';
 import 'params/delete_group_params.dart';
 
 final class DeleteGroupImpl implements DeleteGroup {
-  const DeleteGroupImpl({required GroupRepository repository})
+  const DeleteGroupImpl({required GroupRepository groupRepository})
     // ignore: prefer_initializing_formals
-    : _repository = repository;
-  final GroupRepository _repository;
+    : _groupRepository = groupRepository;
+  final GroupRepository _groupRepository;
 
   @override
   Future<void> call(DeleteGroupParams params) {
     if (params.currentGroup.membership.role != MemberRole.admin) {
       throw const GroupFailure(GroupFailureReason.forbidden);
     }
-    return _repository.deleteGroup(groupId: params.currentGroup.group.id);
+    return _groupRepository.deleteGroup(groupId: params.currentGroup.group.id);
   }
 }

@@ -8,6 +8,7 @@ part of 'update_group_request.dart';
 
 _UpdateGroupRequest _$UpdateGroupRequestFromJson(Map<String, dynamic> json) =>
     _UpdateGroupRequest(
+      meetingId: (json['meetingId'] as num).toInt(),
       name: json['name'] as String?,
       description: json['description'] as String?,
     );

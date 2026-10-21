@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../models/group_api_failure.dart';
 import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
+import '../requests/delete_group_request.dart';
 import '../requests/update_group_request.dart';
 import 'group_remote_data_source.dart';
 
@@ -36,22 +37,25 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
   }
 
   @override
-  Future<GroupUpdateModel> updateGroup({
-    required int groupId,
-    required UpdateGroupRequest request,
-  }) => _decode(
-    _request('PATCH', '/v1/meetings/$groupId', body: request.toJson()),
+  Future<GroupUpdateModel> updateGroup(UpdateGroupRequest request) => _decode(
+    _request(
+      'PATCH',
+      '/v1/meetings/${request.meetingId}',
+      body: request.toJson(),
+    ),
     (data) {
       final model = GroupUpdateModel.fromJson(data);
-      if (model.meetingId != groupId) throw const FormatException('모임 ID 불일치');
+      if (model.meetingId != request.meetingId) {
+        throw const FormatException('모임 ID 불일치');
+      }
       return model;
     },
   );
 
   @override
-  Future<void> deleteGroup(int groupId) =>
-      _decode(_request('DELETE', '/v1/meetings/$groupId'), (data) {
-        if (data['meetingId'] != groupId) {
+  Future<void> deleteGroup(DeleteGroupRequest request) =>
+      _decode(_request('DELETE', '/v1/meetings/${request.meetingId}'), (data) {
+        if (data['meetingId'] != request.meetingId) {
           throw const FormatException('모임 ID 불일치');
         }
       });

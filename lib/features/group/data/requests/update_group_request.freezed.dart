@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UpdateGroupRequest {
 
-@JsonKey(includeIfNull: false) String? get name;@JsonKey(includeIfNull: false) String? get description;
+@JsonKey(includeToJson: false) int get meetingId;@JsonKey(includeIfNull: false) String? get name;@JsonKey(includeIfNull: false) String? get description;
 /// Create a copy of UpdateGroupRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +29,16 @@ $UpdateGroupRequestCopyWith<UpdateGroupRequest> get copyWith => _$UpdateGroupReq
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateGroupRequest&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateGroupRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,description);
+int get hashCode => Object.hash(runtimeType,meetingId,name,description);
 
 @override
 String toString() {
-  return 'UpdateGroupRequest(name: $name, description: $description)';
+  return 'UpdateGroupRequest(meetingId: $meetingId, name: $name, description: $description)';
 }
 
 
@@ -49,7 +49,7 @@ abstract mixin class $UpdateGroupRequestCopyWith<$Res>  {
   factory $UpdateGroupRequestCopyWith(UpdateGroupRequest value, $Res Function(UpdateGroupRequest) _then) = _$UpdateGroupRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeIfNull: false) String? name,@JsonKey(includeIfNull: false) String? description
+@JsonKey(includeToJson: false) int meetingId,@JsonKey(includeIfNull: false) String? name,@JsonKey(includeIfNull: false) String? description
 });
 
 
@@ -66,9 +66,10 @@ class _$UpdateGroupRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateGroupRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = freezed,Object? description = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? meetingId = null,Object? name = freezed,Object? description = freezed,}) {
   return _then(UpdateGroupRequest(
-name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+meetingId: null == meetingId ? _self.meetingId : meetingId // ignore: cast_nullable_to_non_nullable
+as int,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -155,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId, @JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UpdateGroupRequest() when $default != null:
-return $default(_that.name,_that.description);case _:
+return $default(_that.meetingId,_that.name,_that.description);case _:
   return orElse();
 
 }
@@ -176,10 +177,10 @@ return $default(_that.name,_that.description);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int meetingId, @JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)  $default,) {final _that = this;
 switch (_that) {
 case _UpdateGroupRequest():
-return $default(_that.name,_that.description);case _:
+return $default(_that.meetingId,_that.name,_that.description);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +197,10 @@ return $default(_that.name,_that.description);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int meetingId, @JsonKey(includeIfNull: false)  String? name, @JsonKey(includeIfNull: false)  String? description)?  $default,) {final _that = this;
 switch (_that) {
 case _UpdateGroupRequest() when $default != null:
-return $default(_that.name,_that.description);case _:
+return $default(_that.meetingId,_that.name,_that.description);case _:
   return null;
 
 }
@@ -211,9 +212,10 @@ return $default(_that.name,_that.description);case _:
 @JsonSerializable()
 
 class _UpdateGroupRequest implements UpdateGroupRequest {
-  const _UpdateGroupRequest({@JsonKey(includeIfNull: false) this.name, @JsonKey(includeIfNull: false) this.description});
+  const _UpdateGroupRequest({@JsonKey(includeToJson: false) required this.meetingId, @JsonKey(includeIfNull: false) this.name, @JsonKey(includeIfNull: false) this.description});
   factory _UpdateGroupRequest.fromJson(Map<String, dynamic> json) => _$UpdateGroupRequestFromJson(json);
 
+@override@JsonKey(includeToJson: false) final  int meetingId;
 @override@JsonKey(includeIfNull: false) final  String? name;
 @override@JsonKey(includeIfNull: false) final  String? description;
 
@@ -230,16 +232,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateGroupRequest&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateGroupRequest&&(identical(other.meetingId, meetingId) || other.meetingId == meetingId)&&(identical(other.name, name) || other.name == name)&&(identical(other.description, description) || other.description == description));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,description);
+int get hashCode => Object.hash(runtimeType,meetingId,name,description);
 
 @override
 String toString() {
-  return 'UpdateGroupRequest(name: $name, description: $description)';
+  return 'UpdateGroupRequest(meetingId: $meetingId, name: $name, description: $description)';
 }
 
 
@@ -250,7 +252,7 @@ abstract mixin class _$UpdateGroupRequestCopyWith<$Res> implements $UpdateGroupR
   factory _$UpdateGroupRequestCopyWith(_UpdateGroupRequest value, $Res Function(_UpdateGroupRequest) _then) = __$UpdateGroupRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeIfNull: false) String? name,@JsonKey(includeIfNull: false) String? description
+@JsonKey(includeToJson: false) int meetingId,@JsonKey(includeIfNull: false) String? name,@JsonKey(includeIfNull: false) String? description
 });
 
 
@@ -267,9 +269,10 @@ class __$UpdateGroupRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateGroupRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = freezed,Object? description = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? meetingId = null,Object? name = freezed,Object? description = freezed,}) {
   return _then(_UpdateGroupRequest(
-name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+meetingId: null == meetingId ? _self.meetingId : meetingId // ignore: cast_nullable_to_non_nullable
+as int,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

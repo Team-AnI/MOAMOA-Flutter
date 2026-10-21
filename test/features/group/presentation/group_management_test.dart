@@ -138,6 +138,10 @@ void main() {
       };
       await repository.deleteGroup(groupId: 1);
       expect(adapter.requests.single.method, 'DELETE');
+      expect(
+        adapter.requests.single.path,
+        'https://example.test/v1/meetings/1',
+      );
       expect(adapter.requests.single.data, isNull);
     });
     for (final deleting in [true, false]) {
@@ -186,13 +190,13 @@ void main() {
     test('구성원이 수정·삭제하면 Repository를 호출하기 전에 거부한다', () {
       final member = makeGroup(MemberRole.member);
       expect(
-        () => UpdateGroupImpl(repository: fake)(
+        () => UpdateGroupImpl(groupRepository: fake)(
           UpdateGroupParams(currentGroup: member, name: '수정'),
         ),
         throwsA(isA<GroupFailure>()),
       );
       expect(
-        () => DeleteGroupImpl(repository: fake)(
+        () => DeleteGroupImpl(groupRepository: fake)(
           DeleteGroupParams(currentGroup: member),
         ),
         throwsA(isA<GroupFailure>()),
@@ -200,7 +204,7 @@ void main() {
       expect(fake.updates + fake.deletes, 0);
     });
     test('공백 이름이나 변경 필드 없는 수정 요청은 거부한다', () {
-      final usecase = UpdateGroupImpl(repository: fake);
+      final usecase = UpdateGroupImpl(groupRepository: fake);
       final admin = makeGroup(MemberRole.admin);
       for (final name in [null, '   ']) {
         expect(

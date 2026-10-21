@@ -62,10 +62,10 @@ final getMyGroupsProvider = Provider<GetMyGroups>(
   (ref) => GetMyGroupsImpl(repository: ref.watch(groupRepositoryProvider)),
 );
 final updateGroupProvider = Provider<UpdateGroup>(
-  (ref) => UpdateGroupImpl(repository: ref.watch(groupRepositoryProvider)),
+  (ref) => UpdateGroupImpl(groupRepository: ref.watch(groupRepositoryProvider)),
 );
 final deleteGroupProvider = Provider<DeleteGroup>(
-  (ref) => DeleteGroupImpl(repository: ref.watch(groupRepositoryProvider)),
+  (ref) => DeleteGroupImpl(groupRepository: ref.watch(groupRepositoryProvider)),
 );
 final groupProvider = NotifierProvider<GroupViewModel, GroupState>(
   GroupViewModel.new,

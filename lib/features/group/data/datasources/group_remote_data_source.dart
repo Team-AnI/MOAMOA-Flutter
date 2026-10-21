@@ -1,13 +1,11 @@
 import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
+import '../requests/delete_group_request.dart';
 import '../requests/update_group_request.dart';
 
 abstract interface class GroupRemoteDataSource {
-  Future<GroupUpdateModel> updateGroup({
-    required int groupId,
-    required UpdateGroupRequest request,
-  });
-  Future<void> deleteGroup(int groupId);
+  Future<GroupUpdateModel> updateGroup(UpdateGroupRequest request);
+  Future<void> deleteGroup(DeleteGroupRequest request);
   Future<List<MeetingModel>> fetchMyGroups();
   Future<MeetingModel> fetchGroup(int groupId);
   Future<MeetingModel> createGroup({required String name, String? description});

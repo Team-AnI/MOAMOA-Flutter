@@ -9,11 +9,11 @@ import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 
 /// 일정·공지·회비 영역은 담당 기능에서 연결합니다.
-class GroupHomePage extends ConsumerWidget {
+class GroupHomePage extends StatelessWidget {
   const GroupHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -136,7 +136,11 @@ class _HomeHeader extends ConsumerWidget {
           const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
           if (current?.canViewInviteCode ?? false) ...[
             const SizedBox(width: 8),
-            const _HomeSettings(),
+            _HeaderButton(
+              icon: 'gear',
+              label: '모임 설정',
+              onPressed: () => context.push('/groups/settings'),
+            ),
           ],
         ],
       ),
@@ -165,16 +169,6 @@ class _HomeContent extends ConsumerWidget {
             ),
     );
   }
-}
-
-class _HomeSettings extends StatelessWidget {
-  const _HomeSettings();
-  @override
-  Widget build(BuildContext context) => _HeaderButton(
-    icon: 'gear',
-    label: '모임 설정',
-    onPressed: () => context.push('/groups/settings'),
-  );
 }
 
 class _MembersHeading extends StatelessWidget {
