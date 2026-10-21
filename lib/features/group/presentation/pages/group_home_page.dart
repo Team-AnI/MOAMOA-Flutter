@@ -9,11 +9,11 @@ import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 
 /// 일정·공지·회비 영역은 담당 기능에서 연결합니다.
-class GroupHomePage extends ConsumerWidget {
+class GroupHomePage extends StatelessWidget {
   const GroupHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -136,7 +136,11 @@ class _HomeHeader extends ConsumerWidget {
           const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
           if (current?.canViewInviteCode ?? false) ...[
             const SizedBox(width: 8),
-            const _HomeSettings(),
+            _HeaderButton(
+              icon: 'gear',
+              label: '모임 설정',
+              onPressed: () => context.push('/groups/settings'),
+            ),
           ],
         ],
       ),
@@ -165,27 +169,6 @@ class _HomeContent extends ConsumerWidget {
             ),
     );
   }
-}
-
-class _HomeSettings extends StatelessWidget {
-  const _HomeSettings();
-  @override
-  Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: '모임 설정',
-    onSelected: (_) => context.push('/groups/invite'),
-    itemBuilder: (_) => [
-      const PopupMenuItem(value: 'invite', child: Text('초대 코드 확인')),
-    ],
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        color: GroupDesign.fill,
-        shape: BoxShape.circle,
-      ),
-      child: const Center(child: GroupIcon('gear', size: 20)),
-    ),
-  );
 }
 
 class _MembersHeading extends StatelessWidget {

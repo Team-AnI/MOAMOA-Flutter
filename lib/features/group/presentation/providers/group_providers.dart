@@ -8,6 +8,8 @@ import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/usecases/create_group.dart';
 import '../../domain/usecases/create_group_impl.dart';
+import '../../domain/usecases/delete_group.dart';
+import '../../domain/usecases/delete_group_impl.dart';
 import '../../domain/usecases/get_group.dart';
 import '../../domain/usecases/get_group_impl.dart';
 import '../../domain/usecases/get_group_invite_code.dart';
@@ -16,6 +18,8 @@ import '../../domain/usecases/get_my_groups.dart';
 import '../../domain/usecases/get_my_groups_impl.dart';
 import '../../domain/usecases/join_group.dart';
 import '../../domain/usecases/join_group_impl.dart';
+import '../../domain/usecases/update_group.dart';
+import '../../domain/usecases/update_group_impl.dart';
 import '../viewmodels/group_state.dart';
 import '../viewmodels/group_view_model.dart';
 
@@ -56,6 +60,12 @@ final getGroupProvider = Provider<GetGroup>(
 );
 final getMyGroupsProvider = Provider<GetMyGroups>(
   (ref) => GetMyGroupsImpl(repository: ref.watch(groupRepositoryProvider)),
+);
+final updateGroupProvider = Provider<UpdateGroup>(
+  (ref) => UpdateGroupImpl(groupRepository: ref.watch(groupRepositoryProvider)),
+);
+final deleteGroupProvider = Provider<DeleteGroup>(
+  (ref) => DeleteGroupImpl(groupRepository: ref.watch(groupRepositoryProvider)),
 );
 final groupProvider = NotifierProvider<GroupViewModel, GroupState>(
   GroupViewModel.new,
