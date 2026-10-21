@@ -339,6 +339,24 @@ void main() {
       expect(find.byType(NoticeWritePage), findsNothing);
     });
 
+    testWidgets('수정 화면에서 공백만 바꾸고 닫으면 확인 없이 닫는다', (tester) async {
+      await pumpPushedPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        ),
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.enterText(find.byType(TextField).first, '10월 회비 안내 ');
+      await tester.pump();
+
+      await tester.tap(find.byTooltip('닫기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NoticeWritePage), findsNothing);
+      expect(find.text('수정을 취소할까요?'), findsNothing);
+    });
+
     testWidgets('수정 화면에서 내용을 바꾸고 닫으면 수정을 취소할지 묻는다', (tester) async {
       await pumpPushedPage(
         tester,
@@ -405,6 +423,25 @@ void main() {
 
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNull);
+    });
+
+    testWidgets('앞뒤 공백만 바꾸면 수정 완료 버튼을 누를 수 없다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        ),
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, '  10월 회비 안내  ');
+      await tester.pump();
+
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
     });
 
     testWidgets('내용을 바꾸면 수정 완료 버튼을 누를 수 있고, 원래대로 되돌리면 다시 막는다', (tester) async {
@@ -552,6 +589,43 @@ void main() {
 
       repository.detailGate!.complete();
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('삭제에 성공했을 때 닫을 화면이 없으면 목록으로 이동한다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1)],
+        myRole: MemberRole.admin,
+      );
+      final router = GoRouter(
+        initialLocation: '/meetings/1/notices/1',
+        routes: [
+          GoRoute(
+            path: '/meetings/:meetingId/notices',
+            builder: (_, _) => const Scaffold(body: Text('목록 화면')),
+          ),
+          GoRoute(
+            path: '/meetings/:meetingId/notices/:noticeId',
+            builder: (_, _) => page,
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          retry: (_, _) => null,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('공지 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NoticeDetailPage), findsNothing);
+      expect(find.text('목록 화면'), findsOneWidget);
+      expect(repository.notices, isEmpty);
     });
 
     testWidgets('삭제하는 동안에는 수정·삭제 버튼을 누를 수 없고 진행 표시를 보여준다', (tester) async {
