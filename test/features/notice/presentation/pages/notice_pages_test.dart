@@ -126,9 +126,72 @@ void main() {
       expect(find.text('10월 회비 안내'), findsOneWidget);
       expect(find.text('10일까지 납부'), findsOneWidget);
     });
+
+    String enteredTitle(WidgetTester tester) =>
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text;
+
+    testWidgets('제목을 50자까지 입력하면 모두 입력된다', (tester) async {
+      await pumpPage(tester, FakeNoticeRepository(), page);
+
+      await tester.enterText(find.byType(TextField).first, '가' * 50);
+      await tester.pump();
+
+      expect(enteredTitle(tester).length, 50);
+    });
+
+    testWidgets('제목을 51자 이상 입력하면 50자까지만 남는다', (tester) async {
+      await pumpPage(tester, FakeNoticeRepository(), page);
+
+      await tester.enterText(find.byType(TextField).first, '가' * 55);
+      await tester.pump();
+
+      expect(enteredTitle(tester).length, 50);
+    });
+
+    testWidgets('제목 입력칸 아래에 현재 글자 수를 최대 50자와 함께 보여준다', (tester) async {
+      await pumpPage(tester, FakeNoticeRepository(), page);
+
+      await tester.enterText(find.byType(TextField).first, '10월 회비 안내');
+      await tester.pump();
+
+      expect(find.text('9/50'), findsOneWidget);
+    });
+
+    testWidgets('내용은 50자를 넘겨도 제한 없이 입력된다', (tester) async {
+      await pumpPage(tester, FakeNoticeRepository(), page);
+
+      await tester.enterText(find.byType(TextField).last, '가' * 120);
+      await tester.pump();
+
+      final content = tester
+          .widget<TextField>(find.byType(TextField).last)
+          .controller!
+          .text;
+      expect(content.length, 120);
+    });
   });
 
   group('공지 수정', () {
+    testWidgets('수정 화면에서도 제목을 51자 이상 입력하면 50자까지만 남는다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+        ),
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, '가' * 55);
+      await tester.pump();
+
+      final title = tester
+          .widget<TextField>(find.byType(TextField).first)
+          .controller!
+          .text;
+      expect(title.length, 50);
+    });
+
     testWidgets('수정 화면을 열면 기존 제목과 내용이 채워져 있다', (tester) async {
       await pumpPage(
         tester,

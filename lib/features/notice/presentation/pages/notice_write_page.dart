@@ -8,6 +8,9 @@ import '../widgets/notice_colors.dart';
 import '../widgets/notice_dialogs.dart';
 import '../widgets/notice_error_view.dart';
 
+/// 공지 제목 최대 길이. API 계약(3-1, 3-4)에서 확정되었고, 넘으면 서버가 400 VALIDATION_ERROR 로 응답합니다.
+const _titleMaxLength = 50;
+
 /// 공지 작성 화면. [noticeId] 가 있으면 수정 화면으로 동작합니다.
 ///
 /// 수정일 때는 기존 공지를 다 불러온 뒤에 입력칸을 만듭니다.
@@ -216,6 +219,7 @@ class _NoticeFormFields extends StatelessWidget {
           label: '제목',
           hintText: '공지 제목을 입력하세요',
           controller: titleController,
+          maxLength: _titleMaxLength,
           errorText: showTitleMissing ? '공지 제목을 입력해주세요' : null,
           onChanged: onChanged,
         ),
@@ -286,6 +290,7 @@ class _InputField extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     this.minLines = 1,
+    this.maxLength,
     this.errorText,
   });
 
@@ -294,6 +299,9 @@ class _InputField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final int minLines;
+
+  /// 값이 있으면 입력할 수 있는 글자 수를 제한하고 현재 글자 수를 보여줍니다.
+  final int? maxLength;
 
   /// 값이 있으면 입력칸 아래에 빠진 항목 안내를 보여줍니다.
   final String? errorText;
@@ -310,6 +318,7 @@ class _InputField extends StatelessWidget {
           controller: controller,
           onChanged: onChanged,
           minLines: minLines,
+          maxLength: maxLength,
           errorText: errorText,
         ),
       ],
@@ -346,6 +355,7 @@ class _InputTextField extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.minLines,
+    this.maxLength,
     this.errorText,
   });
 
@@ -353,6 +363,7 @@ class _InputTextField extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final int minLines;
+  final int? maxLength;
   final String? errorText;
 
   static OutlineInputBorder _border(BorderSide side) => OutlineInputBorder(
@@ -370,6 +381,7 @@ class _InputTextField extends StatelessWidget {
       onChanged: onChanged,
       minLines: minLines,
       maxLines: isMultiline ? null : 1,
+      maxLength: maxLength,
       style: const TextStyle(
         fontSize: 15,
         height: 1.47,
@@ -394,6 +406,10 @@ class _InputTextField extends StatelessWidget {
         errorBorder: errorBorder,
         focusedErrorBorder: errorBorder,
         errorStyle: const TextStyle(fontSize: 12, color: NoticeColors.error),
+        counterStyle: const TextStyle(
+          fontSize: 12,
+          color: NoticeColors.subText,
+        ),
       ),
     );
   }
