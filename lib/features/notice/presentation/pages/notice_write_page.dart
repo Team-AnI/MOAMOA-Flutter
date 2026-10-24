@@ -48,7 +48,8 @@ class NoticeWritePage extends ConsumerWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 16),
           child: IconButton(
-            onPressed: () => context.pop(),
+            // maybePop 은 아래 폼의 PopScope(입력 중 취소 확인)를 거칩니다.
+            onPressed: () => Navigator.of(context).maybePop(),
             tooltip: '닫기',
             constraints: const BoxConstraints.tightFor(width: 40, height: 40),
             padding: EdgeInsets.zero,
@@ -112,6 +113,27 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
 
   bool get _isEdit => widget.initialNotice != null;
 
+  /// 처음 열렸을 때와 입력 내용이 다르면 true. (작성은 비어 있는 상태가 기준)
+  ///
+  /// 서버로 보낼 때 앞뒤 공백을 지우므로, 공백만 다른 경우는 바뀐 것으로 보지 않습니다.
+  bool get _hasChanges {
+    final initial = widget.initialNotice;
+    return _titleController.text.trim() != (initial?.title ?? '').trim() ||
+        _contentController.text.trim() != (initial?.content ?? '').trim();
+  }
+
+  /// 입력 중에 뒤로 가면 내용이 사라지므로 한 번 확인합니다.
+  Future<void> _confirmLeave() async {
+    final leave = await showNoticeConfirmDialog(
+      context,
+      title: _isEdit ? '수정을 취소할까요?' : '작성을 취소할까요?',
+      message: '입력한 내용이 사라져요.',
+      confirmLabel: '나가기',
+      cancelLabel: '계속 작성',
+    );
+    if (leave == true && mounted) Navigator.of(context).pop();
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -151,34 +173,80 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     );
   }
 
-  /// 안내가 보이는 중에는 입력할 때마다 빠진 항목을 다시 확인합니다.
-  void _onChanged(String _) {
-    if (_showMissing) setState(() {});
-  }
+  /// 입력할 때마다 화면을 다시 그려, 빠진 항목 안내와 닫기 확인 여부(_hasChanges),
+  /// 수정 완료 버튼의 활성 여부를 최신 입력값 기준으로 맞춥니다.
+  void _onChanged(String _) => setState(() {});
 
   @override
   Widget build(BuildContext context) {
     final isSubmitting = ref
         .watch(noticeWriteProvider(widget.meetingId))
         .isLoading;
+    // 수정 화면은 바뀐 내용이 없으면 저장할 것이 없으므로 버튼을 누를 수 없게 합니다.
+    final canSubmit = !isSubmitting && (!_isEdit || _hasChanges);
 
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmLeave();
+      },
+      child: _NoticeFormBody(
+        isEdit: _isEdit,
+        titleController: _titleController,
+        contentController: _contentController,
+        showTitleMissing: _showMissing && _isTitleMissing,
+        showContentMissing: _showMissing && _isContentMissing,
+        onChanged: _onChanged,
+        isSubmitting: isSubmitting,
+        onSubmit: canSubmit ? _submit : null,
+      ),
+    );
+  }
+}
+
+/// 입력칸과 등록(수정 완료) 버튼. 상태는 들고 있지 않고 [_NoticeFormState] 가 넘겨 준 값으로만 그립니다.
+class _NoticeFormBody extends StatelessWidget {
+  const _NoticeFormBody({
+    required this.isEdit,
+    required this.titleController,
+    required this.contentController,
+    required this.showTitleMissing,
+    required this.showContentMissing,
+    required this.onChanged,
+    required this.isSubmitting,
+    required this.onSubmit,
+  });
+
+  final bool isEdit;
+  final TextEditingController titleController;
+  final TextEditingController contentController;
+  final bool showTitleMissing;
+  final bool showContentMissing;
+  final ValueChanged<String> onChanged;
+  final bool isSubmitting;
+
+  /// null 이면 버튼을 누를 수 없습니다.
+  final VoidCallback? onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: _NoticeFormFields(
-            isEdit: _isEdit,
-            titleController: _titleController,
-            contentController: _contentController,
-            showTitleMissing: _showMissing && _isTitleMissing,
-            showContentMissing: _showMissing && _isContentMissing,
-            onChanged: _onChanged,
+            isEdit: isEdit,
+            titleController: titleController,
+            contentController: contentController,
+            showTitleMissing: showTitleMissing,
+            showContentMissing: showContentMissing,
+            onChanged: onChanged,
           ),
         ),
         _SubmitBar(
-          label: _isEdit ? '수정 완료' : '공지 등록',
+          label: isEdit ? '수정 완료' : '공지 등록',
           isLoading: isSubmitting,
-          onPressed: isSubmitting ? null : _submit,
+          onPressed: onSubmit,
         ),
       ],
     );

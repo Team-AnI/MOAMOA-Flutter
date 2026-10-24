@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/notice.dart';
+import '../notice_format.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
@@ -274,7 +275,7 @@ class _MetaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      _formatRelative(notice.createdAt),
+      formatNoticeRelative(notice.createdAt),
       style: const TextStyle(
         fontSize: 14,
         height: 1.43,
@@ -456,15 +457,4 @@ class _EmptyActionButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 작성 시각을 "방금 전", "3시간 전", "1일 전", "1주 전", "9월 12일" 형태로 표시합니다.
-String _formatRelative(DateTime createdAt) {
-  final diff = DateTime.now().difference(createdAt);
-  if (diff.inMinutes < 1) return '방금 전';
-  if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-  if (diff.inDays < 1) return '${diff.inHours}시간 전';
-  if (diff.inDays < 7) return '${diff.inDays}일 전';
-  if (diff.inDays < 30) return '${diff.inDays ~/ 7}주 전';
-  return '${createdAt.month}월 ${createdAt.day}일';
 }
