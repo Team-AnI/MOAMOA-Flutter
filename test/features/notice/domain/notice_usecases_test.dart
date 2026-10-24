@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/domain/usecases/create_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/delete_notice.dart';
-import 'package:moamoa/features/notice/domain/usecases/get_my_role.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notice_detail.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notices.dart';
 import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
@@ -163,18 +161,6 @@ void main() {
       await deleteNotice(const DeleteNoticeParams(meetingId: 1, noticeId: 1));
 
       expect(repository.notices.map((notice) => notice.id), [2]);
-    });
-  });
-
-  group('GetMyRole', () {
-    test('모임에서 내 역할을 조회한다', () async {
-      final repository = FakeNoticeRepository(myRole: MemberRole.admin);
-      final getMyRole = GetMyRoleImpl(noticeRepository: repository);
-
-      final role = await getMyRole(const GetMyRoleParams(meetingId: 1));
-
-      expect(role, MemberRole.admin);
-      expect(role.isAdmin, isTrue);
     });
   });
 }

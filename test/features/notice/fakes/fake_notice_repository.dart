@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
@@ -18,13 +17,10 @@ Notice buildNotice(int id, {String? title, String? content}) {
 
 /// 메모리에 공지를 저장하는 테스트용 Repository
 class FakeNoticeRepository implements NoticeRepository {
-  FakeNoticeRepository({List<Notice>? notices, this.myRole = MemberRole.member})
-    : notices = [...?notices];
+  FakeNoticeRepository({List<Notice>? notices}) : notices = [...?notices];
 
   /// 저장된 공지 (최신순)
   final List<Notice> notices;
-
-  MemberRole myRole;
 
   /// 값이 있으면 모든 호출이 이 예외를 던집니다.
   NoticeException? error;
@@ -42,8 +38,8 @@ class FakeNoticeRepository implements NoticeRepository {
   /// 값이 있으면 createNotice 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? createGate;
 
-  /// 값이 있으면 getMyRole 만 이 예외를 던집니다. (역할 조회만 실패하는 상황)
-  NoticeException? myRoleError;
+  /// 값이 있으면 deleteNotice 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? deleteGate;
 
   int _nextId = 1000;
 
@@ -129,14 +125,8 @@ class FakeNoticeRepository implements NoticeRepository {
     required int meetingId,
     required int noticeId,
   }) async {
+    await deleteGate?.future;
     _throwIfError();
     notices.removeAt(_indexOf(noticeId));
-  }
-
-  @override
-  Future<MemberRole> getMyRole({required int meetingId}) async {
-    if (myRoleError != null) throw myRoleError!;
-    _throwIfError();
-    return myRole;
   }
 }

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../group/domain/entities/member_role.dart';
+import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/notice.dart';
+import '../notice_format.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
@@ -58,11 +61,11 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   @override
   Widget build(BuildContext context) {
     final notices = ref.watch(noticeListProvider(widget.meetingId));
-    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
-    final isAdmin = role.value?.isAdmin ?? false;
+    final role = ref.watch(groupMyRoleProvider(widget.meetingId));
+    final canWrite = role.value?.canWriteNotices ?? false;
     // 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
     final VoidCallback? retryRole = role.hasError
-        ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
+        ? () => ref.invalidate(groupMyRoleProvider(widget.meetingId))
         : null;
 
     return Scaffold(
@@ -71,12 +74,15 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(onWrite: isAdmin ? _goWrite : null, onRetryRole: retryRole),
+            _Header(
+              onWrite: canWrite ? _goWrite : null,
+              onRetryRole: retryRole,
+            ),
             Expanded(
               child: notices.when(
                 data: (state) => state.isEmpty
                     ? _EmptyView(
-                        onWrite: isAdmin ? _goWrite : null,
+                        onWrite: canWrite ? _goWrite : null,
                         onRetryRole: retryRole,
                         onRefresh: () => ref
                             .read(noticeListProvider(widget.meetingId).notifier)
@@ -274,7 +280,7 @@ class _MetaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      _formatRelative(notice.createdAt),
+      formatNoticeRelative(notice.createdAt),
       style: const TextStyle(
         fontSize: 14,
         height: 1.43,
@@ -456,15 +462,4 @@ class _EmptyActionButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 작성 시각을 "방금 전", "3시간 전", "1일 전", "1주 전", "9월 12일" 형태로 표시합니다.
-String _formatRelative(DateTime createdAt) {
-  final diff = DateTime.now().difference(createdAt);
-  if (diff.inMinutes < 1) return '방금 전';
-  if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-  if (diff.inDays < 1) return '${diff.inHours}시간 전';
-  if (diff.inDays < 7) return '${diff.inDays}일 전';
-  if (diff.inDays < 30) return '${diff.inDays ~/ 7}주 전';
-  return '${createdAt.month}월 ${createdAt.day}일';
 }
