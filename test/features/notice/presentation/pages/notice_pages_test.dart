@@ -324,6 +324,81 @@ void main() {
       expect(repository.notices, hasLength(1));
     });
 
+    testWidgets('등록 요청 중에 닫기를 누르면 확인 없이 닫히고 공지는 한 번만 등록된다', (tester) async {
+      final repository = FakeNoticeRepository()..createGate = Completer<void>();
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('이전 화면')),
+          ),
+          GoRoute(path: '/write', builder: (_, _) => writePage),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          retry: (_, _) => null,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      unawaited(router.push('/write'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '10월 회비 안내');
+      await tester.enterText(find.byType(TextField).last, '10일까지 납부');
+      await tester.pump();
+      await tester.tap(find.text('공지 등록'));
+      await tester.pump();
+
+      await tester.tap(find.byTooltip('닫기'));
+      // 등록 중에는 진행 표시가 계속 돌아 pumpAndSettle 이 끝나지 않습니다.
+      await tester.pump(const Duration(milliseconds: 500));
+      repository.createGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('작성을 취소할까요?'), findsNothing);
+      expect(find.byType(NoticeWritePage), findsNothing);
+      expect(find.text('이전 화면'), findsOneWidget);
+      expect(repository.notices, hasLength(1));
+    });
+
+    testWidgets('수정에 성공하면 취소할지 묻지 않고 화면을 닫고 변경한 내용이 저장된다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+      );
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const Scaffold(body: Text('이전 화면')),
+          ),
+          GoRoute(
+            path: '/edit',
+            builder: (_, _) => const NoticeWritePage(meetingId: 1, noticeId: 1),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+          retry: (_, _) => null,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      unawaited(router.push('/edit'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, '11월 회비 안내');
+      await tester.pump();
+
+      await tester.tap(find.text('수정 완료'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('수정을 취소할까요?'), findsNothing);
+      expect(find.byType(NoticeWritePage), findsNothing);
+      expect(find.text('이전 화면'), findsOneWidget);
+      expect(repository.notices.single.title, '11월 회비 안내');
+    });
+
     testWidgets('수정 화면에서 내용을 바꾸지 않았으면 확인 없이 닫는다', (tester) async {
       await pumpPushedPage(
         tester,
