@@ -270,15 +270,11 @@ class _TimeLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hour = start.hour % 12 == 0 ? 12 : start.hour % 12;
-    final minute = start.minute.toString().padLeft(2, '0');
-    final meridiem = start.hour < 12 ? '오전' : '오후';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '${start.weekdayKo}요일 $meridiem $hour:$minute',
+          '${start.weekdayKo}요일 ${start.meridiemTime}',
           style: MoaText.titleS,
         ),
         if (end != null)
