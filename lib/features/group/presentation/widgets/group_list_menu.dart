@@ -18,7 +18,29 @@ class GroupListMenu extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _MenuHeading(current: current),
+          Row(
+            children: [
+              GroupMark(name: current.group.name, size: 48),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(current.group.name, style: GroupDesign.strong),
+                    const SizedBox(height: 4),
+                    Text(
+                      [
+                        current.canViewInviteCode ? '관리자' : '구성원',
+                        if (current.group.memberCount != null)
+                          '구성원 ${current.group.memberCount}명',
+                      ].join(' · '),
+                      style: GroupDesign.sub,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           _MenuCard(
             children: [
@@ -87,35 +109,6 @@ class _ArchiveAction extends ConsumerWidget {
   );
 }
 
-class _MenuHeading extends StatelessWidget {
-  const _MenuHeading({required this.current});
-  final CurrentGroup current;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      GroupMark(name: current.group.name, size: 48),
-      const SizedBox(width: 14),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(current.group.name, style: GroupDesign.strong),
-            const SizedBox(height: 4),
-            Text(
-              [
-                current.canViewInviteCode ? '관리자' : '구성원',
-                if (current.group.memberCount != null)
-                  '구성원 ${current.group.memberCount}명',
-              ].join(' · '),
-              style: GroupDesign.sub,
-            ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
 class _MenuCard extends StatelessWidget {
   const _MenuCard({required this.children});
   final List<Widget> children;
@@ -150,76 +143,47 @@ class _MenuAction extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          _ActionIcon(
-            icon: icon,
-            enabled: onTap != null,
-            destructive: destructive,
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: destructive && onTap != null
+                  ? const Color(0xfffdecec)
+                  : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: GroupIcon(
+              icon,
+              size: 18,
+              color: onTap != null ? null : GroupDesign.muted,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: _ActionLabel(
-              title: title,
-              subtitle: subtitle,
-              enabled: onTap != null,
-              destructive: destructive,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GroupDesign.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: onTap == null
+                        ? GroupDesign.muted
+                        : destructive
+                        ? const Color(0xffe30000)
+                        : GroupDesign.ink,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!, style: GroupDesign.caption),
+                ],
+              ],
             ),
           ),
         ],
       ),
     ),
-  );
-}
-
-class _ActionIcon extends StatelessWidget {
-  const _ActionIcon({
-    required this.icon,
-    required this.enabled,
-    required this.destructive,
-  });
-  final String icon;
-  final bool enabled, destructive;
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 36,
-    height: 36,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: destructive && enabled ? const Color(0xfffdecec) : Colors.white,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: GroupIcon(icon, size: 18, color: enabled ? null : GroupDesign.muted),
-  );
-}
-
-class _ActionLabel extends StatelessWidget {
-  const _ActionLabel({
-    required this.title,
-    required this.subtitle,
-    required this.enabled,
-    required this.destructive,
-  });
-  final String title;
-  final String? subtitle;
-  final bool enabled, destructive;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: GroupDesign.body.copyWith(
-          fontWeight: FontWeight.w600,
-          color: !enabled
-              ? GroupDesign.muted
-              : destructive
-              ? const Color(0xffe30000)
-              : GroupDesign.ink,
-        ),
-      ),
-      if (subtitle != null) ...[
-        const SizedBox(height: 2),
-        Text(subtitle!, style: GroupDesign.caption),
-      ],
-    ],
   );
 }

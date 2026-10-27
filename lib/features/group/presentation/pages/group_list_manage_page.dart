@@ -94,7 +94,14 @@ class _ManageContent extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
       children: [
-        if (groups.isEmpty) _ManageEmptyState(archivedOnly: archivedOnly),
+        if (groups.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            child: Text(
+              archivedOnly ? '보관한 모임이 없어요.' : '표시할 모임이 없어요.',
+              style: GroupDesign.body,
+            ),
+          ),
         for (final admin in [true, false])
           if (groups.any((current) => current.canViewInviteCode == admin))
             _ManageSection(
@@ -120,19 +127,6 @@ class _ManageContent extends ConsumerWidget {
       ],
     );
   }
-}
-
-class _ManageEmptyState extends StatelessWidget {
-  const _ManageEmptyState({required this.archivedOnly});
-  final bool archivedOnly;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 28),
-    child: Text(
-      archivedOnly ? '보관한 모임이 없어요.' : '표시할 모임이 없어요.',
-      style: GroupDesign.body,
-    ),
-  );
 }
 
 class _ArchivedLink extends StatelessWidget {
@@ -236,28 +230,26 @@ class _ManageRow extends StatelessWidget {
           ),
         GroupMark(name: current.group.name, size: 44),
         const SizedBox(width: 12),
-        Expanded(child: _ManageGroupInfo(current: current)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                current.group.name,
+                style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
+              ),
+              if (current.group.memberCount != null)
+                Text(
+                  '구성원 ${current.group.memberCount}명',
+                  style: GroupDesign.sub,
+                ),
+            ],
+          ),
+        ),
         if (!archivedOnly) _PinButton(groupId: current.group.id),
         _ArchiveButton(groupId: current.group.id, archivedOnly: archivedOnly),
       ],
     ),
-  );
-}
-
-class _ManageGroupInfo extends StatelessWidget {
-  const _ManageGroupInfo({required this.current});
-  final CurrentGroup current;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        current.group.name,
-        style: GroupDesign.body.copyWith(fontWeight: FontWeight.w600),
-      ),
-      if (current.group.memberCount != null)
-        Text('구성원 ${current.group.memberCount}명', style: GroupDesign.sub),
-    ],
   );
 }
 

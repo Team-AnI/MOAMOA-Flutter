@@ -148,11 +148,37 @@ class _ListBody extends ConsumerWidget {
               visible.isEmpty &&
               !state.isLoading &&
               state.errorMessage == null)
-            const _ArchivedGroupsNotice(),
-          _RoleSections(
-            admins: admins,
-            members: members,
-            onSelect: state.isLoading ? null : onSelect,
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('표시할 모임이 없어요.', style: GroupDesign.heading),
+                  SizedBox(height: 8),
+                  Text(
+                    '보관한 모임은 아래 모임 관리에서 다시 표시할 수 있어요.',
+                    style: GroupDesign.body,
+                  ),
+                ],
+              ),
+            ),
+          Column(
+            children: [
+              if (admins.isNotEmpty)
+                GroupListSection(
+                  title: '관리 중인 모임',
+                  topPadding: 20,
+                  groups: admins,
+                  onSelect: state.isLoading ? null : onSelect,
+                ),
+              if (members.isNotEmpty)
+                GroupListSection(
+                  title: '참여 중인 모임',
+                  topPadding: admins.isEmpty ? 20 : 24,
+                  groups: members,
+                  onSelect: state.isLoading ? null : onSelect,
+                ),
+            ],
           ),
           if (state.groups.isNotEmpty)
             _ManageFooter(archivedCount: state.groups.length - visible.length),
@@ -160,51 +186,6 @@ class _ListBody extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _RoleSections extends StatelessWidget {
-  const _RoleSections({
-    required this.admins,
-    required this.members,
-    required this.onSelect,
-  });
-  final List<CurrentGroup> admins, members;
-  final ValueChanged<int>? onSelect;
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      if (admins.isNotEmpty)
-        GroupListSection(
-          title: '관리 중인 모임',
-          topPadding: 20,
-          groups: admins,
-          onSelect: onSelect,
-        ),
-      if (members.isNotEmpty)
-        GroupListSection(
-          title: '참여 중인 모임',
-          topPadding: admins.isEmpty ? 20 : 24,
-          groups: members,
-          onSelect: onSelect,
-        ),
-    ],
-  );
-}
-
-class _ArchivedGroupsNotice extends StatelessWidget {
-  const _ArchivedGroupsNotice();
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.symmetric(vertical: 28),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text('표시할 모임이 없어요.', style: GroupDesign.heading),
-        SizedBox(height: 8),
-        Text('보관한 모임은 아래 모임 관리에서 다시 표시할 수 있어요.', style: GroupDesign.body),
-      ],
-    ),
-  );
 }
 
 class _ManageFooter extends StatelessWidget {

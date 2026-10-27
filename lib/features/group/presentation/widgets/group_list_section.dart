@@ -22,10 +22,18 @@ class GroupListSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _SectionHeading(
-        title: title,
-        count: groups.length,
-        topPadding: topPadding,
+      Padding(
+        padding: EdgeInsets.only(top: topPadding, bottom: 12, left: 4),
+        child: Row(
+          children: [
+            Flexible(child: Text(title, style: GroupDesign.heading)),
+            const SizedBox(width: 8),
+            Text(
+              '${groups.length}',
+              style: GroupDesign.heading.copyWith(color: GroupDesign.muted),
+            ),
+          ],
+        ),
       ),
       for (final current in groups)
         Padding(
@@ -33,31 +41,6 @@ class GroupListSection extends StatelessWidget {
           child: _GroupCard(current: current, onSelect: onSelect),
         ),
     ],
-  );
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({
-    required this.title,
-    required this.count,
-    required this.topPadding,
-  });
-  final String title;
-  final int count;
-  final double topPadding;
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.only(top: topPadding, bottom: 12, left: 4),
-    child: Row(
-      children: [
-        Flexible(child: Text(title, style: GroupDesign.heading)),
-        const SizedBox(width: 8),
-        Text(
-          '$count',
-          style: GroupDesign.heading.copyWith(color: GroupDesign.muted),
-        ),
-      ],
-    ),
   );
 }
 
@@ -78,33 +61,28 @@ class _GroupCard extends StatelessWidget {
           children: [
             GroupMark(name: current.group.name, photo: null),
             const SizedBox(width: 14),
-            Expanded(child: _GroupSummary(current: current)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(current.group.name, style: GroupDesign.strong),
+                  const SizedBox(height: 4),
+                  Text(
+                    current.group.memberCount == null
+                        ? current.canViewInviteCode
+                              ? '관리자'
+                              : '구성원'
+                        : '구성원 ${current.group.memberCount}명',
+                    style: GroupDesign.sub,
+                  ),
+                ],
+              ),
+            ),
             _GroupMenuButton(current: current, enabled: onSelect != null),
           ],
         ),
       ),
     ),
-  );
-}
-
-class _GroupSummary extends StatelessWidget {
-  const _GroupSummary({required this.current});
-  final CurrentGroup current;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(current.group.name, style: GroupDesign.strong),
-      const SizedBox(height: 4),
-      Text(
-        current.group.memberCount == null
-            ? current.canViewInviteCode
-                  ? '관리자'
-                  : '구성원'
-            : '구성원 ${current.group.memberCount}명',
-        style: GroupDesign.sub,
-      ),
-    ],
   );
 }
 
