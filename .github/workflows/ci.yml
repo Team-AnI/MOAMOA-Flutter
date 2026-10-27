@@ -18,7 +18,7 @@ permissions:
 
 env:
   # README 요구 버전 / moamoa-flutter-setup.sh 의 REQUIRED_FLUTTER_VERSION 과 함께 갱신
-  FLUTTER_VERSION: "3.44.9"
+  FLUTTER_VERSION: "3.47.8"
 
 jobs:
   check:
