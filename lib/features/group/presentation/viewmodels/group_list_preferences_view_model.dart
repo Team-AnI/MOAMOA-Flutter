@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/current_group.dart';
 import 'group_list_preferences.dart';
 
 class GroupListPreferencesViewModel extends Notifier<GroupListPreferences> {
@@ -22,4 +23,11 @@ class GroupListPreferencesViewModel extends Notifier<GroupListPreferences> {
   void reorder(List<int> ids) => state = state.copyWith(
     orderedIds: [...state.orderedIds.where((id) => !ids.contains(id)), ...ids],
   );
+
+  /// SDK가 보정한 newIndex를 그대로 사용하고, 다른 역할의 순서는 보존합니다.
+  void reorderSection(List<CurrentGroup> groups, int oldIndex, int newIndex) {
+    final reordered = [...groups];
+    reordered.insert(newIndex, reordered.removeAt(oldIndex));
+    reorder(reordered.map((current) => current.group.id).toList());
+  }
 }

@@ -7,121 +7,113 @@ import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';
 
-class GroupListMenu extends StatelessWidget {
+class GroupListMenu extends ConsumerWidget {
   const GroupListMenu({super.key, required this.current});
   final CurrentGroup current;
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              GroupMark(name: current.group.name, size: 48),
-              const SizedBox(width: 14),
-              Expanded(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final display = ref.watch(groupListDisplayProvider);
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                GroupMark(name: current.group.name, size: 48),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(current.group.name, style: GroupDesign.strong),
+                      const SizedBox(height: 4),
+                      Text(
+                        display.menuSubtitle(current),
+                        style: GroupDesign.sub,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Material(
+              color: GroupDesign.fill,
+              borderRadius: BorderRadius.circular(24),
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(current.group.name, style: GroupDesign.strong),
-                    const SizedBox(height: 4),
-                    Text(
-                      [
-                        current.canViewInviteCode ? '관리자' : '구성원',
-                        if (current.group.memberCount != null)
-                          '구성원 ${current.group.memberCount}명',
-                      ].join(' · '),
-                      style: GroupDesign.sub,
+                    _MenuAction(
+                      title: display.isPinned(current.group.id)
+                          ? '고정 해제'
+                          : '맨 위에 고정',
+                      icon: 'list_pin',
+                      onTap: () {
+                        ref
+                            .read(groupListPreferencesProvider.notifier)
+                            .togglePin(current.group.id);
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const Divider(height: 1, color: Colors.white),
+                    const _MenuAction(
+                      title: '이 모임 알림 끄기',
+                      icon: 'list_mute',
+                      subtitle: '알림 기능 연결 후 사용할 수 있어요',
+                    ),
+                    const Divider(height: 1, color: Colors.white),
+                    _MenuAction(
+                      title: '보관하기',
+                      icon: 'list_archive',
+                      subtitle: '목록에서 숨겨요',
+                      onTap: () {
+                        ref
+                            .read(groupListPreferencesProvider.notifier)
+                            .toggleArchive(current.group.id);
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _MenuCard(
-            children: [
-              _PinAction(groupId: current.group.id),
-              const Divider(height: 1, color: Colors.white),
-              const _MenuAction(
-                title: '이 모임 알림 끄기',
-                icon: 'list_mute',
-                subtitle: '알림 기능 연결 후 사용할 수 있어요',
+            ),
+            const SizedBox(height: 12),
+            Material(
+              color: GroupDesign.fill,
+              borderRadius: BorderRadius.circular(24),
+              clipBehavior: Clip.antiAlias,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 6,
+                ),
+                child: Column(
+                  children: [
+                    _MenuAction(
+                      title: '모임 나가기',
+                      icon: 'list_leave',
+                      destructive: true,
+                      subtitle: current.canViewInviteCode
+                          ? '관리자는 모임을 나갈 수 없어요'
+                          : '탈퇴 기능 연결 후 사용할 수 있어요',
+                    ),
+                  ],
+                ),
               ),
-              const Divider(height: 1, color: Colors.white),
-              _ArchiveAction(groupId: current.group.id),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _MenuCard(
-            children: [
-              _MenuAction(
-                title: '모임 나가기',
-                icon: 'list_leave',
-                destructive: true,
-                subtitle: current.canViewInviteCode
-                    ? '관리자는 모임을 나갈 수 없어요'
-                    : '탈퇴 기능 연결 후 사용할 수 있어요',
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
-class _PinAction extends ConsumerWidget {
-  const _PinAction({required this.groupId});
-  final int groupId;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final pinned = ref
-        .watch(groupListPreferencesProvider)
-        .pinnedIds
-        .contains(groupId);
-    return _MenuAction(
-      title: pinned ? '고정 해제' : '맨 위에 고정',
-      icon: 'list_pin',
-      onTap: () {
-        ref.read(groupListPreferencesProvider.notifier).togglePin(groupId);
-        Navigator.pop(context);
-      },
     );
   }
-}
-
-class _ArchiveAction extends ConsumerWidget {
-  const _ArchiveAction({required this.groupId});
-  final int groupId;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => _MenuAction(
-    title: '보관하기',
-    icon: 'list_archive',
-    subtitle: '목록에서 숨겨요',
-    onTap: () {
-      ref.read(groupListPreferencesProvider.notifier).toggleArchive(groupId);
-      Navigator.pop(context);
-    },
-  );
-}
-
-class _MenuCard extends StatelessWidget {
-  const _MenuCard({required this.children});
-  final List<Widget> children;
-  @override
-  Widget build(BuildContext context) => Material(
-    color: GroupDesign.fill,
-    borderRadius: BorderRadius.circular(24),
-    clipBehavior: Clip.antiAlias,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Column(children: children),
-    ),
-  );
 }
 
 class _MenuAction extends StatelessWidget {
