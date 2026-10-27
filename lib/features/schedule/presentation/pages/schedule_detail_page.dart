@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 
 import '../providers/schedule_providers.dart';
 import '../schedule_format.dart';
@@ -52,24 +51,21 @@ class ScheduleDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final request = ScheduleDetailRequest(
-      meetingId: meetingId,
-      scheduleId: scheduleId,
-    );
-    final schedule = ref.watch(scheduleDetailProvider(request));
-    ref.listen(scheduleDeleteProvider(request), (previous, next) {
+    final ScheduleArgs args = (meetingId: meetingId, scheduleId: scheduleId);
+    final schedule = ref.watch(scheduleDetailProvider(args));
+    ref.listen(scheduleDeleteProvider(args), (previous, next) {
       _onDeleteChanged(context, previous, next);
     });
 
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: MoaAppBar(actions: [_EditButton(request: request)]),
+      appBar: MoaAppBar(actions: [_EditButton(args: args)]),
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: schedule.when(
-                data: (s) => _Body(schedule: s, request: request),
+                data: (s) => _Body(schedule: s, args: args),
                 error: (_, _) => Center(
                   child: Text(
                     '일정을 불러오지 못했어요',
@@ -90,12 +86,12 @@ class ScheduleDetailPage extends ConsumerWidget {
 ///
 /// - 카드: 날짜 배지, 요일과 시작 시각, 진행 시간(종료 일시가 있을 때만), 장소, 메모
 /// - 장소, 메모: 비어 있으면 그 줄을 그리지 않습니다.
-/// - 관리자에게는 카드 아래에 "일정 취소하기"가 붙습니다. ([request] 는 취소할 일정)
+/// - 관리자에게는 카드 아래에 "일정 취소하기"가 붙습니다. ([args] 는 취소할 일정)
 class _Body extends StatelessWidget {
-  const _Body({required this.schedule, required this.request});
+  const _Body({required this.schedule, required this.args});
 
   final Schedule schedule;
-  final ScheduleDetailRequest request;
+  final ScheduleArgs args;
 
   @override
   Widget build(BuildContext context) {
@@ -107,25 +103,25 @@ class _Body extends StatelessWidget {
         children: [
           Text(schedule.title, style: MoaText.titleXl),
           _InfoCard(schedule: schedule),
-          _CancelButton(request: request),
+          _CancelButton(args: args),
         ],
       ),
     );
   }
 }
 
-/// 상단 바 오른쪽의 수정(연필) 버튼입니다. 관리자에게만 보이고, 누르면 [request] 일정의 수정 화면으로 이동합니다.
+/// 상단 바 오른쪽의 수정(연필) 버튼입니다. 관리자에게만 보이고, 누르면 [args] 일정의 수정 화면으로 이동합니다.
 class _EditButton extends ConsumerWidget {
-  const _EditButton({required this.request});
+  const _EditButton({required this.args});
 
-  final ScheduleDetailRequest request;
+  final ScheduleArgs args;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
     final isCancelling = ref.watch(
       scheduleDeleteProvider(
-        request,
+        args,
       ).select((s) => s.status == ScheduleDeleteStatus.submitting),
     );
 
@@ -140,7 +136,7 @@ class _EditButton extends ConsumerWidget {
           onTap: isCancelling
               ? null
               : () => context.push(
-                  '/meetings/${request.meetingId}/schedules/${request.scheduleId}/edit',
+                  '/meetings/${args.meetingId}/schedules/${args.scheduleId}/edit',
                 ),
           child: SizedBox(
             width: 40,
@@ -353,18 +349,18 @@ class _IconTile extends StatelessWidget {
 }
 
 /// 관리자에게만 보이는 "일정 취소하기" 글자 버튼입니다.
-/// 누르면 확인 팝업을 띄우고, 확인하면 [request] 일정을 취소합니다.
+/// 누르면 확인 팝업을 띄우고, 확인하면 [args] 일정을 취소합니다.
 class _CancelButton extends ConsumerWidget {
-  const _CancelButton({required this.request});
+  const _CancelButton({required this.args});
 
-  final ScheduleDetailRequest request;
+  final ScheduleArgs args;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
     final isCancelling = ref.watch(
       scheduleDeleteProvider(
-        request,
+        args,
       ).select((s) => s.status == ScheduleDeleteStatus.submitting),
     );
 
@@ -384,7 +380,7 @@ class _CancelButton extends ConsumerWidget {
                   builder: (_) => const _CancelConfirmDialog(),
                 );
                 if (confirmed != true) return;
-                ref.read(scheduleDeleteProvider(request).notifier).cancel();
+                ref.read(scheduleDeleteProvider(args).notifier).cancel();
               },
         child: Text(
           '이 일정 취소하기',

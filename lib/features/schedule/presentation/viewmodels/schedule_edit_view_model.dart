@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
 
 import '../providers/schedule_providers.dart';
@@ -31,9 +30,10 @@ class ScheduleEditViewModel extends Notifier<ScheduleEditState> {
     ScheduleEditStatus result;
     try {
       final original = await ref.read(
-        scheduleDetailProvider(
-          ScheduleDetailRequest(meetingId: meetingId, scheduleId: scheduleId),
-        ).future,
+        scheduleDetailProvider((
+          meetingId: meetingId,
+          scheduleId: scheduleId,
+        )).future,
       );
       await ref.read(updateScheduleProvider)(
         UpdateScheduleParams(

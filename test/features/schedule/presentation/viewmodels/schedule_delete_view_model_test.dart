@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_delete_state.dart';
@@ -14,7 +13,7 @@ void main() {
   late FakeScheduleRepository repository;
   late ProviderContainer container;
 
-  const request = ScheduleDetailRequest(meetingId: 1, scheduleId: 20);
+  const scheduleArgs = (meetingId: 1, scheduleId: 20);
 
   setUp(() {
     repository = FakeScheduleRepository();
@@ -23,15 +22,17 @@ void main() {
     );
     addTearDown(container.dispose);
     // 화면이 구독하는 것처럼 상태를 유지한다. (autoDispose 라서 구독이 없으면 사라진다)
-    container.listen(scheduleDeleteProvider(request), (_, _) {});
+    container.listen(scheduleDeleteProvider(scheduleArgs), (_, _) {});
   });
 
   Future<void> cancel() {
-    return container.read(scheduleDeleteProvider(request).notifier).cancel();
+    return container
+        .read(scheduleDeleteProvider(scheduleArgs).notifier)
+        .cancel();
   }
 
   ScheduleDeleteState state() =>
-      container.read(scheduleDeleteProvider(request));
+      container.read(scheduleDeleteProvider(scheduleArgs));
 
   group('ScheduleDeleteViewModel', () {
     test('요청 전에는 초기 상태이다', () {
@@ -83,14 +84,14 @@ void main() {
       );
       addTearDown(isolated.dispose);
       final subscription = isolated.listen(
-        scheduleDeleteProvider(request),
+        scheduleDeleteProvider(scheduleArgs),
         (_, _) {},
       );
       await isolated.read(scheduleListProvider(args).future);
       repository.deleteCompleter = Completer<void>();
 
       final pending = isolated
-          .read(scheduleDeleteProvider(request).notifier)
+          .read(scheduleDeleteProvider(scheduleArgs).notifier)
           .cancel();
       await pumpEventQueue();
       subscription.close(); // 요청 중에 화면이 닫힌 상황

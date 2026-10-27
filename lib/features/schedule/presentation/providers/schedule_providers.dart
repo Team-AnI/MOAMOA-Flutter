@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
@@ -73,15 +72,18 @@ final scheduleListProvider =
       ),
     );
 
+/// 상세·수정·취소 Provider 가 키로 쓰는 일정 식별자입니다.
+typedef ScheduleArgs = ({int meetingId, int scheduleId});
+
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<
       ScheduleDetailViewModel,
       Schedule,
-      ScheduleDetailRequest
+      ScheduleArgs
     >(
-      (request) => ScheduleDetailViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
+      (args) => ScheduleDetailViewModel(
+        meetingId: args.meetingId,
+        scheduleId: args.scheduleId,
       ),
     );
 
@@ -95,24 +97,20 @@ final scheduleCreateProvider = NotifierProvider.autoDispose
 /// 인자는 수정할 일정입니다.
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleEditProvider = NotifierProvider.autoDispose
-    .family<ScheduleEditViewModel, ScheduleEditState, ScheduleDetailRequest>(
-      (request) => ScheduleEditViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
+    .family<ScheduleEditViewModel, ScheduleEditState, ScheduleArgs>(
+      (args) => ScheduleEditViewModel(
+        meetingId: args.meetingId,
+        scheduleId: args.scheduleId,
       ),
     );
 
 /// 인자는 취소할 일정입니다.
 /// autoDispose: 화면을 닫으면 이전 요청 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleDeleteProvider = NotifierProvider.autoDispose
-    .family<
-      ScheduleDeleteViewModel,
-      ScheduleDeleteState,
-      ScheduleDetailRequest
-    >(
-      (request) => ScheduleDeleteViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
+    .family<ScheduleDeleteViewModel, ScheduleDeleteState, ScheduleArgs>(
+      (args) => ScheduleDeleteViewModel(
+        meetingId: args.meetingId,
+        scheduleId: args.scheduleId,
       ),
     );
 

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 
 import '../providers/schedule_providers.dart';
 import '../viewmodels/schedule_edit_state.dart';
@@ -44,16 +43,13 @@ class ScheduleEditPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final request = ScheduleDetailRequest(
-      meetingId: meetingId,
-      scheduleId: scheduleId,
-    );
-    final editProvider = scheduleEditProvider(request);
+    final ScheduleArgs args = (meetingId: meetingId, scheduleId: scheduleId);
+    final editProvider = scheduleEditProvider(args);
     ref.listen(editProvider, (previous, next) {
       _onStateChanged(context, previous, next);
     });
     final state = ref.watch(editProvider);
-    final schedule = ref.watch(scheduleDetailProvider(request));
+    final schedule = ref.watch(scheduleDetailProvider(args));
 
     return Scaffold(
       backgroundColor: MoaColors.page,
