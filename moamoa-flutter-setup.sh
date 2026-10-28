@@ -19,8 +19,8 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # 프로젝트 요구 버전 (README 의 "요구 버전" 표와 함께 갱신해주세요)
 # ---------------------------------------------------------------------------
-REQUIRED_FLUTTER_VERSION="3.44.9"
-REQUIRED_DART_VERSION="3.12.2"
+REQUIRED_FLUTTER_VERSION="3.47.8"
+REQUIRED_DART_VERSION="3.13.7"
 REQUIRED_JAVA_MAJOR="17"
 UPSTREAM_URL="https://github.com/Team-AnI/MOAMOA-Flutter.git"
 

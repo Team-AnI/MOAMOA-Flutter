@@ -10,10 +10,10 @@ import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'package:moamoa/features/group/domain/entities/group.dart';
 import 'package:moamoa/features/group/domain/entities/group_member.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
-import 'package:moamoa/features/group/presentation/pages/group_list_page.dart';
 import 'package:moamoa/features/group/presentation/pages/group_list_manage_page.dart';
-import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
+import 'package:moamoa/features/group/presentation/pages/group_list_page.dart';
 import 'package:moamoa/features/group/presentation/providers/group_list_preferences_provider.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/group/presentation/widgets/group_list_section.dart';
 
 import '../fake_group_repository.dart';
@@ -240,8 +240,7 @@ Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
     image.dispose();
     final directory = Directory(outputDirectory);
     await directory.create(recursive: true);
-    await File(
-      '${directory.path}/$name.png',
-    ).writeAsBytes(bytes!.buffer.asUint8List());
+    await File('${directory.path}/$name.png')
+        .writeAsBytes(bytes!.buffer.asUint8List());
   });
 }
