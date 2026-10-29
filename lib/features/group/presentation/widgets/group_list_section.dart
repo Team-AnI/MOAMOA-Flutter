@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/current_group.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
+import 'group_list_menu.dart';
 import 'group_mark.dart';
 
-class GroupListSection extends ConsumerWidget {
+class GroupListSection extends StatelessWidget {
   const GroupListSection({
     super.key,
     required this.title,
     required this.groups,
     required this.onSelect,
+    this.topPadding = 24,
   });
   final String title;
   final List<CurrentGroup> groups;
   final ValueChanged<int>? onSelect;
+  final double topPadding;
   @override
-  Widget build(BuildContext context, WidgetRef ref) => Column(
+  Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Padding(
-        padding: const EdgeInsets.only(top: 24, bottom: 12, left: 4),
-        child: Text('$title  ${groups.length}', style: GroupDesign.heading),
+        padding: EdgeInsets.only(top: topPadding, bottom: 12, left: 4),
+        child: Row(
+          children: [
+            Flexible(child: Text(title, style: GroupDesign.heading)),
+            const SizedBox(width: 8),
+            Text(
+              '${groups.length}',
+              style: GroupDesign.heading.copyWith(color: GroupDesign.muted),
+            ),
+          ],
+        ),
       ),
       for (final current in groups)
         Padding(
@@ -58,7 +69,21 @@ class GroupListSection extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const GroupIcon('chevron', size: 16),
+                    IconButton(
+                      tooltip: '${current.group.name} 메뉴',
+                      onPressed: onSelect == null
+                          ? null
+                          : () => showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              showDragHandle: true,
+                              backgroundColor: Colors.white,
+                              shape: const RoundedRectangleBorder(),
+                              builder: (context) =>
+                                  GroupListMenu(current: current),
+                            ),
+                      icon: const GroupIcon('list_more', size: 18),
+                    ),
                   ],
                 ),
               ),
