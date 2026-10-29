@@ -15,13 +15,16 @@ final class UpdateGroupImpl implements UpdateGroup {
     if (params.currentGroup.membership.role != MemberRole.admin) {
       throw const GroupFailure(GroupFailureReason.forbidden);
     }
-    if (params.name != null && params.name!.trim().isEmpty ||
-        params.name == null && params.description == null) {
+    final name = params.name?.trim();
+    if (name != null && (name.isEmpty || name.length > 20)) {
+      throw const GroupFailure(GroupFailureReason.validation);
+    }
+    if (name == null && params.description == null) {
       throw const GroupFailure(GroupFailureReason.validation);
     }
     return _groupRepository.updateGroup(
       groupId: params.currentGroup.group.id,
-      name: params.name?.trim(),
+      name: name,
       description: params.description,
     );
   }

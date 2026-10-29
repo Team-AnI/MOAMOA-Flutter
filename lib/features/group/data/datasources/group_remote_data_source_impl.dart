@@ -41,7 +41,7 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     _request(
       'PATCH',
       '/v1/meetings/${request.meetingId}',
-      body: request.toJson(),
+      body: request.toPatchJson(),
     ),
     (data) {
       final model = GroupUpdateModel.fromJson(data);

@@ -14,10 +14,20 @@ class FakeGroupRepository implements GroupRepository {
     String? description,
   }) async {
     final current = groups.firstWhere((entry) => entry.group.id == groupId);
-    return current.group.copyWith(
+    final updated = current.group.copyWith(
       name: name ?? current.group.name,
-      description: description ?? current.group.description,
+      description: description == ''
+          ? null
+          : description ?? current.group.description,
     );
+    groups = groups
+        .map(
+          (entry) => entry.group.id == groupId
+              ? entry.copyWith(group: updated)
+              : entry,
+        )
+        .toList();
+    return updated;
   }
 
   @override

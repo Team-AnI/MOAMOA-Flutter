@@ -123,13 +123,21 @@ void main() {
       expect(group.name, '새 모임');
       expect(group.description, '소개');
     });
-    test('소개만 수정하면 이름을 보내지 않고 빈 문자열도 생략하지 않는다', () async {
+    test('소개를 비우면 이름은 생략하고 description null을 전송한다', () async {
       adapter.response = {
         'success': true,
-        'data': {'meetingId': 1, 'name': '모임', 'description': ''},
+        'data': {'meetingId': 1, 'name': '모임', 'description': null},
       };
       await repository.updateGroup(groupId: 1, description: '');
-      expect(adapter.requests.single.data, {'description': ''});
+      expect(adapter.requests.single.data, {'description': null});
+    });
+    test('소개를 변경하면 입력한 문자열이 전송된다', () async {
+      adapter.response = {
+        'success': true,
+        'data': {'meetingId': 1, 'name': '모임', 'description': '새 소개'},
+      };
+      await repository.updateGroup(groupId: 1, description: '새 소개');
+      expect(adapter.requests.single.data, {'description': '새 소개'});
     });
     test('삭제하면 DELETE 경로와 성공 응답 ID를 확인한다', () async {
       adapter.response = {
@@ -203,16 +211,36 @@ void main() {
       );
       expect(fake.updates + fake.deletes, 0);
     });
-    test('공백 이름이나 변경 필드 없는 수정 요청은 거부한다', () {
+    test('공백·20자 초과 이름이나 변경 필드 없는 요청은 거부한다', () {
       final usecase = UpdateGroupImpl(groupRepository: fake);
       final admin = makeGroup(MemberRole.admin);
-      for (final name in [null, '   ']) {
+      for (final name in [null, '   ', '가' * 21]) {
         expect(
           () => usecase(UpdateGroupParams(currentGroup: admin, name: name)),
           throwsA(isA<GroupFailure>()),
         );
       }
       expect(fake.updates, 0);
+    });
+    test('20자 이름은 저장할 수 있다', () async {
+      await container
+          .read(groupProvider.notifier)
+          .update(name: '가' * 20, description: '소개');
+      expect(fake.sentName, '가' * 20);
+    });
+    test('소개를 비운 뒤 이름만 수정해도 비워진 소개가 유지된다', () async {
+      final vm = container.read(groupProvider.notifier);
+      await vm.update(name: '모임', description: '');
+      expect(
+        container.read(groupProvider).currentGroup!.group.description,
+        isNull,
+      );
+      await vm.update(name: '새 이름', description: '');
+      expect(fake.sentDescription, isNull);
+      expect(
+        container.read(groupProvider).currentGroup!.group.description,
+        isNull,
+      );
     });
     test('이름 수정 성공 시 목록·상세와 역할·구성원 수를 보존한다', () async {
       await container
@@ -318,6 +346,21 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('모임 정보 수정'), findsNothing);
       expect(container.read(groupProvider).currentGroup!.group.name, '수정한 이름');
+    });
+    testWidgets('모임 이름 입력은 20자까지 허용된다', (tester) async {
+      await showPage(tester, '/groups/edit');
+      await tester.enterText(find.byType(TextFormField).first, '가' * 21);
+      await tester.pump();
+      final field = tester.widget<TextFormField>(
+        find.byType(TextFormField).first,
+      );
+      expect(field.controller!.text, '가' * 20);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
+            .onPressed,
+        isNotNull,
+      );
     });
     testWidgets('삭제 취소 시 요청하지 않고 확인 후 목록으로 이동한다', (tester) async {
       final router = await showPage(tester, '/groups/settings');

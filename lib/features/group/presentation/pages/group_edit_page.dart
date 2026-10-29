@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
-import '../../domain/entities/member_role.dart';
 import '../providers/group_providers.dart';
+import '../viewmodels/group_state.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_field.dart';
 import '../widgets/group_page_layout.dart';
@@ -16,10 +16,9 @@ class GroupEditPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(
-      groupProvider.select((state) => state.currentGroup),
-    );
-    if (current == null || current.membership.role != MemberRole.admin) {
+    final state = ref.watch(groupProvider);
+    final current = state.currentGroup;
+    if (current == null || !state.canManageCurrentGroup) {
       return GroupPageLayout(
         isBack: true,
         onClose: () => context.go('/groups'),
@@ -48,6 +47,11 @@ class _EditFormState extends ConsumerState<_EditForm> {
       _name.text.trim() != widget.initial.group.name ||
       _description.text != (widget.initial.group.description ?? '');
 
+  bool get _canSave =>
+      _changed &&
+      _name.text.trim().isNotEmpty &&
+      _name.text.trim().length <= 20;
+
   @override
   void dispose() {
     _name.dispose();
@@ -66,9 +70,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(
-      groupProvider.select((state) => state.isSubmitting || state.isLoading),
-    );
+    final busy = ref.watch(groupProvider.select((state) => state.isBusy));
     final error = ref.watch(
       groupProvider.select((state) => state.errorMessage),
     );
@@ -79,73 +81,49 @@ class _EditFormState extends ConsumerState<_EditForm> {
         onClose: busy ? null : () => context.go('/groups/settings'),
         bottom: GroupPrimaryButton(
           label: busy ? '저장 중…' : '저장',
-          onPressed: busy || !_changed || _name.text.trim().isEmpty
-              ? null
-              : _save,
+          onPressed: busy || !_canSave ? null : _save,
         ),
         child: Form(
           key: _form,
-          child: _EditFields(
-            name: _name,
-            description: _description,
-            busy: busy,
-            error: error,
-            onChanged: (_) => setState(() {}),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const GroupPageTitle(
+                title: '모임 정보 수정',
+                subtitle: '모임 이름과 소개를 변경할 수 있어요.',
+              ),
+              GroupField(
+                controller: _name,
+                label: '모임 이름',
+                hint: '모임 이름을 입력해주세요',
+                requiredValue: true,
+                maxLength: 20,
+                enabled: !busy,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 20),
+              GroupField(
+                controller: _description,
+                label: '모임 소개',
+                hint: '모임을 소개해주세요',
+                multiline: true,
+                enabled: !busy,
+                onChanged: (_) => setState(() {}),
+              ),
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    error,
+                    style: GroupDesign.body,
+                    semanticsLabel: '저장 실패: $error',
+                  ),
+                ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
     );
   }
-}
-
-class _EditFields extends StatelessWidget {
-  const _EditFields({
-    required this.name,
-    required this.description,
-    required this.busy,
-    required this.error,
-    required this.onChanged,
-  });
-  final TextEditingController name, description;
-  final bool busy;
-  final String? error;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const GroupPageTitle(
-        title: '모임 정보 수정',
-        subtitle: '모임 이름과 소개를 변경할 수 있어요.',
-      ),
-      GroupField(
-        controller: name,
-        label: '모임 이름',
-        hint: '모임 이름을 입력해주세요',
-        requiredValue: true,
-        enabled: !busy,
-        onChanged: onChanged,
-      ),
-      const SizedBox(height: 20),
-      GroupField(
-        controller: description,
-        label: '모임 소개',
-        hint: '모임을 소개해주세요',
-        multiline: true,
-        enabled: !busy,
-        onChanged: onChanged,
-      ),
-      if (error != null)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            error!,
-            style: GroupDesign.body,
-            semanticsLabel: '저장 실패: $error',
-          ),
-        ),
-      const SizedBox(height: 24),
-    ],
-  );
 }
