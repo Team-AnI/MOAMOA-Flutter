@@ -167,6 +167,7 @@ flutter run
 | `refactor/#이슈번호-수정범위` | 리팩터링 | `refactor/#20-auth-repo` |
 | `chore/#이슈번호-설명` | 빌드, 설정, 의존성 등 | `chore/#3-update-pubspec` |
 | `docs/#이슈번호-설명` | 문서 | `docs/#1-readme` |
+| `release/버전` | 웹 배포 (push 하면 Firebase Hosting 에 자동 배포, [웹 배포](#웹-배포-firebase-hosting) 참고) | `release/0.1.0` |
 
 ### 4. 이슈 / 커밋 / PR 작성
 
@@ -416,7 +417,7 @@ PR 을 올리면 아래 검사가 자동으로 실행되며, **모두 통과해�
 | `PR Title / PR Title Convention` | PR 제목이 `<type>: <subject> (#이슈번호)` 형식인지 | PR 제목 수정 (재실행 자동) |
 
 - 워크플로우 파일: `.github/workflows/`
-- CI 의 Flutter 버전은 `ci.yml` 의 `FLUTTER_VERSION` 으로 고정되어 있으며, 요구 버전이 바뀌면 함께 수정합니다.
+- CI 의 Flutter 버전은 `ci.yml`, `deploy-web.yml` 의 `FLUTTER_VERSION` 으로 고정되어 있으며, 요구 버전이 바뀌면 함께 수정합니다.
 
 ---
 
@@ -435,3 +436,26 @@ PR 을 올리면 아래 검사가 자동으로 실행되며, **모두 통과해�
 ## 기타
 
 <!-- TODO: 환경 변수, 배포, 트러블슈팅 등 추가 섹션을 작성합니다. -->
+
+### 웹 배포 (Firebase Hosting)
+
+`release/` 로 시작하는 브랜치에 push 하면 `.github/workflows/deploy-web.yml` 이 웹을 빌드해 Firebase Hosting 에 배포합니다.
+
+- 주소: https://moamoa-129cd.web.app
+- Firebase 프로젝트: `moamoa-129cd`
+- 배포 전에 포맷 / 정적 분석 / 테스트를 실행하며, 하나라도 실패하면 배포하지 않습니다.
+
+#### 배포 순서
+
+1. `develop` 에서 `release/<버전>` 브랜치를 만듭니다. (예: `release/0.2.0`, GitHub 브랜치 화면에서 만들어도 됩니다)
+2. `pubspec.yaml` 의 `version` 이 브랜치 버전과 같은지 확인하고, 다르면 release 브랜치에서 올립니다. (예: `0.2.0+2`)
+3. push 하면 Actions 의 `Deploy Web` 이 실행되고, 끝나면 위 주소에서 확인합니다.
+   - 폰에서는 브라우저 공유 메뉴의 "홈 화면에 추가" 로 앱처럼 열 수 있습니다.
+4. 확인이 끝나면 release 브랜치를 `main` 과 `develop` 에 반영하고, `main` 에 `v<버전>` 태그를 답니다.
+
+#### 설정 (Settings → Secrets and variables → Actions)
+
+| 이름 | 종류 | 내용 |
+| --- | --- | --- |
+| `FIREBASE_SERVICE_ACCOUNT_MOAMOA_129CD` | Secret | 배포용 서비스 계정 키(JSON). 키 파일은 공유하지 않고 등록 후 삭제합니다. |
+| `API_BASE_URL` | Variable | 앱이 호출할 서버 주소. 웹은 https 라서 서버도 https 여야 합니다. |
