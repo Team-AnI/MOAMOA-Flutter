@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/current_group.dart';
 import '../providers/group_list_preferences_provider.dart';
+import '../viewmodels/group_list_display_state.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';

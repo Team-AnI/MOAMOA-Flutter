@@ -226,8 +226,8 @@ return $default(_that.source,_that.preferences,_that.userName);case _:
 /// @nodoc
 
 
-class _GroupListDisplayState extends GroupListDisplayState {
-  const _GroupListDisplayState({required this.source, required this.preferences, this.userName}): super._();
+class _GroupListDisplayState implements GroupListDisplayState {
+  const _GroupListDisplayState({required this.source, required this.preferences, this.userName});
   
 
 @override final  GroupState source;

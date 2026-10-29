@@ -9,13 +9,14 @@ part 'group_list_display_state.freezed.dart';
 /// 서버 상태와 로컬 표시 설정을 합성합니다. 원본 상태는 변경하지 않습니다.
 @freezed
 abstract class GroupListDisplayState with _$GroupListDisplayState {
-  const GroupListDisplayState._();
   const factory GroupListDisplayState({
     required GroupState source,
     required GroupListPreferences preferences,
     String? userName,
   }) = _GroupListDisplayState;
+}
 
+extension GroupListDisplayStateX on GroupListDisplayState {
   String get greeting {
     final name = userName?.trim();
     return name == null || name.isEmpty ? '안녕하세요' : '$name님, 안녕하세요';
