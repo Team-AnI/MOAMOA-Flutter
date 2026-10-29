@@ -703,7 +703,7 @@ void main() {
       expect(find.byTooltip('공지 삭제'), findsNothing);
     });
 
-    testWidgets('올해 공지는 작성일을 연도 없이 제목·내용과 함께 보여준다', (tester) async {
+    testWidgets('제목 · 작성일 · 내용을 보여준다', (tester) async {
       await pumpPage(
         tester,
         FakeNoticeRepository(
@@ -721,7 +721,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('회식 정산 안내'), findsOneWidget);
-      expect(find.text('9월 12일'), findsOneWidget);
+      expect(find.text('${DateTime.now().year}년 9월 12일'), findsOneWidget);
       expect(find.text('10월 회비는 10일까지 내 주세요.'), findsOneWidget);
     });
 
@@ -939,7 +939,7 @@ void main() {
       expect(find.text('공지를 삭제했어요.'), findsOneWidget);
     });
 
-    testWidgets('작년 공지는 작성일에 연도를 함께 보여준다', (tester) async {
+    testWidgets('작년 공지도 작성일에 연도를 함께 보여준다', (tester) async {
       await pumpPage(
         tester,
         FakeNoticeRepository(

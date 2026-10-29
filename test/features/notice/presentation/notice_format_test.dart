@@ -3,25 +3,12 @@ import 'package:moamoa/features/notice/presentation/notice_format.dart';
 
 void main() {
   group('formatNoticeDate', () {
-    final now = DateTime(2026, 10, 16, 12);
-
-    test('올해 9월 12일은 연도 없이 9월 12일로 표시한다', () {
-      expect(formatNoticeDate(DateTime(2026, 9, 12), now: now), '9월 12일');
+    test('올해 날짜도 연도를 포함해 2026년 9월 12일로 표시한다', () {
+      expect(formatNoticeDate(DateTime(2026, 9, 12)), '2026년 9월 12일');
     });
 
-    test('올해 1월 1일은 연도 없이 1월 1일로 표시한다', () {
-      expect(formatNoticeDate(DateTime(2026, 1, 1), now: now), '1월 1일');
-    });
-
-    test('작년 12월 31일은 연도를 포함해 2025년 12월 31일로 표시한다', () {
-      expect(
-        formatNoticeDate(DateTime(2025, 12, 31), now: now),
-        '2025년 12월 31일',
-      );
-    });
-
-    test('내년 1월 1일도 연도를 포함해 2027년 1월 1일로 표시한다', () {
-      expect(formatNoticeDate(DateTime(2027, 1, 1), now: now), '2027년 1월 1일');
+    test('작년 날짜도 연도를 포함해 2025년 12월 31일로 표시한다', () {
+      expect(formatNoticeDate(DateTime(2025, 12, 31)), '2025년 12월 31일');
     });
   });
 
