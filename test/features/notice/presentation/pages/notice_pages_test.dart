@@ -859,11 +859,14 @@ void main() {
     });
 
     testWidgets('삭제하는 동안에는 기기의 뒤로 가기를 눌러도 화면이 남는다', (tester) async {
-      final repository = FakeNoticeRepository(
-        notices: [buildNotice(1)],
-        myRole: MemberRole.admin,
-      )..deleteGate = Completer<void>();
-      await pumpPushedPage(tester, repository, page);
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+        ..deleteGate = Completer<void>();
+      await pumpPushedPage(
+        tester,
+        repository,
+        page,
+        myRole: FakeGroupMyRole.admin(),
+      );
       await tester.tap(find.byTooltip('공지 삭제'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('삭제'));
