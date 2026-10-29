@@ -100,12 +100,14 @@ class FakeNoticeRepository implements NoticeRepository {
     required String content,
   }) async {
     _throwIfError();
+    await createGate?.future;
+    // 응답을 기다리는 사이 실패하도록 바뀐 경우 (등록 중 실패 상황 재현)
+    _throwIfError();
     final id = _nextId++;
     notices.insert(
       0,
       Notice(id: id, title: title, content: content, createdAt: DateTime.now()),
     );
-    await createGate?.future;
     return id;
   }
 

@@ -3,12 +3,25 @@ import 'package:moamoa/features/notice/presentation/notice_format.dart';
 
 void main() {
   group('formatNoticeDate', () {
-    test('2026년 9월 12일은 연도를 포함해 2026년 9월 12일로 표시한다', () {
-      expect(formatNoticeDate(DateTime(2026, 9, 12)), '2026년 9월 12일');
+    final now = DateTime(2026, 10, 16, 12);
+
+    test('올해 9월 12일은 연도 없이 9월 12일로 표시한다', () {
+      expect(formatNoticeDate(DateTime(2026, 9, 12), now: now), '9월 12일');
     });
 
-    test('2025년 12월 31일도 연도를 포함해 2025년 12월 31일로 표시한다', () {
-      expect(formatNoticeDate(DateTime(2025, 12, 31)), '2025년 12월 31일');
+    test('올해 1월 1일은 연도 없이 1월 1일로 표시한다', () {
+      expect(formatNoticeDate(DateTime(2026, 1, 1), now: now), '1월 1일');
+    });
+
+    test('작년 12월 31일은 연도를 포함해 2025년 12월 31일로 표시한다', () {
+      expect(
+        formatNoticeDate(DateTime(2025, 12, 31), now: now),
+        '2025년 12월 31일',
+      );
+    });
+
+    test('내년 1월 1일도 연도를 포함해 2027년 1월 1일로 표시한다', () {
+      expect(formatNoticeDate(DateTime(2027, 1, 1), now: now), '2027년 1월 1일');
     });
   });
 
@@ -38,7 +51,7 @@ void main() {
       expect(format(const Duration(days: 20)), '2주 전');
     });
 
-    test('30일부터 개월 단위로 표시해 30일은 1개월 전, 95일은 3개월 전, 190일은 6개월 전이다', () {
+    test('30일부터 개월 단위로 표시해 30일은 1개월 전, 95일은 3개월 전, 190일은 6개월 전으로 표시한다', () {
       expect(format(const Duration(days: 30)), '1개월 전');
       expect(format(const Duration(days: 95)), '3개월 전');
       expect(format(const Duration(days: 190)), '6개월 전');
@@ -73,7 +86,7 @@ void main() {
       expect(format(const Duration(days: 364)), '12개월 전');
     });
 
-    test('365일부터 년 단위로 표시해 365일은 1년 전, 800일은 2년 전이다', () {
+    test('365일부터 년 단위로 표시해 365일은 1년 전, 800일은 2년 전으로 표시한다', () {
       expect(format(const Duration(days: 365)), '1년 전');
       expect(format(const Duration(days: 800)), '2년 전');
     });

@@ -1,6 +1,12 @@
-/// 상세 화면의 작성일. 연도까지 항상 표시합니다. (예: 2026년 9월 12일)
-String formatNoticeDate(DateTime date) {
-  return '${date.year}년 ${date.month}월 ${date.day}일';
+/// 상세 화면의 작성일. 올해가 아니면 연도를 함께 표시합니다.
+///
+/// 올해: "9월 12일", 다른 해: "2025년 9월 12일"
+///
+/// [now] 는 테스트에서 기준 시각을 고정할 때만 넘깁니다.
+String formatNoticeDate(DateTime date, {DateTime? now}) {
+  final monthDay = '${date.month}월 ${date.day}일';
+  final thisYear = (now ?? DateTime.now()).year;
+  return date.year == thisYear ? monthDay : '${date.year}년 $monthDay';
 }
 
 /// 목록의 작성 시각. 오래될수록 거칠게 표시합니다.

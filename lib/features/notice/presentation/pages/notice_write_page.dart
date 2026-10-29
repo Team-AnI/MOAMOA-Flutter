@@ -185,12 +185,15 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     // 수정 화면은 바뀐 내용이 없으면 저장할 것이 없으므로 버튼을 누를 수 없게 합니다.
     final canSubmit = !isSubmitting && (!_isEdit || _hasChanges);
 
-    // 등록 요청 중에는 확인 없이 닫습니다. 확인창이 떠 있는 채로 요청이 성공하면
-    // 성공 후 pop 이 화면 대신 확인창만 닫아, 등록된 내용이 남은 폼이 중복 등록될 수 있습니다.
+    // 등록 요청 중에는 닫지 않습니다. 닫으면 실패해도 안내를 볼 수 없고, 확인창이 열린 채
+    // 요청이 성공하면 pop 이 화면 대신 확인창만 닫아 같은 공지가 중복 등록될 수 있습니다.
     return PopScope(
-      canPop: !_hasChanges || isSubmitting,
+      canPop: !_hasChanges && !isSubmitting,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmLeave();
+        if (didPop) return;
+        // 등록 버튼을 누른 직후 화면이 다시 그려지기 전에도 막도록 최신 상태를 직접 확인합니다.
+        if (ref.read(noticeWriteProvider(widget.meetingId)).isLoading) return;
+        _confirmLeave();
       },
       child: _NoticeFormBody(
         isEdit: _isEdit,

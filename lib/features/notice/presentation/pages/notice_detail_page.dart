@@ -72,37 +72,41 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
     final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
     final isAdmin = role.value?.isAdmin ?? false;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _DetailAppBar(
-        onBack: () => context.pop(),
-        onRetryRole: role.hasError && notice.hasValue
-            ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
-            : null,
-        // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
-        onEdit: isAdmin && notice.hasValue
-            ? () => context.push(
-                '/meetings/${widget.meetingId}/notices/${widget.noticeId}/edit',
-              )
-            : null,
-        onDelete: isAdmin && notice.hasValue ? _delete : null,
-        isDeleting: _isDeleting,
-      ),
-      body: notice.when(
-        data: (notice) => _NoticeContent(notice: notice),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
-        error: (error, _) => isNoticeNotFound(error)
-            ? NoticeErrorView(
-                error: error,
-                message: '삭제되었거나 존재하지 않는 공지입니다.',
-                actionLabel: '목록으로',
-                onAction: () => context.go(_listPath),
-              )
-            : NoticeErrorView(
-                error: error,
-                onAction: () => ref.invalidate(noticeDetailProvider(_args)),
-              ),
+    // 삭제 요청 중에는 화면을 닫지 않습니다. 닫으면 삭제 결과 안내와 목록 새로고침이 빠집니다.
+    return PopScope(
+      canPop: !_isDeleting,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: _DetailAppBar(
+          onBack: _isDeleting ? null : () => context.pop(),
+          onRetryRole: role.hasError && notice.hasValue
+              ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
+              : null,
+          // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
+          onEdit: isAdmin && notice.hasValue
+              ? () => context.push(
+                  '/meetings/${widget.meetingId}/notices/${widget.noticeId}/edit',
+                )
+              : null,
+          onDelete: isAdmin && notice.hasValue ? _delete : null,
+          isDeleting: _isDeleting,
+        ),
+        body: notice.when(
+          data: (notice) => _NoticeContent(notice: notice),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
+          error: (error, _) => isNoticeNotFound(error)
+              ? NoticeErrorView(
+                  error: error,
+                  message: '삭제되었거나 존재하지 않는 공지입니다.',
+                  actionLabel: '목록으로',
+                  onAction: () => context.go(_listPath),
+                )
+              : NoticeErrorView(
+                  error: error,
+                  onAction: () => ref.invalidate(noticeDetailProvider(_args)),
+                ),
+        ),
       ),
     );
   }
@@ -118,7 +122,8 @@ class _DetailAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.isDeleting = false,
   });
 
-  final VoidCallback onBack;
+  /// null 이면 뒤로 갈 수 없습니다. (삭제 요청 중)
+  final VoidCallback? onBack;
   final VoidCallback? onRetryRole;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
