@@ -52,9 +52,9 @@ void main() {
           home: Builder(
             builder: (context) => Scaffold(
               body: TextButton(
-                onPressed: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute<void>(builder: (_) => page)),
+                onPressed: () =>
+                    Navigator.of(context)
+                        .push(MaterialPageRoute<void>(builder: (_) => page)),
                 child: const Text('이전 화면'),
               ),
             ),
