@@ -215,9 +215,8 @@ Future<void> _capture(
     final image = await boundary.toImage();
     final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
     await Directory(directory).create(recursive: true);
-    await File(
-      '$directory/$name-${size.width.toInt()}.png',
-    ).writeAsBytes(bytes!.buffer.asUint8List());
+    await File('$directory/$name-${size.width.toInt()}.png')
+        .writeAsBytes(bytes!.buffer.asUint8List());
     image.dispose();
   });
 }

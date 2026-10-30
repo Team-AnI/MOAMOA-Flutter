@@ -15,40 +15,35 @@ class GroupTabBar extends StatelessWidget {
         color: Colors.white,
         border: Border(top: BorderSide(color: GroupDesign.fill)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          _Tab(name: '모임', icon: 'groups', active: true),
-          _Tab(name: '알림', icon: 'bell', active: false),
-          _Tab(name: '내 계정', icon: 'user', active: false),
-        ],
-      ),
-    ),
-  );
-}
-
-class _Tab extends StatelessWidget {
-  const _Tab({required this.name, required this.icon, required this.active});
-  final String name, icon;
-  final bool active;
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Semantics(
-      selected: active,
-      enabled: active,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          GroupIcon(icon, size: 24),
-          const SizedBox(height: 3),
-          Text(
-            name,
-            style: TextStyle(
-              fontFamily: 'Pretendard',
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: active ? GroupDesign.ink : GroupDesign.muted,
+          for (final tab in const [
+            (name: '모임', icon: 'groups', active: true),
+            (name: '캘린더', icon: 'list_calendar', active: false),
+            (name: '내 계정', icon: 'user', active: false),
+          ])
+            Expanded(
+              child: Semantics(
+                selected: tab.active,
+                enabled: tab.active,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GroupIcon(tab.icon, size: 24),
+                    const SizedBox(height: 3),
+                    Text(
+                      tab.name,
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: tab.active ? GroupDesign.ink : GroupDesign.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
         ],
       ),
     ),

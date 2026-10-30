@@ -9,11 +9,11 @@ import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 
 /// 일정·공지·회비 영역은 담당 기능에서 연결합니다.
-class GroupHomePage extends ConsumerWidget {
+class GroupHomePage extends StatelessWidget {
   const GroupHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
