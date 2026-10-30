@@ -29,7 +29,7 @@ class _FailingGroupRepository extends FakeGroupRepository {
 }
 
 void main() {
-  group('모임 내 역할', () {
+  group('groupMyRoleProvider', () {
     ProviderContainer createContainer(
       GroupRepository repository, {
       int groupId = 1,
@@ -64,7 +64,7 @@ void main() {
       expect(role, MemberRole.member);
     });
 
-    test('응답을 기다리는 동안에는 역할 없이 로딩 상태이다', () {
+    test('응답을 기다리는 동안에는 역할 없이 로딩 상태가 된다', () {
       final container = createContainer(_PendingGroupRepository());
 
       final role = container.read(groupMyRoleProvider(1));
@@ -73,7 +73,7 @@ void main() {
       expect(role.hasValue, isFalse);
     });
 
-    test('모임을 불러오지 못하면 일반 구성원이 아니라 오류 상태이다', () async {
+    test('모임을 불러오지 못하면 일반 구성원이 아니라 오류 상태가 된다', () async {
       final repository = _FailingGroupRepository();
       final container = createContainer(repository);
 

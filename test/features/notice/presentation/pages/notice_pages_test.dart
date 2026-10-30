@@ -1014,7 +1014,20 @@ void main() {
   group('내 역할 조회 실패', () {
     const roleError = GroupFailure(GroupFailureReason.unavailable);
 
-    testWidgets('공지가 있어도 다시 시도 버튼을 보여주고, 성공하면 작성 버튼이 나타난다', (tester) async {
+    testWidgets('역할 조회에 실패하면 공지가 있어도 작성 버튼 대신 다시 시도 버튼을 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(notices: [buildNotice(1)]),
+        const NoticeListPage(meetingId: 1),
+        myRole: FakeGroupMyRole.admin()..error = roleError,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('권한 확인 다시 시도'), findsOneWidget);
+      expect(find.byTooltip('공지 작성'), findsNothing);
+    });
+
+    testWidgets('다시 시도해 역할 조회에 성공하면 작성 버튼이 나타난다', (tester) async {
       final myRole = FakeGroupMyRole.admin()..error = roleError;
       await pumpPage(
         tester,
@@ -1023,9 +1036,6 @@ void main() {
         myRole: myRole,
       );
       await tester.pumpAndSettle();
-
-      expect(find.byTooltip('권한 확인 다시 시도'), findsOneWidget);
-      expect(find.byTooltip('공지 작성'), findsNothing);
 
       myRole.error = null;
       await tester.tap(find.byTooltip('권한 확인 다시 시도'));
