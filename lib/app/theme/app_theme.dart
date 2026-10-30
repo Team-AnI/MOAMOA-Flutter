@@ -9,6 +9,7 @@ abstract final class AppTheme {
     scaffoldBackgroundColor: MoaColors.page,
     colorScheme: ColorScheme.fromSeed(
       seedColor: MoaColors.accent,
+      dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
       primary: MoaColors.accent,
       surface: MoaColors.raised,
     ),
