@@ -1,5 +1,4 @@
 import 'package:moamoa/core/usecases/usecase.dart';
-import 'package:moamoa/core/utils/date_time_utils.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_update_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
@@ -43,25 +42,38 @@ final class UpdateScheduleImpl implements UpdateSchedule {
     final title = params.title.trim();
     final description = params.description.trim();
     final location = params.location.trim();
+    final startAt = params.startAt;
+    final endAt = params.endAt;
+    final originalEndAt = original.endAt;
 
-    final request = ScheduleUpdateRequest(
-      meetingId: params.meetingId,
-      scheduleId: original.id,
-      title: title == original.title ? null : title,
-      description: description == original.description ? null : description,
-      startAt: isSameMoment(params.startAt, original.startAt)
-          ? null
-          : params.startAt,
-      endAt: isSameMoment(params.endAt, original.endAt) ? null : params.endAt,
-      location: location == original.location ? null : location,
+    final titleChanged = title != original.title;
+    final descriptionChanged = description != original.description;
+    // 서버 응답은 UTC, 입력 폼은 로컬 시각이라 일시는 `==` 대신 같은 순간인지로 비교합니다.
+    final startAtChanged = !startAt.isAtSameMomentAs(original.startAt);
+    // 종료 일시를 비우는 수정은 아직 지원하지 않아서, 새 값이 있을 때만 비교합니다.
+    final endAtChanged =
+        endAt != null &&
+        (originalEndAt == null || !endAt.isAtSameMomentAs(originalEndAt));
+    final locationChanged = location != original.location;
+
+    final hasChanges =
+        titleChanged ||
+        descriptionChanged ||
+        startAtChanged ||
+        endAtChanged ||
+        locationChanged;
+    if (!hasChanges) return;
+
+    await _scheduleRepository.updateSchedule(
+      ScheduleUpdateRequest(
+        meetingId: params.meetingId,
+        scheduleId: original.id,
+        title: titleChanged ? title : null,
+        description: descriptionChanged ? description : null,
+        startAt: startAtChanged ? startAt : null,
+        endAt: endAtChanged ? endAt : null,
+        location: locationChanged ? location : null,
+      ),
     );
-    if (request ==
-        ScheduleUpdateRequest(
-          meetingId: params.meetingId,
-          scheduleId: original.id,
-        )) {
-      return;
-    }
-    await _scheduleRepository.updateSchedule(request);
   }
 }

@@ -82,6 +82,37 @@ void main() {
       expect(repository.updateCalls, isEmpty);
     });
 
+    test('종료 일시만 비우면 저장하지 않는다', () async {
+      await updateSchedule(
+        UpdateScheduleParams(
+          meetingId: 1,
+          original: original,
+          title: '10월 정기 러닝',
+          description: '반포 한강공원 집합',
+          startAt: startAt,
+          location: '반포 한강공원',
+        ),
+      );
+
+      expect(repository.updateCalls, isEmpty);
+    });
+
+    test('종료 일시가 없던 일정에 종료 일시를 넣으면 요청에 담는다', () async {
+      await updateSchedule(
+        UpdateScheduleParams(
+          meetingId: 1,
+          original: original.copyWith(endAt: null),
+          title: '10월 정기 러닝',
+          description: '반포 한강공원 집합',
+          startAt: startAt,
+          endAt: endAt,
+          location: '반포 한강공원',
+        ),
+      );
+
+      expect(repository.updateCalls.single.endAt, endAt);
+    });
+
     test('설명이나 장소를 비우면 빈 문자열로 보낸다', () async {
       await updateSchedule(params(description: '   ', location: ''));
 
