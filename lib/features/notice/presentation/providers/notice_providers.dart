@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../group/domain/entities/member_role.dart';
+import '../../../group/presentation/providers/group_providers.dart';
 import '../../data/datasources/notice_remote_data_source.dart';
 import '../../data/datasources/notice_remote_data_source_impl.dart';
 import '../../data/repositories/notice_repository_impl.dart';
@@ -14,6 +16,7 @@ import '../../domain/usecases/update_notice.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../viewmodels/notice_list_view_model.dart';
+import '../viewmodels/notice_write_access.dart';
 import '../viewmodels/notice_write_view_model.dart';
 
 // DataSource → Repository
@@ -72,3 +75,17 @@ final noticeWriteProvider = AsyncNotifierProvider.autoDispose
     .family<NoticeWriteViewModel, void, int>(
       (meetingId) => NoticeWriteViewModel(meetingId: meetingId),
     );
+
+/// 모임 내 내 역할로 공지 작성 권한을 정합니다. (family 인자: meetingId)
+///
+/// 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
+final noticeWriteAccessProvider = Provider.autoDispose
+    .family<NoticeWriteAccess, int>((ref, meetingId) {
+      final role = ref.watch(groupMyRoleProvider(meetingId));
+      return NoticeWriteAccess(
+        canWrite: role.value?.canWriteNotices ?? false,
+        retryRole: role.hasError
+            ? () => ref.invalidate(groupMyRoleProvider(meetingId))
+            : null,
+      );
+    });

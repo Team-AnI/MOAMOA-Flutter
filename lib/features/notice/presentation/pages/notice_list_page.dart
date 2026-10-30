@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../group/domain/entities/member_role.dart';
-import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/notice.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
@@ -61,12 +59,9 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   @override
   Widget build(BuildContext context) {
     final notices = ref.watch(noticeListProvider(widget.meetingId));
-    final role = ref.watch(groupMyRoleProvider(widget.meetingId));
-    final canWrite = role.value?.canWriteNotices ?? false;
-    // 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
-    final VoidCallback? retryRole = role.hasError
-        ? () => ref.invalidate(groupMyRoleProvider(widget.meetingId))
-        : null;
+    final access = ref.watch(noticeWriteAccessProvider(widget.meetingId));
+    final canWrite = access.canWrite;
+    final retryRole = access.retryRole;
 
     return Scaffold(
       backgroundColor: Colors.white,
