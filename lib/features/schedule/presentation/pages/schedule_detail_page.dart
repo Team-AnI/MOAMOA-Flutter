@@ -7,6 +7,7 @@ import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_args.dart';
 import '../schedule_format.dart';
 import '../viewmodels/schedule_delete_state.dart';
 import '../viewmodels/schedule_delete_status.dart';

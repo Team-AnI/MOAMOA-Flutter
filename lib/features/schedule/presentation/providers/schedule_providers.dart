@@ -7,6 +7,7 @@ import 'package:moamoa/features/schedule/domain/usecases/delete_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
+import 'package:moamoa/features/schedule/presentation/schedule_args.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
@@ -71,9 +72,6 @@ final scheduleListProvider =
         endDate: request.endDate,
       ),
     );
-
-/// 상세·수정·취소 Provider 가 키로 쓰는 일정 식별자입니다.
-typedef ScheduleArgs = ({int meetingId, int scheduleId});
 
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<

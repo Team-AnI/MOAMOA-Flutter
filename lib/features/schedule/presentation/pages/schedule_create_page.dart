@@ -17,14 +17,18 @@ import '../widgets/schedule_form.dart';
 ///   문구를 보여주며, 그 밖의 실패는 하단 안내(SnackBar)로 알립니다.
 ///
 /// [meetingId] 는 일정을 만들 모임입니다. 제출 상태는 [scheduleCreateProvider] 가 관리합니다.
-class ScheduleCreatePage extends ConsumerWidget {
+class ScheduleCreatePage extends ConsumerStatefulWidget {
   const ScheduleCreatePage({super.key, required this.meetingId});
 
   final int meetingId;
 
+  @override
+  ConsumerState<ScheduleCreatePage> createState() => _ScheduleCreatePageState();
+}
+
+class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   /// 제출 상태가 바뀌면: 성공이면 화면을 닫고, 실패하면 안내합니다.
   void _onStateChanged(
-    BuildContext context,
     ScheduleCreateState? previous,
     ScheduleCreateState next,
   ) {
@@ -38,12 +42,29 @@ class ScheduleCreatePage extends ConsumerWidget {
     }
   }
 
+  /// 입력한 값으로 일정 만들기를 요청합니다.
+  void _submit({
+    required String title,
+    required String description,
+    required DateTime startAt,
+    DateTime? endAt,
+    required String location,
+  }) {
+    ref
+        .read(scheduleCreateProvider(widget.meetingId).notifier)
+        .submit(
+          title: title,
+          description: description,
+          startAt: startAt,
+          endAt: endAt,
+          location: location,
+        );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final provider = scheduleCreateProvider(meetingId);
-    ref.listen(provider, (previous, next) {
-      _onStateChanged(context, previous, next);
-    });
+  Widget build(BuildContext context) {
+    final provider = scheduleCreateProvider(widget.meetingId);
+    ref.listen(provider, _onStateChanged);
     final state = ref.watch(provider);
 
     return Scaffold(
@@ -54,24 +75,7 @@ class ScheduleCreatePage extends ConsumerWidget {
           heading: '일정 만들기',
           submitLabel: '일정 만들기',
           isSubmitting: state.status == ScheduleCreateStatus.submitting,
-          onSubmit:
-              ({
-                required title,
-                required description,
-                required startAt,
-                endAt,
-                required location,
-              }) {
-                ref
-                    .read(provider.notifier)
-                    .submit(
-                      title: title,
-                      description: description,
-                      startAt: startAt,
-                      endAt: endAt,
-                      location: location,
-                    );
-              },
+          onSubmit: _submit,
         ),
       ),
     );

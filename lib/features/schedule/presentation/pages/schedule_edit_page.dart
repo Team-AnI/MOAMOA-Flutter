@@ -5,6 +5,7 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_args.dart';
 import '../viewmodels/schedule_edit_state.dart';
 import '../viewmodels/schedule_edit_status.dart';
 import '../widgets/schedule_failure_snack_bar.dart';
@@ -15,7 +16,7 @@ import '../widgets/schedule_form.dart';
 /// - [meetingId], [scheduleId]: 수정할 모임과 일정. 라우트(`…/schedules/:scheduleId/edit`)에서 전달됩니다.
 /// - 불러오는 중에는 로딩 표시, 실패하면 안내 문구를 보여줍니다.
 /// - 성공하면 화면을 닫고(상세와 목록은 ViewModel 이 새로 불러옵니다), 실패하면 하단 안내(SnackBar)로 알립니다.
-class ScheduleEditPage extends ConsumerWidget {
+class ScheduleEditPage extends ConsumerStatefulWidget {
   const ScheduleEditPage({
     super.key,
     required this.meetingId,
@@ -25,12 +26,16 @@ class ScheduleEditPage extends ConsumerWidget {
   final int meetingId;
   final int scheduleId;
 
+  @override
+  ConsumerState<ScheduleEditPage> createState() => _ScheduleEditPageState();
+}
+
+class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
+  ScheduleArgs get _args =>
+      (meetingId: widget.meetingId, scheduleId: widget.scheduleId);
+
   /// 제출 상태가 바뀌면: 성공이면 화면을 닫고, 실패하면 안내합니다.
-  void _onStateChanged(
-    BuildContext context,
-    ScheduleEditState? previous,
-    ScheduleEditState next,
-  ) {
+  void _onStateChanged(ScheduleEditState? previous, ScheduleEditState next) {
     if (previous?.status == next.status) return;
     if (next.status == ScheduleEditStatus.success) {
       context.pop();
@@ -41,15 +46,31 @@ class ScheduleEditPage extends ConsumerWidget {
     }
   }
 
+  /// 입력한 값으로 일정 수정을 요청합니다.
+  void _submit({
+    required String title,
+    required String description,
+    required DateTime startAt,
+    DateTime? endAt,
+    required String location,
+  }) {
+    ref
+        .read(scheduleEditProvider(_args).notifier)
+        .submit(
+          title: title,
+          description: description,
+          startAt: startAt,
+          endAt: endAt,
+          location: location,
+        );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ScheduleArgs args = (meetingId: meetingId, scheduleId: scheduleId);
-    final editProvider = scheduleEditProvider(args);
-    ref.listen(editProvider, (previous, next) {
-      _onStateChanged(context, previous, next);
-    });
+  Widget build(BuildContext context) {
+    final editProvider = scheduleEditProvider(_args);
+    ref.listen(editProvider, _onStateChanged);
     final state = ref.watch(editProvider);
-    final schedule = ref.watch(scheduleDetailProvider(args));
+    final schedule = ref.watch(scheduleDetailProvider(_args));
 
     return Scaffold(
       backgroundColor: MoaColors.page,
@@ -60,24 +81,7 @@ class ScheduleEditPage extends ConsumerWidget {
             submitLabel: '수정 완료',
             isSubmitting: state.status == ScheduleEditStatus.submitting,
             initial: s,
-            onSubmit:
-                ({
-                  required title,
-                  required description,
-                  required startAt,
-                  endAt,
-                  required location,
-                }) {
-                  ref
-                      .read(editProvider.notifier)
-                      .submit(
-                        title: title,
-                        description: description,
-                        startAt: startAt,
-                        endAt: endAt,
-                        location: location,
-                      );
-                },
+            onSubmit: _submit,
           ),
           error: (_, _) => Center(
             child: Text(
