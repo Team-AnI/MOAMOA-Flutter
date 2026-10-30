@@ -167,7 +167,7 @@ flutter run
 | `refactor/#이슈번호-수정범위` | 리팩터링 | `refactor/#20-auth-repo` |
 | `chore/#이슈번호-설명` | 빌드, 설정, 의존성 등 | `chore/#3-update-pubspec` |
 | `docs/#이슈번호-설명` | 문서 | `docs/#1-readme` |
-| `release/버전` | 웹 배포 (push 하면 Firebase Hosting 에 자동 배포, [웹 배포](#웹-배포-firebase-hosting) 참고) | `release/0.1.0` |
+| `release/버전` | 웹 배포 (`v버전` 태그를 push 하면 Firebase Hosting 에 자동 배포, [웹 배포](#웹-배포-firebase-hosting) 참고) | `release/0.1.0` |
 
 ### 4. 이슈 / 커밋 / PR 작성
 
@@ -439,19 +439,22 @@ PR 을 올리면 아래 검사가 자동으로 실행되며, **모두 통과해�
 
 ### 웹 배포 (Firebase Hosting)
 
-`release/` 로 시작하는 브랜치에 push 하면 `.github/workflows/deploy-web.yml` 이 웹을 빌드해 Firebase Hosting 에 배포합니다.
+`release/` 브랜치에 `v<버전>` 태그를 push 하면 `.github/workflows/deploy-web.yml` 이 웹을 빌드해 Firebase Hosting 에 배포합니다. 브랜치만 push 해서는 배포되지 않습니다.
 
 - 주소: https://moamoa-129cd.web.app
 - Firebase 프로젝트: `moamoa-129cd`
-- 배포 전에 포맷 / 정적 분석 / 테스트를 실행하며, 하나라도 실패하면 배포하지 않습니다.
+- 배포 전에 태그와 포맷 / 정적 분석 / 테스트를 확인하며, 하나라도 실패하면 배포하지 않습니다.
 
 #### 배포 순서
 
 1. `develop` 에서 `release/<버전>` 브랜치를 만듭니다. (예: `release/0.2.0`, GitHub 브랜치 화면에서 만들어도 됩니다)
-2. `pubspec.yaml` 의 `version` 이 브랜치 버전과 같은지 확인하고, 다르면 release 브랜치에서 올립니다. (예: `0.2.0+2`)
-3. push 하면 Actions 의 `Deploy Web` 이 실행되고, 끝나면 위 주소에서 확인합니다.
+2. `pubspec.yaml` 의 `version` 이 브랜치 버전과 같은지 확인하고, 다르면 release 브랜치에서 올립니다. (예: `0.2.0+2`, 태그와 다르면 배포가 중단됩니다)
+3. release 브랜치의 마지막 커밋에 `v<버전>` 태그를 push 합니다. (예: `v0.2.0`, GitHub Releases 에서 대상 브랜치를 `release/0.2.0` 으로 골라 만들어도 됩니다)
+4. Actions 의 `Deploy Web` 이 끝나면 위 주소에서 확인합니다.
    - 폰에서는 브라우저 공유 메뉴의 "홈 화면에 추가" 로 앱처럼 열 수 있습니다.
-4. 확인이 끝나면 release 브랜치를 `main` 과 `develop` 에 반영하고, `main` 에 `v<버전>` 태그를 답니다.
+5. 확인이 끝나면 release 브랜치를 `main` 과 `develop` 에 반영합니다.
+
+이전 버전으로 되돌릴 때는 해당 태그의 Actions 실행을 다시 실행(Re-run)합니다.
 
 #### 설정 (Settings → Secrets and variables → Actions)
 
