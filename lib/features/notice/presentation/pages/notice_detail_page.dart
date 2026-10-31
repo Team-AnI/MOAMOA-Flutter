@@ -48,21 +48,26 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
     if (confirmed != true || !mounted) return;
 
     setState(() => _isDeleting = true);
+    Object? failure;
     try {
       await ref.read(noticeDetailProvider(_args).notifier).delete();
-      if (!mounted) return;
-      // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
-      showNoticeSnackBar(context, '공지를 삭제했어요.');
-      // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        context.go(_listPath);
-      }
     } catch (error) {
-      if (!mounted) return;
+      failure = error;
+    }
+    if (!mounted) return;
+
+    if (failure != null) {
       setState(() => _isDeleting = false);
-      showNoticeSnackBar(context, noticeErrorMessage(error));
+      showNoticeSnackBar(context, noticeErrorMessage(failure));
+      return;
+    }
+    // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
+    showNoticeSnackBar(context, '공지를 삭제했어요.');
+    // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(_listPath);
     }
   }
 
