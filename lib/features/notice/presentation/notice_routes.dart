@@ -2,10 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../group/domain/entities/member_role.dart';
+import '../../group/presentation/providers/group_providers.dart';
 import 'pages/notice_detail_page.dart';
 import 'pages/notice_list_page.dart';
 import 'pages/notice_write_page.dart';
-import 'providers/notice_providers.dart';
 
 /// 공지 route 목록. `app/router/app_router.dart` 의 `_featureRoutes` 에 추가합니다.
 ///
@@ -61,12 +62,12 @@ Future<String?> _adminOnly(BuildContext context, GoRouterState state) async {
   final container = ProviderScope.containerOf(context, listen: false);
   // autoDispose provider 가 응답 도착 전에 정리되지 않도록 구독을 유지합니다.
   final subscription = container.listen(
-    noticeMyRoleProvider(meetingId),
+    groupMyRoleProvider(meetingId),
     (_, _) {},
   );
   try {
-    final role = await container.read(noticeMyRoleProvider(meetingId).future);
-    if (role.isAdmin) return null;
+    final role = await container.read(groupMyRoleProvider(meetingId).future);
+    if (role.canWriteNotices) return null;
   } catch (_) {
     // 역할을 확인하지 못했으면 들여보내지 않습니다.
   } finally {

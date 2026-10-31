@@ -1,21 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
+import '../../../group/domain/entities/member_role.dart';
+import '../../../group/presentation/providers/group_providers.dart';
 import '../../data/datasources/notice_remote_data_source.dart';
 import '../../data/datasources/notice_remote_data_source_impl.dart';
 import '../../data/repositories/notice_repository_impl.dart';
-import '../../domain/entities/member_role.dart';
 import '../../domain/entities/notice.dart';
 import '../../domain/repositories/notice_repository.dart';
 import '../../domain/usecases/create_notice.dart';
 import '../../domain/usecases/delete_notice.dart';
-import '../../domain/usecases/get_my_role.dart';
 import '../../domain/usecases/get_notice_detail.dart';
 import '../../domain/usecases/get_notices.dart';
 import '../../domain/usecases/update_notice.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../viewmodels/notice_list_view_model.dart';
+import '../viewmodels/notice_write_access.dart';
 import '../viewmodels/notice_write_view_model.dart';
 
 // DataSource → Repository
@@ -58,17 +59,7 @@ final deleteNoticeProvider = Provider<DeleteNotice>(
       DeleteNoticeImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
-final getMyRoleProvider = Provider<GetMyRole>(
-  (ref) => GetMyRoleImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
-);
-
 // ViewModel / 화면 상태 (family 인자: meetingId)
-
-/// 모임에서 내 역할. 작성·수정·삭제 버튼 노출에 사용합니다.
-final noticeMyRoleProvider = FutureProvider.autoDispose.family<MemberRole, int>(
-  (ref, meetingId) =>
-      ref.watch(getMyRoleProvider)(GetMyRoleParams(meetingId: meetingId)),
-);
 
 final noticeListProvider = AsyncNotifierProvider.autoDispose
     .family<NoticeListViewModel, NoticeListState, int>(
@@ -84,3 +75,21 @@ final noticeWriteProvider = AsyncNotifierProvider.autoDispose
     .family<NoticeWriteViewModel, void, int>(
       (meetingId) => NoticeWriteViewModel(meetingId: meetingId),
     );
+
+/// 모임 내 내 역할로 공지 작성 권한을 정합니다. (family 인자: meetingId)
+///
+/// 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
+///
+/// AsyncValue 는 재조회 중이거나 실패해도 이전 성공 값을 들고 있으므로, 지금 확인이
+/// 끝난 상태(로딩·오류가 아님)일 때만 작성할 수 있습니다.
+final noticeWriteAccessProvider = Provider.autoDispose
+    .family<NoticeWriteAccess, int>((ref, meetingId) {
+      final role = ref.watch(groupMyRoleProvider(meetingId));
+      final isSettled = !role.isLoading && !role.hasError;
+      return NoticeWriteAccess(
+        canWrite: isSettled && (role.value?.canWriteNotices ?? false),
+        retryRole: role.hasError
+            ? () => ref.invalidate(groupMyRoleProvider(meetingId))
+            : null,
+      );
+    });

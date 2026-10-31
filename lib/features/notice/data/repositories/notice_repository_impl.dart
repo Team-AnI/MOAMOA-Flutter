@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../domain/entities/member_role.dart';
 import '../../domain/entities/notice.dart';
 import '../../domain/entities/notice_exception.dart';
 import '../../domain/entities/notice_list_result.dart';
@@ -8,7 +7,6 @@ import '../../domain/repositories/notice_repository.dart';
 import '../datasources/notice_remote_data_source.dart';
 import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
-import '../models/fetch_my_role_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
 import '../models/notice_list_model.dart';
@@ -93,16 +91,6 @@ class NoticeRepositoryImpl implements NoticeRepository {
         DeleteNoticeRequest(meetingId: meetingId, noticeId: noticeId),
       ),
     );
-  }
-
-  @override
-  Future<MemberRole> getMyRole({required int meetingId}) {
-    return _guard(() async {
-      final role = await _noticeRemoteDataSource.fetchMyRole(
-        FetchMyRoleRequest(meetingId: meetingId),
-      );
-      return role == 'ADMIN' ? MemberRole.admin : MemberRole.member;
-    });
   }
 
   Future<T> _guard<T>(Future<T> Function() request) async {

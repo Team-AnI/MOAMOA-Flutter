@@ -59,12 +59,9 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
   @override
   Widget build(BuildContext context) {
     final notices = ref.watch(noticeListProvider(widget.meetingId));
-    final role = ref.watch(noticeMyRoleProvider(widget.meetingId));
-    final isAdmin = role.value?.isAdmin ?? false;
-    // 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
-    final VoidCallback? retryRole = role.hasError
-        ? () => ref.invalidate(noticeMyRoleProvider(widget.meetingId))
-        : null;
+    final access = ref.watch(noticeWriteAccessProvider(widget.meetingId));
+    final canWrite = access.canWrite;
+    final retryRole = access.retryRole;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -72,12 +69,15 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(onWrite: isAdmin ? _goWrite : null, onRetryRole: retryRole),
+            _Header(
+              onWrite: canWrite ? _goWrite : null,
+              onRetryRole: retryRole,
+            ),
             Expanded(
               child: notices.when(
                 data: (state) => state.isEmpty
                     ? _EmptyView(
-                        onWrite: isAdmin ? _goWrite : null,
+                        onWrite: canWrite ? _goWrite : null,
                         onRetryRole: retryRole,
                         onRefresh: () => ref
                             .read(noticeListProvider(widget.meetingId).notifier)

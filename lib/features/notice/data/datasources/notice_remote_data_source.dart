@@ -1,6 +1,5 @@
 import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
-import '../models/fetch_my_role_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
 import '../models/notice_list_model.dart';
@@ -23,7 +22,4 @@ abstract interface class NoticeRemoteDataSource {
 
   /// DELETE /v1/meetings/{meetingId}/notices/{noticeId}
   Future<void> deleteNotice(DeleteNoticeRequest request);
-
-  /// GET /v1/meetings/{meetingId} 의 myRole ("ADMIN" / "MEMBER")
-  Future<String> fetchMyRole(FetchMyRoleRequest request);
 }

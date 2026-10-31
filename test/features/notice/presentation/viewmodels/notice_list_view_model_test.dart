@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/member_role.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_state.dart';
@@ -10,181 +9,174 @@ import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_state
 import '../../fakes/fake_notice_repository.dart';
 
 void main() {
-  const meetingId = 1;
-  late FakeNoticeRepository repository;
-  late ProviderContainer container;
+  group('NoticeListViewModel', () {
+    const meetingId = 1;
+    late FakeNoticeRepository repository;
+    late ProviderContainer container;
 
-  setUp(() {
-    repository = FakeNoticeRepository(
-      notices: List.generate(25, (index) => buildNotice(index + 1)),
-    );
-    container = ProviderContainer.test(
-      overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
-      retry: (_, _) => null,
-    );
-  });
+    setUp(() {
+      repository = FakeNoticeRepository(
+        notices: List.generate(25, (index) => buildNotice(index + 1)),
+      );
+      container = ProviderContainer.test(
+        overrides: [noticeRepositoryProvider.overrideWithValue(repository)],
+        retry: (_, _) => null,
+      );
+    });
 
-  /// 화면에 들어온 것처럼 목록을 구독하고 첫 로딩을 기다립니다.
-  Future<NoticeListState> openList() {
-    container.listen(noticeListProvider(meetingId), (_, _) {});
-    return container.read(noticeListProvider(meetingId).future);
-  }
+    /// 화면에 들어온 것처럼 목록을 구독하고 첫 로딩을 기다립니다.
+    Future<NoticeListState> openList() {
+      container.listen(noticeListProvider(meetingId), (_, _) {});
+      return container.read(noticeListProvider(meetingId).future);
+    }
 
-  test('처음 화면에 들어오면 첫 페이지를 불러온다', () async {
-    final state = await openList();
+    test('처음 화면에 들어오면 첫 페이지를 불러온다', () async {
+      final state = await openList();
 
-    expect(state.notices, hasLength(20));
-    expect(state.hasNext, isTrue);
-    expect(state.isEmpty, isFalse);
-  });
+      expect(state.notices, hasLength(20));
+      expect(state.hasNext, isTrue);
+      expect(state.isEmpty, isFalse);
+    });
 
-  test('공지가 없으면 빈 상태가 된다', () async {
-    repository.notices.clear();
+    test('공지가 없으면 빈 상태가 된다', () async {
+      repository.notices.clear();
 
-    final state = await openList();
+      final state = await openList();
 
-    expect(state.isEmpty, isTrue);
-    expect(state.hasNext, isFalse);
-  });
+      expect(state.isEmpty, isTrue);
+      expect(state.hasNext, isFalse);
+    });
 
-  test('loadMore 를 하면 다음 페이지를 이어 붙인다', () async {
-    await openList();
+    test('loadMore 를 하면 다음 페이지를 이어 붙인다', () async {
+      await openList();
 
-    await container.read(noticeListProvider(meetingId).notifier).loadMore();
+      await container.read(noticeListProvider(meetingId).notifier).loadMore();
 
-    final state = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(state.notices, hasLength(25));
-    expect(state.page, 1);
-    expect(state.hasNext, isFalse);
-  });
+      final state = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(state.notices, hasLength(25));
+      expect(state.page, 1);
+      expect(state.hasNext, isFalse);
+    });
 
-  test('다음 페이지가 없으면 loadMore 를 해도 조회하지 않는다', () async {
-    repository.notices.removeRange(5, 25);
-    await openList();
-    final callCount = repository.getNoticesCallCount;
+    test('다음 페이지가 없으면 loadMore 를 해도 조회하지 않는다', () async {
+      repository.notices.removeRange(5, 25);
+      await openList();
+      final callCount = repository.getNoticesCallCount;
 
-    await container.read(noticeListProvider(meetingId).notifier).loadMore();
+      await container.read(noticeListProvider(meetingId).notifier).loadMore();
 
-    expect(repository.getNoticesCallCount, callCount);
-  });
+      expect(repository.getNoticesCallCount, callCount);
+    });
 
-  test('refresh 를 하면 첫 페이지를 다시 불러온다', () async {
-    await openList();
-    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+    test('refresh 를 하면 첫 페이지를 다시 불러온다', () async {
+      await openList();
+      repository.notices.insert(0, buildNotice(100, title: '새 공지'));
 
-    await container.read(noticeListProvider(meetingId).notifier).refresh();
+      await container.read(noticeListProvider(meetingId).notifier).refresh();
 
-    final state = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(state.notices.first.title, '새 공지');
-  });
+      final state = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(state.notices.first.title, '새 공지');
+    });
 
-  test('새로고침 전에 시작한 다음 페이지 응답이 늦게 오면 무시한다', () async {
-    await openList();
-    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+    test('새로고침 전에 시작한 다음 페이지 응답이 늦게 오면 무시한다', () async {
+      await openList();
+      final viewModel = container.read(noticeListProvider(meetingId).notifier);
 
-    // 1. 다음 페이지 요청을 보내고, 응답은 붙잡아 둔다.
-    final page1Gate = Completer<void>();
-    repository.pageGates[1] = page1Gate;
-    final loadMore = viewModel.loadMore();
+      // 1. 다음 페이지 요청을 보내고, 응답은 붙잡아 둔다.
+      final page1Gate = Completer<void>();
+      repository.pageGates[1] = page1Gate;
+      final loadMore = viewModel.loadMore();
 
-    // 2. 그사이 새 공지가 등록되고 새로고침이 먼저 끝난다.
-    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
-    await viewModel.refresh();
+      // 2. 그사이 새 공지가 등록되고 새로고침이 먼저 끝난다.
+      repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+      await viewModel.refresh();
 
-    // 3. 이전 다음 페이지 응답이 늦게 도착한다.
-    page1Gate.complete();
-    await loadMore;
+      // 3. 이전 다음 페이지 응답이 늦게 도착한다.
+      page1Gate.complete();
+      await loadMore;
 
-    final state = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(state.notices.first.title, '새 공지');
-    expect(state.notices, hasLength(20));
-    expect(state.page, 0);
-    expect(state.isLoadingMore, isFalse);
-  });
+      final state = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(state.notices.first.title, '새 공지');
+      expect(state.notices, hasLength(20));
+      expect(state.page, 0);
+      expect(state.isLoadingMore, isFalse);
+    });
 
-  test('새로고침 뒤에는 다음 페이지를 다시 불러올 수 있다', () async {
-    await openList();
-    final viewModel = container.read(noticeListProvider(meetingId).notifier);
-    final page1Gate = Completer<void>();
-    repository.pageGates[1] = page1Gate;
-    final staleLoadMore = viewModel.loadMore();
-    await viewModel.refresh();
-    page1Gate.complete();
-    await staleLoadMore;
+    test('새로고침 뒤에는 다음 페이지를 다시 불러올 수 있다', () async {
+      await openList();
+      final viewModel = container.read(noticeListProvider(meetingId).notifier);
+      final page1Gate = Completer<void>();
+      repository.pageGates[1] = page1Gate;
+      final staleLoadMore = viewModel.loadMore();
+      await viewModel.refresh();
+      page1Gate.complete();
+      await staleLoadMore;
 
-    await viewModel.loadMore();
+      await viewModel.loadMore();
 
-    final state = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(state.notices, hasLength(25));
-    expect(state.page, 1);
-  });
+      final state = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(state.notices, hasLength(25));
+      expect(state.page, 1);
+    });
 
-  test('새로고침 중에 시작한 다음 페이지 요청은 보내지 않아 새 목록이 유지된다', () async {
-    await openList();
-    final viewModel = container.read(noticeListProvider(meetingId).notifier);
+    test('새로고침 중에 시작한 다음 페이지 요청은 보내지 않아 새 목록이 유지된다', () async {
+      await openList();
+      final viewModel = container.read(noticeListProvider(meetingId).notifier);
 
-    // 1. 새 공지가 등록된 뒤 새로고침을 시작하고, 첫 페이지 응답은 붙잡아 둔다.
-    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
-    final page0Gate = Completer<void>();
-    repository.pageGates[0] = page0Gate;
-    final refresh = viewModel.refresh();
-    final callsBeforeLoadMore = repository.getNoticesCallCount;
+      // 1. 새 공지가 등록된 뒤 새로고침을 시작하고, 첫 페이지 응답은 붙잡아 둔다.
+      repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+      final page0Gate = Completer<void>();
+      repository.pageGates[0] = page0Gate;
+      final refresh = viewModel.refresh();
+      final callsBeforeLoadMore = repository.getNoticesCallCount;
 
-    // 2. 새로고침 중에 스크롤로 다음 페이지를 요청한다.
-    await viewModel.loadMore();
-    expect(repository.getNoticesCallCount, callsBeforeLoadMore);
+      // 2. 새로고침 중에 스크롤로 다음 페이지를 요청한다.
+      await viewModel.loadMore();
+      expect(repository.getNoticesCallCount, callsBeforeLoadMore);
 
-    // 3. 새로고침 응답이 도착한다.
-    page0Gate.complete();
-    await refresh;
+      // 3. 새로고침 응답이 도착한다.
+      page0Gate.complete();
+      await refresh;
 
-    final state = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(state.notices.first.title, '새 공지');
-    expect(state.notices, hasLength(20));
-    expect(state.page, 0);
-    expect(state.isLoadingMore, isFalse);
+      final state = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(state.notices.first.title, '새 공지');
+      expect(state.notices, hasLength(20));
+      expect(state.page, 0);
+      expect(state.isLoadingMore, isFalse);
 
-    // 4. 새로고침이 끝난 뒤에는 다음 페이지를 이어 붙일 수 있고 중복이 없다.
-    await viewModel.loadMore();
-    final next = container.read(noticeListProvider(meetingId)).requireValue;
-    expect(next.notices, hasLength(26));
-    expect(next.notices.map((notice) => notice.id).toSet(), hasLength(26));
-  });
+      // 4. 새로고침이 끝난 뒤에는 다음 페이지를 이어 붙일 수 있고 중복이 없다.
+      await viewModel.loadMore();
+      final next = container.read(noticeListProvider(meetingId)).requireValue;
+      expect(next.notices, hasLength(26));
+      expect(next.notices.map((notice) => notice.id).toSet(), hasLength(26));
+    });
 
-  test('목록이 다시 만들어지는 중에는 다음 페이지 요청을 보내지 않는다', () async {
-    await openList();
-    final viewModel = container.read(noticeListProvider(meetingId).notifier);
-    repository.notices.insert(0, buildNotice(100, title: '새 공지'));
-    final page0Gate = Completer<void>();
-    repository.pageGates[0] = page0Gate;
+    test('목록이 다시 만들어지는 중에는 다음 페이지 요청을 보내지 않는다', () async {
+      await openList();
+      final viewModel = container.read(noticeListProvider(meetingId).notifier);
+      repository.notices.insert(0, buildNotice(100, title: '새 공지'));
+      final page0Gate = Completer<void>();
+      repository.pageGates[0] = page0Gate;
 
-    // 공지 등록 뒤처럼 목록 Provider 를 무효화하면 첫 페이지를 다시 불러온다.
-    container.invalidate(noticeListProvider(meetingId));
-    await Future<void>.delayed(Duration.zero);
-    final callsBeforeLoadMore = repository.getNoticesCallCount;
+      // 공지 등록 뒤처럼 목록 Provider 를 무효화하면 첫 페이지를 다시 불러온다.
+      container.invalidate(noticeListProvider(meetingId));
+      await Future<void>.delayed(Duration.zero);
+      final callsBeforeLoadMore = repository.getNoticesCallCount;
 
-    await viewModel.loadMore();
-    expect(repository.getNoticesCallCount, callsBeforeLoadMore);
+      await viewModel.loadMore();
+      expect(repository.getNoticesCallCount, callsBeforeLoadMore);
 
-    page0Gate.complete();
-    final state = await container.read(noticeListProvider(meetingId).future);
-    expect(state.notices.first.title, '새 공지');
-    expect(state.notices, hasLength(20));
-  });
+      page0Gate.complete();
+      final state = await container.read(noticeListProvider(meetingId).future);
+      expect(state.notices.first.title, '새 공지');
+      expect(state.notices, hasLength(20));
+    });
 
-  test('조회에 실패하면 에러 상태가 된다', () async {
-    repository.error = const NoticeException('모임 구성원이 아닙니다.');
+    test('조회에 실패하면 에러 상태가 된다', () async {
+      repository.error = const NoticeException('모임 구성원이 아닙니다.');
 
-    await expectLater(openList(), throwsA(isA<NoticeException>()));
-    expect(container.read(noticeListProvider(meetingId)).hasError, isTrue);
-  });
-
-  test('모임에서 내 역할을 불러온다 (작성 버튼 노출용)', () async {
-    repository.myRole = MemberRole.admin;
-    container.listen(noticeMyRoleProvider(meetingId), (_, _) {});
-
-    final role = await container.read(noticeMyRoleProvider(meetingId).future);
-
-    expect(role.isAdmin, isTrue);
+      await expectLater(openList(), throwsA(isA<NoticeException>()));
+      expect(container.read(noticeListProvider(meetingId)).hasError, isTrue);
+    });
   });
 }
