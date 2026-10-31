@@ -1,5 +1,5 @@
 import '../entities/group.dart';
-import '../entities/member_role.dart';
+import '../entities/current_group.dart';
 import '../repositories/group_repository.dart';
 import 'params/update_group_params.dart';
 import 'update_group.dart';
@@ -12,7 +12,7 @@ final class UpdateGroupImpl implements UpdateGroup {
 
   @override
   Future<Group> call(UpdateGroupParams params) {
-    if (params.currentGroup.membership.role != MemberRole.admin) {
+    if (!params.currentGroup.canManageGroup) {
       throw const GroupFailure(GroupFailureReason.forbidden);
     }
     final name = params.name?.trim();

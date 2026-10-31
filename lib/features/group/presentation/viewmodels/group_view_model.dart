@@ -190,23 +190,33 @@ class GroupViewModel extends Notifier<GroupState> {
       await ref.read(deleteGroupProvider)(
         DeleteGroupParams(currentGroup: current),
       );
-      if (!ref.mounted) return false;
-      state = GroupState(
-        groups: previous.groups
-            .where((entry) => entry.group.id != current.group.id)
-            .toList(growable: false),
-      );
-      return true;
+    } on GroupFailure catch (error) {
+      if (error.reason != GroupFailureReason.notFound) {
+        if (ref.mounted) {
+          state = previous.copyWith(
+            isSubmitting: false,
+            errorMessage: _message(error),
+            failureReason: error.reason,
+          );
+        }
+        return false;
+      }
     } on Exception catch (error) {
       if (ref.mounted) {
         state = previous.copyWith(
           isSubmitting: false,
           errorMessage: _message(error),
-          failureReason: error is GroupFailure ? error.reason : null,
         );
       }
       return false;
     }
+    if (!ref.mounted) return false;
+    state = GroupState(
+      groups: previous.groups
+          .where((entry) => entry.group.id != current.group.id)
+          .toList(growable: false),
+    );
+    return true;
   }
 
   Future<String?> getInviteCode() async {

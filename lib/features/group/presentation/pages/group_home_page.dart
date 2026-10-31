@@ -48,7 +48,7 @@ class GroupHomePage extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
-                  if (current?.canViewInviteCode ?? false) ...[
+                  if (current?.canManageGroup ?? false) ...[
                     const SizedBox(width: 8),
                     _HeaderButton(
                       icon: 'gear',

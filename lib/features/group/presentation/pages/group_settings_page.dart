@@ -10,10 +10,17 @@ import '../widgets/group_mark.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 
-class GroupSettingsPage extends ConsumerWidget {
+class GroupSettingsPage extends ConsumerStatefulWidget {
   const GroupSettingsPage({super.key});
 
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<GroupSettingsPage> createState() => _GroupSettingsPageState();
+}
+
+class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
+  String? _error;
+
+  Future<void> _delete() async {
     final current = ref.read(groupProvider).currentGroup;
     if (current == null) return;
     final confirmed = await showDialog<bool>(
@@ -48,12 +55,18 @@ class GroupSettingsPage extends ConsumerWidget {
     if (ref.read(groupProvider).currentGroup?.group.id != current.group.id) {
       return;
     }
+    setState(() => _error = null);
     final deleted = await ref.read(groupProvider.notifier).deleteCurrentGroup();
-    if (deleted && context.mounted) context.go('/groups');
+    if (!mounted) return;
+    if (deleted) {
+      context.go('/groups');
+    } else {
+      setState(() => _error = ref.read(groupProvider).errorMessage);
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(groupProvider);
     final current = state.currentGroup;
     return PopScope(
@@ -118,12 +131,12 @@ class GroupSettingsPage extends ConsumerWidget {
                     icon: 'settings_trash',
                     label: state.isBusy ? '처리 중…' : '모임 삭제',
                     destructive: true,
-                    onTap: state.isBusy ? null : () => _delete(context, ref),
+                    onTap: state.isBusy ? null : _delete,
                   ),
-                  if (state.errorMessage != null)
+                  if (_error != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text(state.errorMessage!, style: GroupDesign.body),
+                      child: Text(_error!, style: GroupDesign.body),
                     ),
                   const SizedBox(height: 24),
                 ],

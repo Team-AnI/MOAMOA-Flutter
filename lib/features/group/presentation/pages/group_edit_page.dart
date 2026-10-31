@@ -42,6 +42,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
   late final _description = TextEditingController(
     text: widget.initial.group.description ?? '',
   );
+  String? _error;
   final _form = GlobalKey<FormState>();
   bool get _changed =>
       _name.text.trim() != widget.initial.group.name ||
@@ -61,19 +62,21 @@ class _EditFormState extends ConsumerState<_EditForm> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    setState(() => _error = null);
     final saved = await ref
         .read(groupProvider.notifier)
         .update(name: _name.text, description: _description.text);
-    if (!mounted || saved == null) return;
+    if (!mounted) return;
+    if (saved == null) {
+      setState(() => _error = ref.read(groupProvider).errorMessage);
+      return;
+    }
     context.go('/groups/home');
   }
 
   @override
   Widget build(BuildContext context) {
     final busy = ref.watch(groupProvider.select((state) => state.isBusy));
-    final error = ref.watch(
-      groupProvider.select((state) => state.errorMessage),
-    );
     return PopScope(
       canPop: !busy,
       child: GroupPageLayout(
@@ -110,13 +113,13 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 enabled: !busy,
                 onChanged: (_) => setState(() {}),
               ),
-              if (error != null)
+              if (_error != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
-                    error,
+                    _error!,
                     style: GroupDesign.body,
-                    semanticsLabel: '저장 실패: $error',
+                    semanticsLabel: '저장 실패: $_error',
                   ),
                 ),
               const SizedBox(height: 24),

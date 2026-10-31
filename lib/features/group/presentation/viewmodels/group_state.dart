@@ -2,7 +2,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/current_group.dart';
 import '../../domain/entities/group_failure_reason.dart';
-import '../../domain/entities/member_role.dart';
 
 part 'group_state.freezed.dart';
 
@@ -20,6 +19,5 @@ abstract class GroupState with _$GroupState {
 
 extension GroupStateX on GroupState {
   bool get isBusy => isSubmitting || isLoading;
-  bool get canManageCurrentGroup =>
-      currentGroup?.membership.role == MemberRole.admin;
+  bool get canManageCurrentGroup => currentGroup?.canManageGroup ?? false;
 }
