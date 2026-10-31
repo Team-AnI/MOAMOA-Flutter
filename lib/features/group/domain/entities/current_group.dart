@@ -18,6 +18,7 @@ abstract class CurrentGroup with _$CurrentGroup {
 
 /// 현재 모임에서 로그인 사용자가 가진 권한을 위임합니다.
 extension CurrentGroupX on CurrentGroup {
+  bool get canManageGroup => membership.role.canManageGroup;
   bool get canWriteNotices => membership.role.canWriteNotices;
   bool get canCreateSchedules => membership.role.canCreateSchedules;
   bool get canConfirmSchedules => membership.role.canConfirmSchedules;

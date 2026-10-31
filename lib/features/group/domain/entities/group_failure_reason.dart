@@ -1,5 +1,6 @@
 enum GroupFailureReason {
   invalidCode,
+  notFound,
   unauthorized,
   validation,
   alreadyJoined,

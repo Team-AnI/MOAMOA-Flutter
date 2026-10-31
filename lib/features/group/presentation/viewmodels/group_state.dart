@@ -16,3 +16,8 @@ abstract class GroupState with _$GroupState {
     GroupFailureReason? failureReason,
   }) = _GroupState;
 }
+
+extension GroupStateX on GroupState {
+  bool get isBusy => isSubmitting || isLoading;
+  bool get canManageCurrentGroup => currentGroup?.canManageGroup ?? false;
+}
