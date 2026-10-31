@@ -42,6 +42,9 @@ class FakeNoticeRepository implements NoticeRepository {
   /// 값이 있으면 createNotice 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? createGate;
 
+  /// 값이 있으면 deleteNotice 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? deleteGate;
+
   /// 값이 있으면 getMyRole 만 이 예외를 던집니다. (역할 조회만 실패하는 상황)
   NoticeException? myRoleError;
 
@@ -97,12 +100,14 @@ class FakeNoticeRepository implements NoticeRepository {
     required String content,
   }) async {
     _throwIfError();
+    await createGate?.future;
+    // 응답을 기다리는 사이 실패하도록 바뀐 경우 (등록 중 실패 상황 재현)
+    _throwIfError();
     final id = _nextId++;
     notices.insert(
       0,
       Notice(id: id, title: title, content: content, createdAt: DateTime.now()),
     );
-    await createGate?.future;
     return id;
   }
 
@@ -129,6 +134,7 @@ class FakeNoticeRepository implements NoticeRepository {
     required int meetingId,
     required int noticeId,
   }) async {
+    await deleteGate?.future;
     _throwIfError();
     notices.removeAt(_indexOf(noticeId));
   }
