@@ -96,5 +96,67 @@ void main() {
       expect(access.canWrite, isTrue);
       expect(access.retryRole, isNull);
     });
+
+    group('관리자로 확인된 뒤 역할을 다시 조회할 때', () {
+      /// 관리자로 확인을 끝낸 상태에서 시작합니다.
+      Future<(ProviderContainer, FakeGroupMyRole)> openAsAdmin() async {
+        final myRole = FakeGroupMyRole.admin();
+        final container = createContainer(myRole);
+        await settleRole(container);
+        expect(container.read(noticeWriteAccessProvider(1)).canWrite, isTrue);
+        return (container, myRole);
+      }
+
+      test('응답을 기다리는 동안에는 이전 관리자 값이 있어도 작성할 수 없다', () async {
+        final (container, myRole) = await openAsAdmin();
+        myRole.gate = Completer<void>();
+
+        container.invalidate(groupMyRoleProvider(1));
+
+        final access = container.read(noticeWriteAccessProvider(1));
+        expect(access.canWrite, isFalse);
+        expect(access.retryRole, isNull);
+        myRole.gate!.complete();
+      });
+
+      test('재조회에 실패하면 이전 관리자 값이 있어도 작성할 수 없고 다시 시도 동작이 생긴다', () async {
+        final (container, myRole) = await openAsAdmin();
+        myRole.error = roleError;
+
+        container.invalidate(groupMyRoleProvider(1));
+        await settleRole(container);
+
+        final access = container.read(noticeWriteAccessProvider(1));
+        expect(access.canWrite, isFalse);
+        expect(access.retryRole, isNotNull);
+      });
+
+      test('재조회 결과가 일반 구성원이면 작성할 수 없다', () async {
+        final (container, myRole) = await openAsAdmin();
+        myRole.role = MemberRole.member;
+
+        container.invalidate(groupMyRoleProvider(1));
+        await settleRole(container);
+
+        final access = container.read(noticeWriteAccessProvider(1));
+        expect(access.canWrite, isFalse);
+        expect(access.retryRole, isNull);
+      });
+
+      test('재조회에 성공하면 다시 작성할 수 있다', () async {
+        final (container, myRole) = await openAsAdmin();
+        myRole.error = roleError;
+        container.invalidate(groupMyRoleProvider(1));
+        await settleRole(container);
+        myRole.error = null;
+
+        container.invalidate(groupMyRoleProvider(1));
+        await settleRole(container);
+
+        final access = container.read(noticeWriteAccessProvider(1));
+        expect(access.canWrite, isTrue);
+        expect(access.retryRole, isNull);
+      });
+    });
   });
 }

@@ -79,11 +79,15 @@ final noticeWriteProvider = AsyncNotifierProvider.autoDispose
 /// 모임 내 내 역할로 공지 작성 권한을 정합니다. (family 인자: meetingId)
 ///
 /// 역할 조회에 실패하면 일반 구성원처럼 숨기지 않고 다시 시도할 수 있게 합니다.
+///
+/// AsyncValue 는 재조회 중이거나 실패해도 이전 성공 값을 들고 있으므로, 지금 확인이
+/// 끝난 상태(로딩·오류가 아님)일 때만 작성할 수 있습니다.
 final noticeWriteAccessProvider = Provider.autoDispose
     .family<NoticeWriteAccess, int>((ref, meetingId) {
       final role = ref.watch(groupMyRoleProvider(meetingId));
+      final isSettled = !role.isLoading && !role.hasError;
       return NoticeWriteAccess(
-        canWrite: role.value?.canWriteNotices ?? false,
+        canWrite: isSettled && (role.value?.canWriteNotices ?? false),
         retryRole: role.hasError
             ? () => ref.invalidate(groupMyRoleProvider(meetingId))
             : null,
