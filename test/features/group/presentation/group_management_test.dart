@@ -91,7 +91,7 @@ void main() {
     return router;
   }
 
-  group('모임 수정·삭제 API', () {
+  group('GroupRepositoryImpl', () {
     late StubAdapter adapter;
     late Dio dio;
     late GroupRepositoryImpl repository;
@@ -108,18 +108,25 @@ void main() {
     });
     tearDown(() => dio.close());
 
-    test('이름만 수정하면 PATCH 본문에서 소개와 경로 ID를 제외하고 역할 없는 응답을 변환한다', () async {
+    test('이름만 수정하면 PATCH 본문에서 소개와 경로 ID를 제외한다', () async {
       adapter.response = {
         'success': true,
         'data': {'meetingId': 1, 'name': '새 모임', 'description': '소개'},
       };
-      final group = await repository.updateGroup(groupId: 1, name: '새 모임');
+      await repository.updateGroup(groupId: 1, name: '새 모임');
       expect(adapter.requests.single.method, 'PATCH');
       expect(
         adapter.requests.single.path,
         'https://example.test/v1/meetings/1',
       );
       expect(adapter.requests.single.data, {'name': '새 모임'});
+    });
+    test('역할 없는 수정 응답을 Group으로 변환한다', () async {
+      adapter.response = {
+        'success': true,
+        'data': {'meetingId': 1, 'name': '새 모임', 'description': '소개'},
+      };
+      final group = await repository.updateGroup(groupId: 1, name: '새 모임');
       expect(group.name, '새 모임');
       expect(group.description, '소개');
     });
@@ -172,56 +179,76 @@ void main() {
       404: GroupFailureReason.notFound,
       500: GroupFailureReason.unavailable,
     }.entries) {
-      test('수정·삭제 HTTP ${status.key} 오류를 도메인 실패로 전달한다', () async {
-        adapter.status = status.key;
-        adapter.response = '';
-        for (final action in [
-          () => repository.updateGroup(groupId: 1, name: '수정'),
-          () => repository.deleteGroup(groupId: 1),
-        ]) {
-          await expectLater(
-            action(),
-            throwsA(
-              isA<GroupFailure>().having(
-                (e) => e.reason,
-                'reason',
-                status.value,
+      for (final deleting in [false, true]) {
+        test(
+          '${deleting ? '삭제' : '수정'} HTTP ${status.key} 오류를 도메인 실패로 전달한다',
+          () async {
+            adapter.status = status.key;
+            adapter.response = '';
+            await expectLater(
+              deleting
+                  ? repository.deleteGroup(groupId: 1)
+                  : repository.updateGroup(groupId: 1, name: '수정'),
+              throwsA(
+                isA<GroupFailure>().having(
+                  (e) => e.reason,
+                  'reason',
+                  status.value,
+                ),
               ),
+            );
+          },
+        );
+      }
+    }
+  });
+
+  group('DeleteGroupImpl', () {
+    test('구성원의 삭제는 Repository 호출 전에 거부한다', () {
+      expect(
+        () => DeleteGroupImpl(groupRepository: fake)(
+          DeleteGroupParams(currentGroup: makeGroup(MemberRole.member)),
+        ),
+        throwsA(isA<GroupFailure>()),
+      );
+      expect(fake.deletes, 0);
+    });
+  });
+  group('UpdateGroupImpl', () {
+    test('구성원의 수정은 Repository 호출 전에 거부한다', () {
+      expect(
+        () => UpdateGroupImpl(groupRepository: fake)(
+          UpdateGroupParams(
+            currentGroup: makeGroup(MemberRole.member),
+            name: '수정',
+          ),
+        ),
+        throwsA(isA<GroupFailure>()),
+      );
+      expect(fake.updates, 0);
+    });
+    for (final entry in <String, String?>{
+      '변경 필드 없음': null,
+      '공백 이름': '   ',
+      '20자 초과 이름': '가' * 21,
+    }.entries) {
+      test('${entry.key} 요청을 거부한다', () {
+        final usecase = UpdateGroupImpl(groupRepository: fake);
+        expect(
+          () => usecase(
+            UpdateGroupParams(
+              currentGroup: makeGroup(MemberRole.admin),
+              name: entry.value,
             ),
-          );
-        }
+          ),
+          throwsA(isA<GroupFailure>()),
+        );
+        expect(fake.updates, 0);
       });
     }
   });
 
-  group('모임 관리 UseCase·ViewModel', () {
-    test('구성원이 수정·삭제하면 Repository를 호출하기 전에 거부한다', () {
-      final member = makeGroup(MemberRole.member);
-      expect(
-        () => UpdateGroupImpl(groupRepository: fake)(
-          UpdateGroupParams(currentGroup: member, name: '수정'),
-        ),
-        throwsA(isA<GroupFailure>()),
-      );
-      expect(
-        () => DeleteGroupImpl(groupRepository: fake)(
-          DeleteGroupParams(currentGroup: member),
-        ),
-        throwsA(isA<GroupFailure>()),
-      );
-      expect(fake.updates + fake.deletes, 0);
-    });
-    test('공백·20자 초과 이름이나 변경 필드 없는 요청은 거부한다', () {
-      final usecase = UpdateGroupImpl(groupRepository: fake);
-      final admin = makeGroup(MemberRole.admin);
-      for (final name in [null, '   ', '가' * 21]) {
-        expect(
-          () => usecase(UpdateGroupParams(currentGroup: admin, name: name)),
-          throwsA(isA<GroupFailure>()),
-        );
-      }
-      expect(fake.updates, 0);
-    });
+  group('GroupViewModel', () {
     test('20자 이름은 저장할 수 있다', () async {
       await container
           .read(groupProvider.notifier)
@@ -277,30 +304,45 @@ void main() {
       );
       expect(fake.updates, 0);
     });
-    test('수정 중 추가 수정·삭제·선택·목록 요청은 기존 작업을 덮어쓰지 않는다', () async {
-      fake.pendingUpdate = Completer<Group>();
-      final vm = container.read(groupProvider.notifier);
-      final pending = vm.update(name: '수정', description: '소개');
-      await vm.update(name: '두 번째', description: '소개');
-      expect(await vm.deleteCurrentGroup(), false);
-      expect(await vm.selectGroup(1), false);
-      await vm.loadGroups();
-      expect(fake.updates, 1);
-      expect(fake.deletes, 0);
-      fake.pendingUpdate!.complete(
-        const Group(id: 1, name: '수정', description: '소개'),
-      );
-      await pending;
-      expect(container.read(groupProvider).currentGroup!.group.name, '수정');
-    });
-    test('삭제 중 중복 요청을 막고 성공 후 목록·현재 모임을 정리한다', () async {
+    for (final action in ['수정', '삭제', '선택', '목록 조회']) {
+      test('수정 중 $action 요청은 진행 중인 작업을 덮어쓰지 않는다', () async {
+        fake.pendingUpdate = Completer<Group>();
+        final vm = container.read(groupProvider.notifier);
+        final pending = vm.update(name: '수정', description: '소개');
+        switch (action) {
+          case '수정':
+            expect(await vm.update(name: '두 번째', description: '소개'), isNull);
+          case '삭제':
+            expect(await vm.deleteCurrentGroup(), false);
+          case '선택':
+            expect(await vm.selectGroup(1), false);
+          case '목록 조회':
+            await vm.loadGroups();
+        }
+        expect(fake.updates, 1);
+        expect(fake.deletes, 0);
+        expect(container.read(groupProvider).isSubmitting, true);
+        fake.pendingUpdate!.complete(
+          const Group(id: 1, name: '수정', description: '소개'),
+        );
+        await pending;
+        expect(container.read(groupProvider).currentGroup!.group.name, '수정');
+      });
+    }
+    test('삭제 중 중복 요청을 차단한다', () async {
       fake.pendingDelete = Completer<void>();
       final vm = container.read(groupProvider.notifier);
       final pending = vm.deleteCurrentGroup();
       expect(await vm.deleteCurrentGroup(), false);
       expect(fake.deletes, 1);
       fake.pendingDelete!.complete();
-      expect(await pending, true);
+      await pending;
+    });
+    test('삭제 성공 후 목록과 현재 모임을 정리한다', () async {
+      expect(
+        await container.read(groupProvider.notifier).deleteCurrentGroup(),
+        true,
+      );
       expect(container.read(groupProvider).currentGroup, isNull);
       expect(container.read(groupProvider).groups, isEmpty);
     });
@@ -316,23 +358,26 @@ void main() {
       expect(state.isSubmitting, false);
       expect(state.errorMessage, isNull);
     });
-    test('수정·삭제 실패 시 기존 데이터와 재시도 가능 상태를 보존한다', () async {
-      fake.failure = const GroupFailure(GroupFailureReason.unavailable);
-      final vm = container.read(groupProvider.notifier);
-      expect(await vm.update(name: '실패', description: '소개'), isNull);
-      expect(await vm.deleteCurrentGroup(), false);
-      final state = container.read(groupProvider);
-      expect(state.currentGroup!.group.name, '모임');
-      expect(state.groups, hasLength(1));
-      expect(state.isSubmitting, false);
-      expect(state.errorMessage, contains('요청을 완료하지 못했습니다'));
-      fake.failure = null;
-      expect(await vm.deleteCurrentGroup(), true);
-    });
+    for (final deleting in [false, true]) {
+      test('${deleting ? '삭제' : '수정'} 실패 시 기존 데이터와 입력 가능한 상태를 보존한다', () async {
+        fake.failure = const GroupFailure(GroupFailureReason.unavailable);
+        final vm = container.read(groupProvider.notifier);
+        if (deleting) {
+          expect(await vm.deleteCurrentGroup(), false);
+        } else {
+          expect(await vm.update(name: '실패', description: '소개'), isNull);
+        }
+        final state = container.read(groupProvider);
+        expect(state.currentGroup!.group.name, '모임');
+        expect(state.groups, hasLength(1));
+        expect(state.isSubmitting, false);
+        expect(state.errorMessage, contains('요청을 완료하지 못했습니다'));
+      });
+    }
   });
 
-  group('모임 관리 화면', () {
-    testWidgets('변경 전 저장을 비활성화하고 실패 시 입력을 보존한다', (tester) async {
+  group('GroupEditPage', () {
+    testWidgets('변경 전에는 저장을 비활성화한다', (tester) async {
       await showPage(tester, '/groups/edit');
       expect(
         tester
@@ -340,6 +385,9 @@ void main() {
             .onPressed,
         isNull,
       );
+    });
+    testWidgets('저장 실패 시 입력을 보존한다', (tester) async {
+      await showPage(tester, '/groups/edit');
       await tester.enterText(find.byType(TextFormField).first, '수정한 이름');
       await tester.pump();
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
@@ -353,12 +401,98 @@ void main() {
             .onPressed,
         isNotNull,
       );
+    });
+    testWidgets('저장 실패 후 재시도하면 변경 내용을 저장한다', (tester) async {
+      await showPage(tester, '/groups/edit');
+      await tester.enterText(find.byType(TextFormField).first, '수정한 이름');
+      await tester.pump();
+      fake.failure = const GroupFailure(GroupFailureReason.unavailable);
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
       fake.failure = null;
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
-      expect(find.text('모임 정보 수정'), findsNothing);
+      expect(fake.updates, 2);
       expect(container.read(groupProvider).currentGroup!.group.name, '수정한 이름');
     });
+    testWidgets('모임 이름 입력은 20자까지 허용된다', (tester) async {
+      await showPage(tester, '/groups/edit');
+      await tester.enterText(find.byType(TextFormField).first, '가' * 21);
+      await tester.pump();
+      final field = tester.widget<TextFormField>(
+        find.byType(TextFormField).first,
+      );
+      expect(field.controller!.text, '가' * 20);
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
+            .onPressed,
+        isNotNull,
+      );
+    });
+  });
+  group('GroupSettingsPage', () {
+    testWidgets('이미 삭제된 모임을 삭제하면 목록으로 이동한다', (tester) async {
+      final router = await showPage(tester, '/groups/settings');
+      fake.failure = const GroupFailure(GroupFailureReason.notFound);
+      fake.groups = []; // 서버에서도 이미 삭제되어 목록 재조회에 포함되지 않습니다.
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/groups');
+      expect(container.read(groupProvider).groups, isEmpty);
+    });
+    testWidgets('삭제를 취소하면 요청하지 않는다', (tester) async {
+      await showPage(tester, '/groups/settings');
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+      expect(fake.deletes, 0);
+    });
+    testWidgets('삭제를 확인하면 목록으로 이동한다', (tester) async {
+      final router = await showPage(tester, '/groups/settings');
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      expect(fake.deletes, 1);
+      expect(router.routeInformationProvider.value.uri.path, '/groups');
+    });
+    testWidgets('삭제 실패 시 설정 화면에 오류를 표시한다', (tester) async {
+      final router = await showPage(tester, '/groups/settings');
+      fake.failure = const GroupFailure(GroupFailureReason.forbidden);
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        '/groups/settings',
+      );
+      expect(find.text('모임 관리자 권한이 필요합니다.'), findsOneWidget);
+      expect(find.text('모임 삭제'), findsOneWidget);
+      expect(container.read(groupProvider).groups, hasLength(1));
+    });
+    testWidgets('삭제 실패 후 다시 시도하면 삭제하고 목록으로 이동한다', (tester) async {
+      final router = await showPage(tester, '/groups/settings');
+      fake.failure = const GroupFailure(GroupFailureReason.unavailable);
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      fake.failure = null;
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      expect(fake.deletes, 2);
+      expect(router.routeInformationProvider.value.uri.path, '/groups');
+      expect(container.read(groupProvider).currentGroup, isNull);
+    });
+  });
+  group('GroupSettingsPage / GroupEditPage', () {
     testWidgets('저장 실패 문구는 설정으로 돌아가면 표시하지 않는다', (tester) async {
       final router = await showPage(tester, '/groups/edit');
       await tester.enterText(find.byType(TextFormField).first, '수정');
@@ -383,62 +517,6 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('요청을 완료하지 못했습니다'), findsNothing);
     });
-    testWidgets('이미 삭제된 모임을 삭제하면 목록으로 이동한다', (tester) async {
-      final router = await showPage(tester, '/groups/settings');
-      fake.failure = const GroupFailure(GroupFailureReason.notFound);
-      fake.groups = []; // 서버에서도 이미 삭제되어 목록 재조회에 포함되지 않습니다.
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
-      await tester.pumpAndSettle();
-      expect(router.routeInformationProvider.value.uri.path, '/groups');
-      expect(container.read(groupProvider).groups, isEmpty);
-    });
-    testWidgets('모임 이름 입력은 20자까지 허용된다', (tester) async {
-      await showPage(tester, '/groups/edit');
-      await tester.enterText(find.byType(TextFormField).first, '가' * 21);
-      await tester.pump();
-      final field = tester.widget<TextFormField>(
-        find.byType(TextFormField).first,
-      );
-      expect(field.controller!.text, '가' * 20);
-      expect(
-        tester
-            .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
-            .onPressed,
-        isNotNull,
-      );
-    });
-    testWidgets('삭제 취소 시 요청하지 않고 확인 후 목록으로 이동한다', (tester) async {
-      final router = await showPage(tester, '/groups/settings');
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('취소'));
-      await tester.pumpAndSettle();
-      expect(fake.deletes, 0);
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
-      await tester.pumpAndSettle();
-      expect(fake.deletes, 1);
-      expect(router.routeInformationProvider.value.uri.path, '/groups');
-    });
-    testWidgets('삭제 실패 시 설정 화면을 유지하고 다시 시도할 수 있다', (tester) async {
-      final router = await showPage(tester, '/groups/settings');
-      fake.failure = const GroupFailure(GroupFailureReason.forbidden);
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
-      await tester.pumpAndSettle();
-      expect(
-        router.routeInformationProvider.value.uri.path,
-        '/groups/settings',
-      );
-      expect(find.text('모임 관리자 권한이 필요합니다.'), findsOneWidget);
-      expect(find.text('모임 삭제'), findsOneWidget);
-      expect(container.read(groupProvider).groups, hasLength(1));
-    });
-
     testWidgets('구성원은 직접 설정·편집 경로로 들어와도 관리 동작을 볼 수 없다', (tester) async {
       fake.groups = [makeGroup(MemberRole.member)];
       await container.read(groupProvider.notifier).selectGroup(1);
@@ -473,4 +551,47 @@ void main() {
       });
     }
   });
+  for (final editing in [true, false]) {
+    group(editing ? 'GroupEditPage' : 'GroupSettingsPage', () {
+      testWidgets('요청 처리 중 기기 뒤로 가기를 막고 완료 후 허용한다', (tester) async {
+        final router = await showPage(tester, '/groups/home');
+        final route = editing ? '/groups/edit' : '/groups/settings';
+        unawaited(router.push(route));
+        await tester.pumpAndSettle();
+        if (editing) {
+          fake.pendingUpdate = Completer<Group>();
+          await tester.enterText(find.byType(TextFormField).first, '수정');
+          await tester.pump();
+          await tester.tap(find.text('저장'));
+        } else {
+          fake.pendingDelete = Completer<void>();
+          await tester.tap(find.text('모임 삭제'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('삭제'));
+        }
+        await tester.pumpAndSettle();
+        expect(container.read(groupProvider).isSubmitting, true);
+        await tester.binding.handlePopRoute();
+        for (var frame = 0; frame < 10; frame++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(find.text(editing ? '모임 정보 수정' : '모임 설정'), findsOneWidget);
+        if (editing) {
+          fake.pendingUpdate!.completeError(
+            const GroupFailure(GroupFailureReason.unavailable),
+          );
+        } else {
+          fake.pendingDelete!.completeError(
+            const GroupFailure(GroupFailureReason.unavailable),
+          );
+        }
+        await tester.pumpAndSettle();
+        await tester.binding.handlePopRoute();
+        for (var frame = 0; frame < 10; frame++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(router.routeInformationProvider.value.uri.path, '/groups/home');
+      });
+    });
+  }
 }
