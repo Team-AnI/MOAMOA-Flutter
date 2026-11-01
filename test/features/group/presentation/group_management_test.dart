@@ -394,7 +394,7 @@ void main() {
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
       expect(find.text('수정한 이름'), findsOneWidget);
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('모임 정보를 저장하지 못했어요'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
@@ -438,7 +438,7 @@ void main() {
       fake.groups = []; // 서버에서도 이미 삭제되어 목록 재조회에 포함되지 않습니다.
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(router.routeInformationProvider.value.uri.path, '/groups');
       expect(container.read(groupProvider).groups, isEmpty);
@@ -447,7 +447,7 @@ void main() {
       await showPage(tester, '/groups/settings');
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('취소'));
+      await tester.tap(find.text('닫기'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 0);
     });
@@ -455,7 +455,7 @@ void main() {
       final router = await showPage(tester, '/groups/settings');
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 1);
       expect(router.routeInformationProvider.value.uri.path, '/groups');
@@ -465,7 +465,7 @@ void main() {
       fake.failure = const GroupFailure(GroupFailureReason.forbidden);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(
         router.routeInformationProvider.value.uri.path,
@@ -480,12 +480,10 @@ void main() {
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       fake.failure = null;
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.text('다시 시도'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 2);
       expect(router.routeInformationProvider.value.uri.path, '/groups');
@@ -500,22 +498,24 @@ void main() {
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('모임 정보를 저장하지 못했어요'), findsOneWidget);
       router.go('/groups/settings');
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsNothing);
+      expect(find.text('모임 정보를 저장하지 못했어요'), findsNothing);
     });
     testWidgets('삭제 실패 문구는 편집 화면에 전달하지 않는다', (tester) async {
       final router = await showPage(tester, '/groups/settings');
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('모임을 삭제하지 못했어요'), findsOneWidget);
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
       router.go('/groups/edit');
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsNothing);
+      expect(find.text('모임을 삭제하지 못했어요'), findsNothing);
     });
     testWidgets('구성원은 직접 설정·편집 경로로 들어와도 관리 동작을 볼 수 없다', (tester) async {
       fake.groups = [makeGroup(MemberRole.member)];
@@ -567,7 +567,7 @@ void main() {
           fake.pendingDelete = Completer<void>();
           await tester.tap(find.text('모임 삭제'));
           await tester.pumpAndSettle();
-          await tester.tap(find.text('삭제'));
+          await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
         }
         await tester.pumpAndSettle();
         expect(container.read(groupProvider).isSubmitting, true);
@@ -586,6 +586,10 @@ void main() {
           );
         }
         await tester.pumpAndSettle();
+        if (!editing) {
+          await tester.tap(find.text('닫기'));
+          await tester.pumpAndSettle();
+        }
         await tester.binding.handlePopRoute();
         for (var frame = 0; frame < 10; frame++) {
           await tester.pump(const Duration(milliseconds: 100));

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/group_providers.dart';
 import '../viewmodels/group_state.dart';
 import '../widgets/group_design.dart';
+import '../widgets/group_delete_dialog.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 import '../widgets/group_page_layout.dart';
@@ -18,50 +19,39 @@ class GroupSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
-  String? _error;
-
   Future<void> _delete() async {
     final current = ref.read(groupProvider).currentGroup;
     if (current == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        titleTextStyle: GroupDesign.heading,
-        contentTextStyle: GroupDesign.body,
-        title: const Text('모임을 삭제할까요?'),
-        content: Text(
-          '“${current.group.name}” 모임을 삭제합니다. 삭제하면 이 모임을 더 이상 이용할 수 없어요.',
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: GroupDesign.ink),
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xffe30000),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+      barrierColor: const Color(0x8f000000),
+      builder: (context) => GroupDeleteDialog(name: current.group.name),
     );
-    if (confirmed != true || !context.mounted) return;
-    // 확인창이 열린 동안 선택 대상이 바뀌었다면 다른 모임을 삭제하지 않습니다.
-    if (ref.read(groupProvider).currentGroup?.group.id != current.group.id) {
-      return;
-    }
-    setState(() => _error = null);
-    final deleted = await ref.read(groupProvider.notifier).deleteCurrentGroup();
-    if (!mounted) return;
-    if (deleted) {
-      context.go('/groups');
-    } else {
-      setState(() => _error = ref.read(groupProvider).errorMessage);
+    if (confirmed != true || !mounted) return;
+    while (mounted) {
+      if (ref.read(groupProvider).currentGroup?.group.id != current.group.id) {
+        return;
+      }
+      final deleted = await ref
+          .read(groupProvider.notifier)
+          .deleteCurrentGroup();
+      if (!mounted) return;
+      if (deleted) {
+        context.go('/groups');
+        return;
+      }
+      final error = ref.read(groupProvider).errorMessage;
+      final retry = await showDialog<bool>(
+        context: context,
+        barrierColor: const Color(0x8f000000),
+        builder: (context) => GroupDeleteDialog(
+          name: current.group.name,
+          error: error == '요청을 완료하지 못했습니다. 다시 시도해주세요.'
+              ? '잠시 후 다시 시도해 주세요. 모임은 그대로 남아 있어요.'
+              : error ?? '잠시 후 다시 시도해 주세요.',
+        ),
+      );
+      if (retry != true) return;
     }
   }
 
@@ -133,11 +123,6 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
                     destructive: true,
                     onTap: state.isBusy ? null : _delete,
                   ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(_error!, style: GroupDesign.body),
-                    ),
                   const SizedBox(height: 24),
                 ],
               ),

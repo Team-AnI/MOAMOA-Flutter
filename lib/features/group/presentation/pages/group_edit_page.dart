@@ -7,6 +7,7 @@ import '../providers/group_providers.dart';
 import '../viewmodels/group_state.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_field.dart';
+import '../widgets/group_feedback_card.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 import '../widgets/group_primary_button.dart';
@@ -80,11 +81,26 @@ class _EditFormState extends ConsumerState<_EditForm> {
     return PopScope(
       canPop: !busy,
       child: GroupPageLayout(
-        isBack: true,
+        title: '모임 정보 수정',
         onClose: busy ? null : () => context.go('/groups/settings'),
-        bottom: GroupPrimaryButton(
-          label: busy ? '저장 중…' : '저장',
-          onPressed: busy || !_canSave ? null : _save,
+        bottom: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_error != null) ...[
+              GroupFeedbackCard(
+                title: '모임 정보를 저장하지 못했어요',
+                message: _error == '요청을 완료하지 못했습니다. 다시 시도해주세요.'
+                    ? '입력한 내용은 그대로 두었어요. 다시 시도해 주세요'
+                    : _error!,
+                warning: true,
+              ),
+              const SizedBox(height: 12),
+            ],
+            GroupPrimaryButton(
+              label: busy ? '저장 중…' : '저장',
+              onPressed: busy || !_canSave ? null : _save,
+            ),
+          ],
         ),
         child: Form(
           key: _form,
@@ -92,8 +108,8 @@ class _EditFormState extends ConsumerState<_EditForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const GroupPageTitle(
-                title: '모임 정보 수정',
-                subtitle: '모임 이름과 소개를 변경할 수 있어요.',
+                title: '모임 정보를 수정해요',
+                subtitle: '이름과 소개는 모든 구성원에게 바로 바뀌어 보여요.',
               ),
               GroupField(
                 controller: _name,
@@ -101,27 +117,20 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 hint: '모임 이름을 입력해주세요',
                 requiredValue: true,
                 maxLength: 20,
+                helper: '20자까지 적을 수 있어요.',
                 enabled: !busy,
                 onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               GroupField(
                 controller: _description,
                 label: '모임 소개',
                 hint: '모임을 소개해주세요',
                 multiline: true,
+                helper: '선택 사항이에요.',
                 enabled: !busy,
                 onChanged: (_) => setState(() {}),
               ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    _error!,
-                    style: GroupDesign.body,
-                    semanticsLabel: '저장 실패: $_error',
-                  ),
-                ),
               const SizedBox(height: 24),
             ],
           ),
