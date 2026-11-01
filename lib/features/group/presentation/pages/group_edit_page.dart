@@ -119,7 +119,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 maxLength: 20,
                 helper: '20자까지 적을 수 있어요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _error = null),
               ),
               const SizedBox(height: 12),
               GroupField(
@@ -129,7 +129,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 multiline: true,
                 helper: '선택 사항이에요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _error = null),
               ),
               const SizedBox(height: 24),
             ],

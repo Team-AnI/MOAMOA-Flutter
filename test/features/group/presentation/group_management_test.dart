@@ -431,6 +431,32 @@ void main() {
       );
     });
   });
+  group('GroupEditPage', () {
+    for (final field in [0, 1]) {
+      testWidgets('저장 실패 후 ${field == 0 ? '이름' : '소개'}를 수정하면 이전 오류 안내를 지운다', (
+        tester,
+      ) async {
+        await showPage(tester, '/groups/edit');
+        await tester.enterText(find.byType(TextFormField).first, '수정한 이름');
+        await tester.pump();
+        fake.failure = const GroupFailure(GroupFailureReason.unavailable);
+        await tester.tap(find.text('저장'));
+        await tester.pumpAndSettle();
+        expect(find.text('모임 정보를 저장하지 못했어요'), findsOneWidget);
+        await tester.enterText(find.byType(TextFormField).at(field), '다시 수정');
+        await tester.pump();
+        expect(find.text('모임 정보를 저장하지 못했어요'), findsNothing);
+        expect(find.text('다시 수정'), findsOneWidget);
+        expect(
+          tester
+              .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
+              .onPressed,
+          isNotNull,
+        );
+        expect(fake.updates, 1);
+      });
+    }
+  });
   group('GroupSettingsPage', () {
     testWidgets('이미 삭제된 모임을 삭제하면 목록으로 이동한다', (tester) async {
       final router = await showPage(tester, '/groups/settings');
