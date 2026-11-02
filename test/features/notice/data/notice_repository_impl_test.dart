@@ -57,7 +57,7 @@ void main() {
       expect(notice.content, '10일까지 납부');
     });
 
-    test('응답에 data 가 없으면 크래시 대신 NoticeException 을 던진다', () async {
+    test('응답에 data 가 없으면 크래시 대신 NoticeException 예외가 발생한다', () async {
       final repository = _repositoryWith(
         200,
         '{"success": true, "data": null}',
@@ -69,7 +69,7 @@ void main() {
       );
     });
 
-    test('실패 응답이면 서버의 error 메시지와 코드를 전달한다', () async {
+    test('실패 응답이면 서버의 error 메시지와 코드를 담은 NoticeException 예외가 발생한다', () async {
       final repository = _repositoryWith(404, '''
       {"success": false, "data": null,
        "error": {"code": "NOT_FOUND", "message": "요청한 리소스를 찾을 수 없습니다."}}

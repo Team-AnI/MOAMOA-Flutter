@@ -25,26 +25,40 @@ void main() {
       container.listen(noticeWriteProvider(meetingId), (_, _) {});
     });
 
-    test('공지를 작성하면 true 를 반환하고 목록에 새 공지가 보인다', () async {
-      container.listen(noticeListProvider(meetingId), (_, _) {});
-      await container.read(noticeListProvider(meetingId).future);
-
+    test('공지를 작성하면 true 를 반환한다', () async {
       final success = await container
           .read(noticeWriteProvider(meetingId).notifier)
           .submit(title: '10월 회비 안내', content: '10일까지 납부');
 
       expect(success, isTrue);
+    });
+
+    test('공지를 작성하면 목록에 새 공지가 보인다', () async {
+      container.listen(noticeListProvider(meetingId), (_, _) {});
+      await container.read(noticeListProvider(meetingId).future);
+
+      await container
+          .read(noticeWriteProvider(meetingId).notifier)
+          .submit(title: '10월 회비 안내', content: '10일까지 납부');
+
       final list = await container.read(noticeListProvider(meetingId).future);
       expect(list.notices.first.title, '10월 회비 안내');
     });
 
-    test('제목이 비어 있으면 등록하지 않고 에러 상태가 된다', () async {
+    test('제목이 비어 있으면 공지를 등록하지 않는다', () async {
       final success = await container
           .read(noticeWriteProvider(meetingId).notifier)
           .submit(title: ' ', content: '내용');
 
       expect(success, isFalse);
       expect(repository.notices, hasLength(1));
+    });
+
+    test('제목이 비어 있으면 오류 상태가 된다', () async {
+      await container
+          .read(noticeWriteProvider(meetingId).notifier)
+          .submit(title: ' ', content: '내용');
+
       expect(
         container.read(noticeWriteProvider(meetingId)).error,
         isA<NoticeException>(),
@@ -61,7 +75,7 @@ void main() {
       expect(repository.notices.single.content, '새 내용');
     });
 
-    test('서버에서 실패하면 false 를 반환하고 에러 상태가 된다', () async {
+    test('서버에서 실패하면 false 를 반환한다', () async {
       repository.error = const NoticeException('ADMIN 이 아닙니다.');
 
       final success = await container
@@ -69,6 +83,15 @@ void main() {
           .submit(title: '제목', content: '내용');
 
       expect(success, isFalse);
+    });
+
+    test('서버에서 실패하면 오류 상태가 된다', () async {
+      repository.error = const NoticeException('ADMIN 이 아닙니다.');
+
+      await container
+          .read(noticeWriteProvider(meetingId).notifier)
+          .submit(title: '제목', content: '내용');
+
       expect(
         container.read(noticeWriteProvider(meetingId)).error,
         isA<NoticeException>(),
