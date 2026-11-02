@@ -11,7 +11,32 @@ Future<bool?> showMoaConfirmDialog(
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (context) => Dialog(
+    builder: (context) => _ConfirmDialog(
+      title: title,
+      message: message,
+      confirmLabel: confirmLabel,
+      cancelLabel: cancelLabel,
+    ),
+  );
+}
+
+/// 확인 팝업의 틀 (흰 배경, 둥근 모서리, 안쪽 여백)
+class _ConfirmDialog extends StatelessWidget {
+  const _ConfirmDialog({
+    required this.title,
+    required this.message,
+    required this.confirmLabel,
+    required this.cancelLabel,
+  });
+
+  final String title;
+  final String message;
+  final String confirmLabel;
+  final String cancelLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
       backgroundColor: MoaColors.raised,
       surfaceTintColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -22,45 +47,77 @@ Future<bool?> showMoaConfirmDialog(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(title, style: MoaText.titleM),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                message,
-                style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-              ),
-            ),
+            _DialogMessage(title: title, message: message),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _DialogButton(
-                    label: cancelLabel,
-                    backgroundColor: MoaColors.fill,
-                    foregroundColor: MoaColors.textPrimary,
-                    onPressed: () => Navigator.of(context).pop(false),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _DialogButton(
-                    label: confirmLabel,
-                    backgroundColor: MoaColors.accent,
-                    foregroundColor: MoaColors.textInverse,
-                    onPressed: () => Navigator.of(context).pop(true),
-                  ),
-                ),
-              ],
+            _DialogActions(
+              confirmLabel: confirmLabel,
+              cancelLabel: cancelLabel,
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+/// 확인 팝업의 제목과 안내 문구
+class _DialogMessage extends StatelessWidget {
+  const _DialogMessage({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: MoaText.titleM),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 확인 팝업의 취소·확인 버튼 줄. 취소는 false, 확인은 true 로 팝업을 닫습니다.
+class _DialogActions extends StatelessWidget {
+  const _DialogActions({required this.confirmLabel, required this.cancelLabel});
+
+  final String confirmLabel;
+  final String cancelLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _DialogButton(
+            label: cancelLabel,
+            backgroundColor: MoaColors.fill,
+            foregroundColor: MoaColors.textPrimary,
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _DialogButton(
+            label: confirmLabel,
+            backgroundColor: MoaColors.accent,
+            foregroundColor: MoaColors.textInverse,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _DialogButton extends StatelessWidget {
