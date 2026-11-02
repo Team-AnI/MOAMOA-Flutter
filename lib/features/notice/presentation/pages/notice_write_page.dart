@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/core/widgets/moa_dialogs.dart';
+import 'package:moamoa/core/widgets/moa_error_view.dart';
 
 import '../../domain/entities/notice.dart';
+import '../notice_error.dart';
 import '../providers/notice_providers.dart';
 import '../widgets/notice_colors.dart';
-import '../widgets/notice_dialogs.dart';
-import '../widgets/notice_error_view.dart';
 
 /// 공지 제목 최대 길이. API 계약(3-1, 3-4)에서 확정되었고, 넘으면 서버가 400 VALIDATION_ERROR 로 응답합니다.
 const _titleMaxLength = 50;
@@ -73,14 +74,13 @@ class NoticeWritePage extends ConsumerWidget {
               _NoticeForm(meetingId: meetingId, initialNotice: notice),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => isNoticeNotFound(error)
-              ? NoticeErrorView(
-                  error: error,
+              ? MoaErrorView(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go('/meetings/$meetingId/notices'),
                 )
-              : NoticeErrorView(
-                  error: error,
+              : MoaErrorView(
+                  message: noticeErrorMessage(error),
                   onAction: () => ref.invalidate(noticeDetailProvider(args)),
                 ),
         );
@@ -124,7 +124,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
 
   /// 입력 중에 뒤로 가면 내용이 사라지므로 한 번 확인합니다.
   Future<void> _confirmLeave() async {
-    final leave = await showNoticeConfirmDialog(
+    final leave = await showMoaConfirmDialog(
       context,
       title: _isEdit ? '수정을 취소할까요?' : '작성을 취소할까요?',
       message: '입력한 내용이 사라져요.',
@@ -165,7 +165,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     }
     // 작성한 내용은 그대로 두고 다시 시도할 수 있게 안내합니다. (예외처리 4-3)
     final error = ref.read(noticeWriteProvider(widget.meetingId)).error;
-    showNoticeSnackBar(
+    showMoaSnackBar(
       context,
       noticeErrorMessage(error),
       actionLabel: '다시 시도',

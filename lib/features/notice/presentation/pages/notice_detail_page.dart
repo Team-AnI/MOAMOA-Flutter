@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/core/widgets/moa_dialogs.dart';
+import 'package:moamoa/core/widgets/moa_error_view.dart';
 
 import '../../domain/entities/notice.dart';
+import '../notice_error.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
-import '../widgets/notice_dialogs.dart';
-import '../widgets/notice_error_view.dart';
 import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 상세 화면
@@ -39,7 +40,7 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
   Future<void> _delete() async {
     if (_isDeleting) return;
 
-    final confirmed = await showNoticeConfirmDialog(
+    final confirmed = await showMoaConfirmDialog(
       context,
       title: '공지를 삭제할까요?',
       message: '삭제한 공지는 되돌릴 수 없어요.',
@@ -58,11 +59,11 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
 
     if (failure != null) {
       setState(() => _isDeleting = false);
-      showNoticeSnackBar(context, noticeErrorMessage(failure));
+      showMoaSnackBar(context, noticeErrorMessage(failure));
       return;
     }
     // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
-    showNoticeSnackBar(context, '공지를 삭제했어요.');
+    showMoaSnackBar(context, '공지를 삭제했어요.');
     // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
     if (context.canPop()) {
       context.pop();
@@ -99,14 +100,13 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
           loading: () => const Center(child: CircularProgressIndicator()),
           // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
           error: (error, _) => isNoticeNotFound(error)
-              ? NoticeErrorView(
-                  error: error,
+              ? MoaErrorView(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go(_listPath),
                 )
-              : NoticeErrorView(
-                  error: error,
+              : MoaErrorView(
+                  message: noticeErrorMessage(error),
                   onAction: () => ref.invalidate(noticeDetailProvider(_args)),
                 ),
         ),

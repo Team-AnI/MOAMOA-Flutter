@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/core/widgets/moa_dialogs.dart';
+import 'package:moamoa/core/widgets/moa_error_view.dart';
 
 import '../../domain/entities/notice.dart';
+import '../notice_error.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../widgets/notice_colors.dart';
-import '../widgets/notice_dialogs.dart';
-import '../widgets/notice_error_view.dart';
 import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 목록 화면
@@ -48,7 +49,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    showNoticeSnackBar(context, noticeErrorMessage(error));
+    showMoaSnackBar(context, noticeErrorMessage(error));
   }
 
   void _goWrite() => context.push('/meetings/${widget.meetingId}/notices/new');
@@ -92,8 +93,8 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
                         onTapNotice: _goDetail,
                       ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => NoticeErrorView(
-                  error: error,
+                error: (error, _) => MoaErrorView(
+                  message: noticeErrorMessage(error),
                   onAction: () =>
                       ref.invalidate(noticeListProvider(widget.meetingId)),
                 ),
