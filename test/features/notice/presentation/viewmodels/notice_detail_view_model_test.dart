@@ -38,7 +38,7 @@ void main() {
       expect(notice.content, '10일까지 납부');
     });
 
-    test('delete 를 하면 공지를 삭제하고 목록을 다시 불러온다', () async {
+    test('delete 를 하면 다시 불러온 목록에서 삭제한 공지가 빠진다', () async {
       container.listen(noticeListProvider(args.meetingId), (_, _) {});
       await container.read(noticeListProvider(args.meetingId).future);
       await container.read(noticeDetailProvider(args).future);
@@ -73,7 +73,7 @@ void main() {
       expect(list.notices.map((notice) => notice.id), [2]);
     });
 
-    test('삭제에 실패하면 NoticeException 을 던진다', () async {
+    test('삭제에 실패하면 NoticeException 예외가 발생한다', () async {
       await container.read(noticeDetailProvider(args).future);
       repository.error = const NoticeException('ADMIN 이 아닙니다.');
 
