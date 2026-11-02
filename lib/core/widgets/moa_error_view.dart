@@ -41,7 +41,11 @@ class MoaErrorView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: Text(actionLabel, style: MoaText.button),
+              // MoaText 에는 글자색이 들어 있어서, 버튼 전경색과 같은 색으로 덮어씁니다.
+              child: Text(
+                actionLabel,
+                style: MoaText.button.copyWith(color: MoaColors.textPrimary),
+              ),
             ),
           ],
         ),
