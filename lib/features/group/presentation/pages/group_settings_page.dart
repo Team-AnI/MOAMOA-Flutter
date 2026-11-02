@@ -40,15 +40,14 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
         context.go('/groups');
         return;
       }
-      final error = ref.read(groupProvider).errorMessage;
+      final failure = ref.read(groupProvider);
       final retry = await showDialog<bool>(
         context: context,
         barrierColor: const Color(0x8f000000),
         builder: (context) => GroupDeleteDialog(
           name: current.group.name,
-          error: error == '요청을 완료하지 못했습니다. 다시 시도해주세요.'
-              ? '잠시 후 다시 시도해 주세요. 모임은 그대로 남아 있어요.'
-              : error ?? '잠시 후 다시 시도해 주세요.',
+          error: failure.deleteFailureMessage,
+          canRetry: failure.canRetryFailure,
         ),
       );
       if (retry != true) return;

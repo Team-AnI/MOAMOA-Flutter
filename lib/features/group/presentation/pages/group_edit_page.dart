@@ -43,7 +43,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
   late final _description = TextEditingController(
     text: widget.initial.group.description ?? '',
   );
-  String? _error;
+  GroupState? _failure;
   final _form = GlobalKey<FormState>();
   bool get _changed =>
       _name.text.trim() != widget.initial.group.name ||
@@ -63,13 +63,13 @@ class _EditFormState extends ConsumerState<_EditForm> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _error = null);
+    setState(() => _failure = null);
     final saved = await ref
         .read(groupProvider.notifier)
         .update(name: _name.text, description: _description.text);
     if (!mounted) return;
     if (saved == null) {
-      setState(() => _error = ref.read(groupProvider).errorMessage);
+      setState(() => _failure = ref.read(groupProvider));
       return;
     }
     context.go('/groups/home');
@@ -86,12 +86,10 @@ class _EditFormState extends ConsumerState<_EditForm> {
         bottom: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_error != null) ...[
+            if (_failure != null) ...[
               GroupFeedbackCard(
                 title: '모임 정보를 저장하지 못했어요',
-                message: _error == '요청을 완료하지 못했습니다. 다시 시도해주세요.'
-                    ? '입력한 내용은 그대로 두었어요. 다시 시도해 주세요'
-                    : _error!,
+                message: _failure!.editFailureMessage,
                 warning: true,
               ),
               const SizedBox(height: 12),
@@ -119,7 +117,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 maxLength: 20,
                 helper: '20자까지 적을 수 있어요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() => _error = null),
+                onChanged: (_) => setState(() => _failure = null),
               ),
               const SizedBox(height: 12),
               GroupField(
@@ -129,7 +127,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 multiline: true,
                 helper: '선택 사항이에요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() => _error = null),
+                onChanged: (_) => setState(() => _failure = null),
               ),
               const SizedBox(height: 24),
             ],

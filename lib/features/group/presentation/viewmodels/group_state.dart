@@ -18,6 +18,16 @@ abstract class GroupState with _$GroupState {
 }
 
 extension GroupStateX on GroupState {
+  /// 일시적 통신 실패와 알 수 없는 예외에만 동일 요청 재시도를 제공합니다.
+  bool get canRetryFailure =>
+      failureReason == null || failureReason == GroupFailureReason.unavailable;
+  String get editFailureMessage => canRetryFailure
+      ? '입력한 내용은 그대로 두었어요. 다시 시도해 주세요'
+      : errorMessage ?? '입력 내용을 확인해주세요.';
+  String get deleteFailureMessage => canRetryFailure
+      ? '잠시 후 다시 시도해 주세요. 모임은 그대로 남아 있어요.'
+      : errorMessage ?? '요청을 완료하지 못했습니다.';
+
   bool get isBusy => isSubmitting || isLoading;
   bool get canManageCurrentGroup => currentGroup?.canManageGroup ?? false;
 }

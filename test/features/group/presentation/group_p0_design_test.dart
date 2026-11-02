@@ -43,7 +43,11 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         final fake = FakeGroupRepository()
-          ..groups = [makeGroup(MemberRole.member)];
+          ..groups = [
+            makeGroup(MemberRole.member).copyWith(
+              group: const Group(id: 1, name: '독서 모임', memberCount: 6),
+            ),
+          ];
         final container = ProviderContainer(
           overrides: [groupRepositoryProvider.overrideWithValue(fake)],
         );
@@ -69,7 +73,7 @@ void main() {
         await tester.tap(find.text('복원'));
         await tester.pumpAndSettle();
         expect(find.text('보관한 모임이 없어요'), findsOneWidget);
-        expect(find.textContaining('목록으로 돌려놨어요'), findsOneWidget);
+        expect(find.text('“독서 모임” 모임을 목록으로 돌려놨어요'), findsOneWidget);
         expect(container.read(groupProvider).groups, fake.groups);
         expect(
           container.read(groupListPreferencesProvider).archivedIds,

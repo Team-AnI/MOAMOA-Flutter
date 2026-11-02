@@ -44,8 +44,7 @@ void main() {
         preferences: const GroupListPreferences(archivedIds: [1, 4, 999]),
       );
       expect(ids(state.visibleGroups), [2, 3]);
-      expect(ids(state.archivedAdminGroups), [1]);
-      expect(ids(state.archivedMemberGroups), [4]);
+      expect(ids(state.archivedGroups), [1, 4]);
       expect(state.archivedCount, 2);
       expect(state.showAllArchived, isFalse);
       expect(ids(source.groups), [1, 2, 3, 4]);
@@ -87,15 +86,6 @@ void main() {
       );
       expect(state.memberSectionPadding, 20);
       expect(state.manageMemberSectionPadding, 4);
-      expect(state.archivedMemberSectionPadding, 16);
-      expect(
-        state
-            .copyWith(
-              preferences: const GroupListPreferences(archivedIds: [2, 4]),
-            )
-            .archivedMemberSectionPadding,
-        4,
-      );
     });
 
     test('공백 이름은 기본 인사말로 표시하고 복원하면 원래 목록에 다시 포함한다', () {

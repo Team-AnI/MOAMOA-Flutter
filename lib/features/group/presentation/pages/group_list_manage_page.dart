@@ -78,35 +78,33 @@ class GroupListManagePage extends ConsumerWidget {
                       groups: display.manageMemberGroups,
                       display: display,
                     ),
-                  ...[
-                    const SizedBox(height: 12),
-                    Material(
-                      color: GroupDesign.fill,
-                      borderRadius: BorderRadius.circular(24),
-                      child: ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        leading: const GroupIcon('list_archive', size: 20),
-                        title: const Text('보관한 모임', style: GroupDesign.strong),
-                        subtitle: Text(
-                          '${display.archivedCount}개 · 목록에서 숨겨져요',
-                          style: GroupDesign.sub,
-                        ),
-                        trailing: const GroupIcon('chevron', size: 16),
-                        onTap: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (context) => const GroupArchivedPage(),
-                          ),
+                  const SizedBox(height: 12),
+                  Material(
+                    color: GroupDesign.fill,
+                    borderRadius: BorderRadius.circular(24),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      leading: const GroupIcon('list_archive', size: 20),
+                      title: const Text('보관한 모임', style: GroupDesign.strong),
+                      subtitle: Text(
+                        '${display.archivedCount}개 · 목록에서 숨겨져요',
+                        style: GroupDesign.sub,
+                      ),
+                      trailing: const GroupIcon('chevron', size: 16),
+                      onTap: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => const GroupArchivedPage(),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      '고정한 모임은 목록 맨 위에 보여요. 보관한 모임의 기록은 그대로 남아요.',
-                      style: GroupDesign.sub,
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '고정한 모임은 목록 맨 위에 보여요. 보관한 모임의 기록은 그대로 남아요.',
+                    style: GroupDesign.sub,
+                  ),
                 ],
               ),
             ),

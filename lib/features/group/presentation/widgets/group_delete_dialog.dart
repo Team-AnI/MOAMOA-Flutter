@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import 'group_design.dart';
 
 class GroupDeleteDialog extends StatelessWidget {
-  const GroupDeleteDialog({super.key, required this.name, this.error});
+  const GroupDeleteDialog({
+    super.key,
+    required this.name,
+    this.error,
+    this.canRetry = false,
+  });
 
   final String name;
   final String? error;
+  final bool canRetry;
 
   @override
   Widget build(BuildContext context) => Dialog(
@@ -21,7 +27,7 @@ class GroupDeleteDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            error == null ? '$name를 삭제할까요?' : '모임을 삭제하지 못했어요',
+            error == null ? '“$name” 모임을 삭제할까요?' : '모임을 삭제하지 못했어요',
             style: GroupDesign.heading,
           ),
           const SizedBox(height: 8),
@@ -30,42 +36,55 @@ class GroupDeleteDialog extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: GroupDesign.fill,
-                      foregroundColor: GroupDesign.ink,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('닫기'),
-                  ),
+                child: _DialogButton(
+                  label: '닫기',
+                  onPressed: () => Navigator.pop(context, false),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xfffdecec),
-                      foregroundColor: const Color(0xffe30000),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+              if (error == null || canRetry) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _DialogButton(
+                    label: error == null ? '모임 삭제' : '다시 시도',
+                    destructive: true,
                     onPressed: () => Navigator.pop(context, true),
-                    child: Text(error == null ? '모임 삭제' : '다시 시도'),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _DialogButton extends StatelessWidget {
+  const _DialogButton({
+    required this.label,
+    required this.onPressed,
+    this.destructive = false,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 56,
+    child: FilledButton(
+      style: FilledButton.styleFrom(
+        backgroundColor: destructive
+            ? const Color(0xfffdecec)
+            : GroupDesign.fill,
+        foregroundColor: destructive
+            ? const Color(0xffe30000)
+            : GroupDesign.ink,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      onPressed: onPressed,
+      child: Text(label),
     ),
   );
 }
