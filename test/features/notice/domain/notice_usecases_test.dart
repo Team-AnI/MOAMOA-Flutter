@@ -9,7 +9,7 @@ import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
 import '../fakes/fake_notice_repository.dart';
 
 void main() {
-  group('GetNotices', () {
+  group(GetNotices, () {
     late GetNotices getNotices;
 
     setUp(() {
@@ -37,7 +37,7 @@ void main() {
     });
   });
 
-  group('GetNoticeDetail', () {
+  group(GetNoticeDetail, () {
     late GetNoticeDetail getNoticeDetail;
 
     setUp(() {
@@ -66,7 +66,7 @@ void main() {
     });
   });
 
-  group('CreateNotice', () {
+  group(CreateNotice, () {
     late FakeNoticeRepository repository;
     late CreateNotice createNotice;
 
@@ -110,7 +110,7 @@ void main() {
     });
   });
 
-  group('UpdateNotice', () {
+  group(UpdateNotice, () {
     late FakeNoticeRepository repository;
     late UpdateNotice updateNotice;
 
@@ -151,7 +151,7 @@ void main() {
     });
   });
 
-  group('DeleteNotice', () {
+  group(DeleteNotice, () {
     test('공지를 삭제한다', () async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1), buildNotice(2)],

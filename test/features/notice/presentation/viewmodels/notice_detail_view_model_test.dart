@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
+import 'package:moamoa/features/notice/presentation/viewmodels/notice_detail_view_model.dart';
 
 import '../../fakes/fake_notice_repository.dart';
 
 void main() {
   const args = (meetingId: 1, noticeId: 1);
 
-  group('NoticeDetailViewModel', () {
+  group(NoticeDetailViewModel, () {
     late FakeNoticeRepository repository;
     late ProviderContainer container;
     late ProviderSubscription<Object?> screen;

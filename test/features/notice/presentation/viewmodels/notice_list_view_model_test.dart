@@ -5,11 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_state.dart';
+import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_view_model.dart';
 
 import '../../fakes/fake_notice_repository.dart';
 
 void main() {
-  group('NoticeListViewModel', () {
+  group(NoticeListViewModel, () {
     const meetingId = 1;
     late FakeNoticeRepository repository;
     late ProviderContainer container;

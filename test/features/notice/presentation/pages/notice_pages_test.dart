@@ -75,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('공지 목록', () {
+  group(NoticeListPage, () {
     const page = NoticeListPage(meetingId: 1);
 
     testWidgets('공지 목록을 보여준다', (tester) async {
@@ -156,7 +156,7 @@ void main() {
     });
   });
 
-  group('공지 작성', () {
+  group(NoticeWritePage, () {
     const page = NoticeWritePage(meetingId: 1);
 
     // 예외처리 4-1
@@ -682,7 +682,7 @@ void main() {
     });
   });
 
-  group('공지 상세', () {
+  group(NoticeDetailPage, () {
     const page = NoticeDetailPage(meetingId: 1, noticeId: 1);
 
     testWidgets('관리자에게는 삭제 버튼 옆에 수정 버튼을 보여준다', (tester) async {

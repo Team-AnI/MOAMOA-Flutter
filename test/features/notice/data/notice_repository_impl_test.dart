@@ -40,41 +40,49 @@ NoticeRepositoryImpl _repositoryWith(int statusCode, String body) {
 }
 
 void main() {
-  test('공통 응답의 data 를 꺼내 공지로 바꾼다', () async {
-    final repository = _repositoryWith(200, '''
+  group(NoticeRepositoryImpl, () {
+    test('공통 응답의 data 를 꺼내 공지로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
       {"success": true, "error": null, "timestamp": "2026-10-07T10:00:00+09:00",
        "data": {"noticeId": 30, "title": "10월 회비 안내",
                 "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00"}}
     ''');
 
-    final notice = await repository.getNoticeDetail(meetingId: 1, noticeId: 30);
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
 
-    expect(notice.id, 30);
-    expect(notice.content, '10일까지 납부');
-  });
+      expect(notice.id, 30);
+      expect(notice.content, '10일까지 납부');
+    });
 
-  test('응답에 data 가 없으면 크래시 대신 NoticeException 을 던진다', () async {
-    final repository = _repositoryWith(200, '{"success": true, "data": null}');
+    test('응답에 data 가 없으면 크래시 대신 NoticeException 을 던진다', () async {
+      final repository = _repositoryWith(
+        200,
+        '{"success": true, "data": null}',
+      );
 
-    await expectLater(
-      repository.getNoticeDetail(meetingId: 1, noticeId: 30),
-      throwsA(isA<NoticeException>()),
-    );
-  });
+      await expectLater(
+        repository.getNoticeDetail(meetingId: 1, noticeId: 30),
+        throwsA(isA<NoticeException>()),
+      );
+    });
 
-  test('실패 응답이면 서버의 error 메시지와 코드를 전달한다', () async {
-    final repository = _repositoryWith(404, '''
+    test('실패 응답이면 서버의 error 메시지와 코드를 전달한다', () async {
+      final repository = _repositoryWith(404, '''
       {"success": false, "data": null,
        "error": {"code": "NOT_FOUND", "message": "요청한 리소스를 찾을 수 없습니다."}}
     ''');
 
-    await expectLater(
-      repository.getNoticeDetail(meetingId: 1, noticeId: 30),
-      throwsA(
-        isA<NoticeException>()
-            .having((e) => e.code, 'code', 'NOT_FOUND')
-            .having((e) => e.message, 'message', '요청한 리소스를 찾을 수 없습니다.'),
-      ),
-    );
+      await expectLater(
+        repository.getNoticeDetail(meetingId: 1, noticeId: 30),
+        throwsA(
+          isA<NoticeException>()
+              .having((e) => e.code, 'code', 'NOT_FOUND')
+              .having((e) => e.message, 'message', '요청한 리소스를 찾을 수 없습니다.'),
+        ),
+      );
+    });
   });
 }
