@@ -88,7 +88,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
           children: [
             if (_failure != null) ...[
               GroupFeedbackCard(
-                title: '모임 정보를 저장하지 못했어요',
+                title: _failure!.editFailureTitle,
                 message: _failure!.editFailureMessage,
                 warning: true,
               ),
@@ -107,7 +107,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
             children: [
               const GroupPageTitle(
                 title: '모임 정보를 수정해요',
-                subtitle: '이름과 소개는 모든 구성원에게 바로 바뀌어 보여요.',
+                subtitle: '모임의 이름과 소개를 변경할 수 있어요.',
               ),
               GroupField(
                 controller: _name,

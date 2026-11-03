@@ -46,7 +46,7 @@ class GroupFeedbackCard extends StatelessWidget {
                 Text(
                   message,
                   style: GroupDesign.caption.copyWith(
-                    color: const Color(0xffcccccc),
+                    color: GroupDesign.onDarkSecondary,
                   ),
                 ),
               ],

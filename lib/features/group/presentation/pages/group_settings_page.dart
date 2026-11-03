@@ -19,38 +19,36 @@ class GroupSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
+  Future<bool?> _showDeleteDialog(GroupDeleteDialog dialog) => showDialog<bool>(
+    context: context,
+    barrierColor: GroupDesign.barrier,
+    builder: (_) => dialog,
+  );
+
   Future<void> _delete() async {
     final current = ref.read(groupProvider).currentGroup;
     if (current == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierColor: const Color(0x8f000000),
-      builder: (context) => GroupDeleteDialog(name: current.group.name),
+    var shouldDelete = await _showDeleteDialog(
+      GroupDeleteDialog.confirm(name: current.group.name),
     );
-    if (confirmed != true || !mounted) return;
-    while (mounted) {
-      if (ref.read(groupProvider).currentGroup?.group.id != current.group.id) {
-        return;
-      }
+    while (mounted &&
+        shouldDelete == true &&
+        ref.read(groupProvider).currentGroup?.group.id == current.group.id) {
       final deleted = await ref
           .read(groupProvider.notifier)
           .deleteCurrentGroup();
-      if (!mounted) return;
+      if (!mounted) break;
       if (deleted) {
         context.go('/groups');
-        return;
+        break;
       }
       final failure = ref.read(groupProvider);
-      final retry = await showDialog<bool>(
-        context: context,
-        barrierColor: const Color(0x8f000000),
-        builder: (context) => GroupDeleteDialog(
-          name: current.group.name,
-          error: failure.deleteFailureMessage,
+      shouldDelete = await _showDeleteDialog(
+        GroupDeleteDialog.failure(
+          message: failure.deleteFailureMessage,
           canRetry: failure.canRetryFailure,
         ),
       );
-      if (retry != true) return;
     }
   }
 
@@ -156,7 +154,7 @@ class _SettingsAction extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: destructive ? const Color(0xfffdecec) : Colors.white,
+                color: destructive ? GroupDesign.dangerTint : Colors.white,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(child: GroupIcon(icon, size: 18)),
@@ -167,9 +165,7 @@ class _SettingsAction extends StatelessWidget {
                 label,
                 style: GroupDesign.body.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: destructive
-                      ? const Color(0xffe30000)
-                      : GroupDesign.ink,
+                  color: destructive ? GroupDesign.danger : GroupDesign.ink,
                 ),
               ),
             ),

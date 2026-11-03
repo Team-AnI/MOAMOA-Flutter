@@ -133,7 +133,7 @@ void main() {
         await tester.tap(find.text('저장'));
         await tester.pumpAndSettle();
         expect(find.text('스터디 모아 수정'), findsOneWidget);
-        expect(find.text('모임 정보를 저장하지 못했어요'), findsOneWidget);
+        expect(find.text('저장 결과를 확인하지 못했어요'), findsOneWidget);
         expect(
           tester
               .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
@@ -190,14 +190,14 @@ void main() {
         await capture(tester, key, 'delete-confirm-${width.toInt()}');
         await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
         await tester.pumpAndSettle();
-        expect(find.text('모임을 삭제하지 못했어요'), findsOneWidget);
+        expect(find.text('삭제 결과를 확인하지 못했어요'), findsOneWidget);
         expect(find.text('다시 시도'), findsOneWidget);
         expect(container.read(groupProvider).groups, hasLength(1));
         expect(tester.takeException(), isNull);
         await capture(tester, key, 'delete-failure-${width.toInt()}');
         await tester.tap(find.text('닫기'));
         await tester.pumpAndSettle();
-        expect(find.text('모임을 삭제하지 못했어요'), findsNothing);
+        expect(find.text('삭제 결과를 확인하지 못했어요'), findsNothing);
       });
     });
   }

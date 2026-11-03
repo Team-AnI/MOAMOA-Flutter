@@ -157,7 +157,7 @@ class _JoinMethodSelector extends StatelessWidget {
                   boxShadow: approval == value
                       ? const [
                           BoxShadow(
-                            color: Color(0x14000000),
+                            color: GroupDesign.shadow,
                             offset: Offset(0, 2),
                             blurRadius: 4,
                           ),

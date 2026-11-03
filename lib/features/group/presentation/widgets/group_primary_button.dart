@@ -8,8 +8,9 @@ class GroupPrimaryButton extends StatelessWidget {
     required this.label,
     this.onPressed,
     this.secondary = false,
+    this.destructive = false,
   });
-  final bool secondary;
+  final bool secondary, destructive;
   final String label;
   final VoidCallback? onPressed;
   @override
@@ -18,10 +19,18 @@ class GroupPrimaryButton extends StatelessWidget {
     height: 56,
     child: FilledButton(
       style: FilledButton.styleFrom(
-        backgroundColor: secondary ? GroupDesign.fill : GroupDesign.ink,
+        backgroundColor: destructive
+            ? GroupDesign.dangerTint
+            : secondary
+            ? GroupDesign.fill
+            : GroupDesign.ink,
         disabledBackgroundColor: GroupDesign.fill,
         disabledForegroundColor: GroupDesign.muted,
-        foregroundColor: secondary ? GroupDesign.ink : Colors.white,
+        foregroundColor: destructive
+            ? GroupDesign.danger
+            : secondary
+            ? GroupDesign.ink
+            : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(
           fontFamily: 'Pretendard',

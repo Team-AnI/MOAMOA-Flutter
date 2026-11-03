@@ -32,7 +32,7 @@ void main() {
             failureReason: reason,
             errorMessage: '바뀐 문구',
           ).deleteFailureMessage,
-          '잠시 후 다시 시도해 주세요. 모임은 그대로 남아 있어요.',
+          '잠시 후 다시 시도해 주세요.',
         );
       });
     }
