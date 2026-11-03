@@ -195,6 +195,44 @@ void main() {
         expect(find.text('다시 시도'), findsNothing);
       });
     }
+    for (final fails in [false, true]) {
+      testWidgets(
+        '새로고침 대기 중 목록을 유지하고 ${fails ? '권한 오류 시 이전 목록을 제거한다' : '새 응답으로 교체한다'}',
+        (tester) async {
+          await showPage(tester);
+          await tester.pumpAndSettle();
+          final gate = Completer<List<GroupMemberProfile>>();
+          fake.pending = gate;
+          await tester.drag(find.byType(ListView), const Offset(0, 350));
+          for (var frame = 0; frame < 10 && fake.calls.length < 2; frame++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          expect(fake.calls, [1, 1]);
+          expect(find.text('김모아'), findsOneWidget);
+          expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+          if (fails) {
+            gate.completeError(
+              const GroupFailure(GroupFailureReason.forbidden),
+            );
+          } else {
+            gate.complete([
+              const GroupMemberProfile(
+                memberId: 10,
+                userName: '새 구성원',
+                role: MemberRole.member,
+              ),
+            ]);
+          }
+          await tester.pumpAndSettle();
+          expect(find.text('김모아'), findsNothing);
+          expect(find.byType(RefreshProgressIndicator), findsNothing);
+          expect(
+            find.text(fails ? '이 모임의 구성원만 목록을 볼 수 있어요.' : '새 구성원'),
+            findsOneWidget,
+          );
+        },
+      );
+    }
     testWidgets('많은 구성원도 아래로 스크롤해 마지막 항목을 볼 수 있다', (tester) async {
       fake.members = List.generate(
         40,

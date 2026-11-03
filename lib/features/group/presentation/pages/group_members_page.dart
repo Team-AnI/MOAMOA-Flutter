@@ -33,7 +33,7 @@ class GroupMembersPage extends ConsumerWidget {
       child: ref
           .watch(groupMembersProvider(groupId))
           .when(
-            skipLoadingOnRefresh: false,
+            skipLoadingOnRefresh: true,
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (_, _) => _MembersMessage(
               message: '구성원 목록을 불러오지 못했어요.',
