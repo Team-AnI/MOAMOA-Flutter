@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
 import '../providers/group_providers.dart';
+import '../widgets/group_button_variant.dart';
 import '../widgets/group_code_card.dart';
 import '../widgets/group_created_actions.dart';
 import '../widgets/group_design.dart';
@@ -69,7 +70,7 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
               children: [
                 GroupPrimaryButton(
                   label: '내 모임으로',
-                  secondary: true,
+                  variant: GroupButtonVariant.secondary,
                   onPressed: () => context.go('/groups'),
                 ),
                 const SizedBox(height: 10),

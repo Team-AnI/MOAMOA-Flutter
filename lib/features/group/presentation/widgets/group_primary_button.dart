@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'group_button_variant.dart';
 import 'group_design.dart';
 
 class GroupPrimaryButton extends StatelessWidget {
@@ -7,10 +8,9 @@ class GroupPrimaryButton extends StatelessWidget {
     super.key,
     required this.label,
     this.onPressed,
-    this.secondary = false,
-    this.destructive = false,
+    this.variant = GroupButtonVariant.primary,
   });
-  final bool secondary, destructive;
+  final GroupButtonVariant variant;
   final String label;
   final VoidCallback? onPressed;
   @override
@@ -19,18 +19,10 @@ class GroupPrimaryButton extends StatelessWidget {
     height: 56,
     child: FilledButton(
       style: FilledButton.styleFrom(
-        backgroundColor: destructive
-            ? GroupDesign.dangerTint
-            : secondary
-            ? GroupDesign.fill
-            : GroupDesign.ink,
+        backgroundColor: variant.background,
         disabledBackgroundColor: GroupDesign.fill,
         disabledForegroundColor: GroupDesign.muted,
-        foregroundColor: destructive
-            ? GroupDesign.danger
-            : secondary
-            ? GroupDesign.ink
-            : Colors.white,
+        foregroundColor: variant.foreground,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: const TextStyle(
           fontFamily: 'Pretendard',
