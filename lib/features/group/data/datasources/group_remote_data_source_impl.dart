@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 
 import '../models/group_api_failure.dart';
+import '../models/group_member_model.dart';
 import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
 import '../requests/delete_group_request.dart';
+import '../requests/group_members_request.dart';
 import '../requests/update_group_request.dart';
 import 'group_remote_data_source.dart';
 
@@ -58,6 +60,28 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
         if (data['meetingId'] != request.meetingId) {
           throw const FormatException('모임 ID 불일치');
         }
+      });
+
+  @override
+  Future<List<GroupMemberModel>> fetchMembers(GroupMembersRequest request) =>
+      _decode(_request('GET', '/v1/meetings/${request.meetingId}/members'), (
+        data,
+      ) {
+        final entries = data['members'];
+        if (entries is! List) throw const FormatException('잘못된 구성원 목록');
+        final members = <GroupMemberModel>[];
+        final ids = <int>{};
+        for (final entry in entries) {
+          if (entry is! Map<String, dynamic>) {
+            throw const FormatException('잘못된 구성원');
+          }
+          final member = GroupMemberModel.fromJson(entry);
+          if (!ids.add(member.memberId)) {
+            throw const FormatException('중복 구성원 ID');
+          }
+          members.add(member);
+        }
+        return List.unmodifiable(members);
       });
 
   @override

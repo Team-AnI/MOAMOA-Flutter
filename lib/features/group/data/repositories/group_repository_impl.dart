@@ -1,11 +1,14 @@
 import '../../domain/entities/current_group.dart';
 import '../../domain/entities/group.dart';
+import '../../domain/entities/group_member_profile.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../datasources/group_remote_data_source.dart';
 import '../models/group_api_failure.dart';
+import '../models/group_member_model.dart';
 import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
 import '../requests/delete_group_request.dart';
+import '../requests/group_members_request.dart';
 import '../requests/update_group_request.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
@@ -59,6 +62,15 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<void> deleteGroup({required int groupId}) => _execute(
     () => _remoteDataSource.deleteGroup(DeleteGroupRequest(meetingId: groupId)),
   );
+
+  @override
+  Future<List<GroupMemberProfile>> getMembers({required int groupId}) =>
+      _execute(() async {
+        final models = await _remoteDataSource.fetchMembers(
+          GroupMembersRequest(meetingId: groupId),
+        );
+        return models.map((model) => model.toEntity()).toList(growable: false);
+      });
 
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {

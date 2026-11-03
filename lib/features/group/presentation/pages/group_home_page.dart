@@ -76,23 +76,25 @@ class GroupHomePage extends ConsumerWidget {
                                 child: Text('구성원', style: GroupDesign.heading),
                               ),
                               Tooltip(
-                                message: '구성원 목록은 추후 연결됩니다.',
+                                message: '구성원 목록',
                                 child: TextButton(
-                                  onPressed: null,
+                                  onPressed: () => context.push(
+                                    '/groups/${current.group.id}/members',
+                                  ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         '전체 보기',
                                         style: GroupDesign.sub.copyWith(
-                                          color: GroupDesign.muted,
+                                          color: GroupDesign.secondary,
                                         ),
                                       ),
                                       const SizedBox(width: 2),
                                       const GroupIcon(
                                         'chevron',
                                         size: 14,
-                                        color: GroupDesign.muted,
+                                        color: GroupDesign.secondary,
                                       ),
                                     ],
                                   ),

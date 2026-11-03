@@ -1,5 +1,6 @@
 import '../entities/current_group.dart';
 import '../entities/group.dart';
+import '../entities/group_member_profile.dart';
 import '../entities/group_failure.dart';
 import '../usecases/params/create_group_params.dart';
 
@@ -16,6 +17,7 @@ abstract interface class GroupRepository {
   });
   Future<void> deleteGroup({required int groupId});
   Future<List<CurrentGroup>> getMyGroups();
+  Future<List<GroupMemberProfile>> getMembers({required int groupId});
   Future<CurrentGroup> getGroup(int groupId);
   Future<CurrentGroup> createGroup(CreateGroupParams params);
 

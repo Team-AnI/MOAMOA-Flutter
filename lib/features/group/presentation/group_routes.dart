@@ -6,9 +6,17 @@ import 'pages/group_home_page.dart';
 import 'pages/group_invite_page.dart';
 import 'pages/group_joined_page.dart';
 import 'pages/group_list_page.dart';
+import 'pages/group_members_page.dart';
 import 'pages/group_settings_page.dart';
 
 final List<RouteBase> groupRoutes = [
+  GoRoute(
+    path: '/groups/:groupId/members',
+    builder: (context, state) {
+      final id = int.tryParse(state.pathParameters['groupId'] ?? '');
+      return GroupMembersPage(groupId: id ?? 0);
+    },
+  ),
   GoRoute(
     path: '/groups/settings',
     builder: (context, state) => const GroupSettingsPage(),
