@@ -194,5 +194,30 @@ void main() {
 
       expect(pressed, 1);
     });
+
+    testWidgets('동작 없이 동작 문구만 넘기면 AssertionError 예외가 발생한다', (tester) async {
+      await pumpHost(
+        tester,
+        (context) =>
+            showMoaSnackBar(context, '등록하지 못했어요.', actionLabel: '다시 시도'),
+      );
+
+      await tester.tap(find.text('열기'));
+      await tester.pump();
+
+      expect(tester.takeException(), isAssertionError);
+    });
+
+    testWidgets('동작 문구 없이 동작만 넘기면 AssertionError 예외가 발생한다', (tester) async {
+      await pumpHost(
+        tester,
+        (context) => showMoaSnackBar(context, '등록하지 못했어요.', onAction: () {}),
+      );
+
+      await tester.tap(find.text('열기'));
+      await tester.pump();
+
+      expect(tester.takeException(), isAssertionError);
+    });
   });
 }

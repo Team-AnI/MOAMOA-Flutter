@@ -157,12 +157,18 @@ class _DialogButton extends StatelessWidget {
 }
 
 /// 어두운 배경에 둥근 모서리로 떠 있는 스낵바
+///
+/// 동작 버튼이 필요하면 [actionLabel] 과 [onAction] 을 함께 넘깁니다.
 void showMoaSnackBar(
   BuildContext context,
   String message, {
   String? actionLabel,
   VoidCallback? onAction,
 }) {
+  assert(
+    (actionLabel == null) == (onAction == null),
+    'actionLabel 과 onAction 은 함께 넘겨야 합니다.',
+  );
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
@@ -173,12 +179,12 @@ void showMoaSnackBar(
         message,
         style: MoaText.sub.copyWith(color: MoaColors.textInverse),
       ),
-      action: actionLabel == null
+      action: actionLabel == null || onAction == null
           ? null
           : SnackBarAction(
               label: actionLabel,
               textColor: MoaColors.textInverse,
-              onPressed: onAction ?? () {},
+              onPressed: onAction,
             ),
     ),
   );
