@@ -9,5 +9,7 @@ enum GroupButtonVariant {
   destructive(GroupDesign.dangerTint, GroupDesign.danger);
 
   const GroupButtonVariant(this.background, this.foreground);
-  final Color background, foreground;
+
+  final Color background;
+  final Color foreground;
 }

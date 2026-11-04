@@ -81,6 +81,25 @@ void main() {
         );
         expect(tester.takeException(), isNull);
         await capture(tester, key, 'archive-restored-${width.toInt()}');
+
+        // 같은 공유 상태로 화면을 다시 열어도 이전 복원 안내는 남지 않습니다.
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: AppTheme.light,
+              home: const GroupArchivedPage(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('보관한 모임이 없어요'), findsOneWidget);
+        expect(find.text('“독서 모임” 모임을 목록으로 돌려놨어요'), findsNothing);
+        expect(
+          container.read(groupListPreferencesProvider).archivedIds,
+          isEmpty,
+        );
       });
     });
     group('GroupEditPage ${width.toInt()}px', () {

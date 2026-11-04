@@ -19,6 +19,8 @@ class GroupArchivedPage extends ConsumerStatefulWidget {
 }
 
 class _GroupArchivedPageState extends ConsumerState<GroupArchivedPage> {
+  // 복원된 항목은 목록에서 사라지므로, 완료 안내에 사용할 이름을 화면 안에서 보관합니다.
+  // 화면을 다시 열면 안내도 초기화되어야 하므로 이 값은 공유 표시 설정과 분리합니다.
   String? _restoredName;
 
   @override

@@ -28,27 +28,35 @@ class _GroupSettingsPageState extends ConsumerState<GroupSettingsPage> {
   Future<void> _delete() async {
     final current = ref.read(groupProvider).currentGroup;
     if (current == null) return;
-    var shouldDelete = await _showDeleteDialog(
+    final confirmed = await _showDeleteDialog(
       GroupDeleteDialog.confirm(name: current.group.name),
     );
-    while (mounted &&
-        shouldDelete == true &&
-        ref.read(groupProvider).currentGroup?.group.id == current.group.id) {
+    if (confirmed != true) return;
+
+    // 최초 확인 후 삭제를 요청하고, 결과 안내에서 재시도를 선택한 경우만 반복합니다.
+    while (mounted) {
+      // 다이얼로그를 기다리는 동안 선택 모임이 바뀌면 새 모임을 삭제하지 않습니다.
+      if (ref.read(groupProvider).currentGroup?.group.id != current.group.id) {
+        return;
+      }
       final deleted = await ref
           .read(groupProvider.notifier)
           .deleteCurrentGroup();
-      if (!mounted) break;
+      if (!mounted) return;
       if (deleted) {
         context.go('/groups');
-        break;
+        return;
       }
+
       final failure = ref.read(groupProvider);
-      shouldDelete = await _showDeleteDialog(
+      final retry = await _showDeleteDialog(
         GroupDeleteDialog.failure(
           message: failure.deleteFailureMessage,
           canRetry: failure.canRetryFailure,
         ),
       );
+      // 닫기·바깥 영역 터치·뒤로 가기는 모두 재요청 없이 종료합니다.
+      if (retry != true) return;
     }
   }
 
