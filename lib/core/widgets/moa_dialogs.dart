@@ -49,9 +49,27 @@ class _ConfirmDialog extends StatelessWidget {
           children: [
             _DialogMessage(title: title, message: message),
             const SizedBox(height: 24),
-            _DialogActions(
-              confirmLabel: confirmLabel,
-              cancelLabel: cancelLabel,
+            // 취소는 false, 확인은 true 로 팝업을 닫습니다.
+            Row(
+              children: [
+                Expanded(
+                  child: _DialogButton(
+                    label: cancelLabel,
+                    backgroundColor: MoaColors.fill,
+                    foregroundColor: MoaColors.textPrimary,
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _DialogButton(
+                    label: confirmLabel,
+                    backgroundColor: MoaColors.accent,
+                    foregroundColor: MoaColors.textInverse,
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -83,39 +101,6 @@ class _DialogMessage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// 확인 팝업의 취소·확인 버튼 줄. 취소는 false, 확인은 true 로 팝업을 닫습니다.
-class _DialogActions extends StatelessWidget {
-  const _DialogActions({required this.confirmLabel, required this.cancelLabel});
-
-  final String confirmLabel;
-  final String cancelLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _DialogButton(
-            label: cancelLabel,
-            backgroundColor: MoaColors.fill,
-            foregroundColor: MoaColors.textPrimary,
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _DialogButton(
-            label: confirmLabel,
-            backgroundColor: MoaColors.accent,
-            foregroundColor: MoaColors.textInverse,
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ),
-      ],
     );
   }
 }
