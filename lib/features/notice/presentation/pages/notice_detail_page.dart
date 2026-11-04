@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/widgets/moa_dialogs.dart';
 import 'package:moamoa/core/widgets/moa_error_view.dart';
+import 'package:moamoa/core/widgets/moa_snack_bar.dart';
 
 import '../../domain/entities/notice.dart';
 import '../notice_error.dart';
@@ -59,11 +60,11 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
 
     if (failure != null) {
       setState(() => _isDeleting = false);
-      showMoaSnackBar(context, noticeErrorMessage(failure));
+      showMoaSnackBar(context, message: noticeErrorMessage(failure));
       return;
     }
     // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
-    showMoaSnackBar(context, '공지를 삭제했어요.');
+    showMoaSnackBar(context, message: '공지를 삭제했어요.');
     // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
     if (context.canPop()) {
       context.pop();

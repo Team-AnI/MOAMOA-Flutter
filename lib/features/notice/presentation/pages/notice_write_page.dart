@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/widgets/moa_dialogs.dart';
 import 'package:moamoa/core/widgets/moa_error_view.dart';
+import 'package:moamoa/core/widgets/moa_snack_bar.dart';
 
 import '../../domain/entities/notice.dart';
 import '../notice_error.dart';
@@ -167,7 +168,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     final error = ref.read(noticeWriteProvider(widget.meetingId)).error;
     showMoaSnackBar(
       context,
-      noticeErrorMessage(error),
+      message: noticeErrorMessage(error),
       actionLabel: '다시 시도',
       onAction: _submit,
     );

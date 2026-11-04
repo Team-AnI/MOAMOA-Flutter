@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:moamoa/core/widgets/moa_dialogs.dart';
 import 'package:moamoa/core/widgets/moa_error_view.dart';
+import 'package:moamoa/core/widgets/moa_snack_bar.dart';
 
 import '../../domain/entities/notice.dart';
 import '../notice_error.dart';
@@ -49,7 +49,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    showMoaSnackBar(context, noticeErrorMessage(error));
+    showMoaSnackBar(context, message: noticeErrorMessage(error));
   }
 
   void _goWrite() => context.push('/meetings/${widget.meetingId}/notices/new');
