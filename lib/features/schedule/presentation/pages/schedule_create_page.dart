@@ -5,7 +5,6 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
 import '../providers/schedule_providers.dart';
-import '../viewmodels/schedule_create_state.dart';
 import '../viewmodels/schedule_create_status.dart';
 import '../widgets/schedule_form.dart';
 
@@ -28,14 +27,13 @@ class ScheduleCreatePage extends ConsumerStatefulWidget {
 
 class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   /// 제출 상태가 바뀌면: 성공이면 화면을 닫고, 실패하면 안내합니다.
-  void _onStateChanged(
-    ScheduleCreateState? previous,
-    ScheduleCreateState next,
+  void _onStatusChanged(
+    ScheduleCreateStatus? previous,
+    ScheduleCreateStatus next,
   ) {
-    if (previous?.status == next.status) return;
-    if (next.status == ScheduleCreateStatus.success) {
+    if (next == ScheduleCreateStatus.success) {
       context.pop();
-    } else if (next.status == ScheduleCreateStatus.failure) {
+    } else if (next == ScheduleCreateStatus.failure) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('일정을 만들지 못했어요')));
@@ -64,7 +62,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
   @override
   Widget build(BuildContext context) {
     final provider = scheduleCreateProvider(widget.meetingId);
-    ref.listen(provider, _onStateChanged);
+    ref.listen(provider.select((state) => state.status), _onStatusChanged);
     final state = ref.watch(provider);
 
     return Scaffold(

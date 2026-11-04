@@ -1,31 +1,38 @@
 import 'package:moamoa/core/usecases/usecase.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_update_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 
 /// UpdateSchedule 전용 파라미터입니다.
-/// [original] 은 수정 전 일정으로, 바뀐 필드만 골라 보내는 데 씁니다.
+/// 바뀐 필드만 값이 있고, null 인 필드는 바꾸지 않습니다.
 final class UpdateScheduleParams extends Params {
   const UpdateScheduleParams({
     required this.meetingId,
-    required this.original,
-    required this.title,
-    this.description = '',
-    required this.startAt,
+    required this.scheduleId,
+    this.title,
+    this.description,
+    this.startAt,
     this.endAt,
-    this.location = '',
+    this.location,
   });
 
   final int meetingId;
-  final Schedule original;
-  final String title;
-  final String description;
-  final DateTime startAt;
+  final int scheduleId;
+  final String? title;
+  final String? description;
+  final DateTime? startAt;
   final DateTime? endAt;
-  final String location;
+  final String? location;
+
+  /// 바뀐 필드가 하나라도 있는지 알려줍니다.
+  bool get hasChanges =>
+      title != null ||
+      description != null ||
+      startAt != null ||
+      endAt != null ||
+      location != null;
 }
 
-/// "일정 수정"을 담당합니다. 바뀐 필드가 없으면 저장하지 않습니다.
+/// "일정 수정"을 담당합니다.
 /// 테스트에서 Fake 로 대체하기 위한 추상 클래스입니다.
 abstract class UpdateSchedule extends Usecase<void, UpdateScheduleParams> {}
 
@@ -38,41 +45,15 @@ final class UpdateScheduleImpl implements UpdateSchedule {
 
   @override
   Future<void> call(UpdateScheduleParams params) async {
-    final original = params.original;
-    final title = params.title.trim();
-    final description = params.description.trim();
-    final location = params.location.trim();
-    final startAt = params.startAt;
-    final endAt = params.endAt;
-    final originalEndAt = original.endAt;
-
-    final titleChanged = title != original.title;
-    final descriptionChanged = description != original.description;
-    // 서버 응답은 UTC, 입력 폼은 로컬 시각이라 일시는 `==` 대신 같은 순간인지로 비교합니다.
-    final startAtChanged = !startAt.isAtSameMomentAs(original.startAt);
-    // 종료 일시를 비우는 수정은 아직 지원하지 않아서, 새 값이 있을 때만 비교합니다.
-    final endAtChanged =
-        endAt != null &&
-        (originalEndAt == null || !endAt.isAtSameMomentAs(originalEndAt));
-    final locationChanged = location != original.location;
-
-    final hasChanges =
-        titleChanged ||
-        descriptionChanged ||
-        startAtChanged ||
-        endAtChanged ||
-        locationChanged;
-    if (!hasChanges) return;
-
-    await _scheduleRepository.updateSchedule(
+    return _scheduleRepository.updateSchedule(
       ScheduleUpdateRequest(
         meetingId: params.meetingId,
-        scheduleId: original.id,
-        title: titleChanged ? title : null,
-        description: descriptionChanged ? description : null,
-        startAt: startAtChanged ? startAt : null,
-        endAt: endAtChanged ? endAt : null,
-        location: locationChanged ? location : null,
+        scheduleId: params.scheduleId,
+        title: params.title,
+        description: params.description,
+        startAt: params.startAt,
+        endAt: params.endAt,
+        location: params.location,
       ),
     );
   }

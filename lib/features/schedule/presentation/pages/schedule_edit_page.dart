@@ -5,8 +5,7 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
 import '../providers/schedule_providers.dart';
-import '../schedule_args.dart';
-import '../viewmodels/schedule_edit_state.dart';
+import '../schedule_id.dart';
 import '../viewmodels/schedule_edit_status.dart';
 import '../widgets/schedule_failure_snack_bar.dart';
 import '../widgets/schedule_form.dart';
@@ -31,15 +30,14 @@ class ScheduleEditPage extends ConsumerStatefulWidget {
 }
 
 class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
-  ScheduleArgs get _args =>
-      (meetingId: widget.meetingId, scheduleId: widget.scheduleId);
+  ScheduleId get _id =>
+      ScheduleId(meetingId: widget.meetingId, scheduleId: widget.scheduleId);
 
   /// 제출 상태가 바뀌면: 성공이면 화면을 닫고, 실패하면 안내합니다.
-  void _onStateChanged(ScheduleEditState? previous, ScheduleEditState next) {
-    if (previous?.status == next.status) return;
-    if (next.status == ScheduleEditStatus.success) {
+  void _onStatusChanged(ScheduleEditStatus? previous, ScheduleEditStatus next) {
+    if (next == ScheduleEditStatus.success) {
       context.pop();
-    } else if (next.status == ScheduleEditStatus.failure) {
+    } else if (next == ScheduleEditStatus.failure) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(ScheduleFailureSnackBar(message: '일정을 수정하지 못했어요'));
@@ -55,7 +53,7 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
     required String location,
   }) {
     ref
-        .read(scheduleEditProvider(_args).notifier)
+        .read(scheduleEditProvider(_id).notifier)
         .submit(
           title: title,
           description: description,
@@ -67,10 +65,10 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final editProvider = scheduleEditProvider(_args);
-    ref.listen(editProvider, _onStateChanged);
+    final editProvider = scheduleEditProvider(_id);
+    ref.listen(editProvider.select((state) => state.status), _onStatusChanged);
     final state = ref.watch(editProvider);
-    final schedule = ref.watch(scheduleDetailProvider(_args));
+    final schedule = ref.watch(scheduleDetailProvider(_id));
 
     return Scaffold(
       backgroundColor: MoaColors.page,
