@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/group_providers.dart';
-import '../widgets/group_button_variant.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
@@ -22,7 +21,7 @@ class GroupJoinedPage extends ConsumerWidget {
       onClose: () => context.go('/groups'),
       bottom: GroupPrimaryButton(
         label: '내 모임으로',
-        variant: GroupButtonVariant.secondary,
+        secondary: true,
         onPressed: () => context.go('/groups'),
       ),
       child: Column(

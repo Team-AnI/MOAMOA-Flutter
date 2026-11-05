@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../providers/group_archived_provider.dart';
 import '../providers/group_list_preferences_provider.dart';
 import '../viewmodels/group_list_display_state.dart';
 import '../widgets/group_design.dart';
@@ -11,28 +12,20 @@ import '../widgets/group_mark.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 
-class GroupArchivedPage extends ConsumerStatefulWidget {
+class GroupArchivedPage extends ConsumerWidget {
   const GroupArchivedPage({super.key});
 
   @override
-  ConsumerState<GroupArchivedPage> createState() => _GroupArchivedPageState();
-}
-
-class _GroupArchivedPageState extends ConsumerState<GroupArchivedPage> {
-  // 복원된 항목은 목록에서 사라지므로, 완료 안내에 사용할 이름을 화면 안에서 보관합니다.
-  // 화면을 다시 열면 안내도 초기화되어야 하므로 이 값은 공유 표시 설정과 분리합니다.
-  String? _restoredName;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final restoredName = ref.watch(groupArchivedProvider);
     final display = ref.watch(groupListDisplayProvider);
     return GroupPageLayout(
       isBack: true,
       onClose: () => Navigator.pop(context),
-      bottom: _restoredName == null
+      bottom: restoredName == null
           ? null
           : GroupFeedbackCard(
-              title: '“$_restoredName” 모임을 목록으로 돌려놨어요',
+              title: '“$restoredName” 모임을 목록으로 돌려놨어요',
               message: '내 모임 목록에서 다시 볼 수 있어요',
             ),
       child: Column(
@@ -46,12 +39,8 @@ class _GroupArchivedPageState extends ConsumerState<GroupArchivedPage> {
           for (final current in display.archivedGroups)
             _ArchivedGroupTile(
               current: current,
-              onRestore: () {
-                ref
-                    .read(groupListPreferencesProvider.notifier)
-                    .toggleArchive(current.group.id);
-                setState(() => _restoredName = current.group.name);
-              },
+              onRestore: () =>
+                  ref.read(groupArchivedProvider.notifier).restore(current),
             ),
         ],
       ),

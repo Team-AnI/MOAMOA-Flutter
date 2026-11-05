@@ -63,11 +63,24 @@ void main() {
               child: MaterialApp(
                 theme: AppTheme.light,
                 debugShowCheckedModeBanner: false,
-                home: const GroupArchivedPage(),
+                home: Builder(
+                  builder: (context) => Scaffold(
+                    body: TextButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const GroupArchivedPage(),
+                        ),
+                      ),
+                      child: const Text('보관 화면 열기'),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
         );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('보관 화면 열기'));
         await tester.pumpAndSettle();
         await capture(tester, key, 'archive-list-${width.toInt()}');
         await tester.tap(find.text('복원'));
@@ -82,17 +95,10 @@ void main() {
         expect(tester.takeException(), isNull);
         await capture(tester, key, 'archive-restored-${width.toInt()}');
 
-        // 같은 공유 상태로 화면을 다시 열어도 이전 복원 안내는 남지 않습니다.
-        await tester.pumpWidget(const SizedBox());
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp(
-              theme: AppTheme.light,
-              home: const GroupArchivedPage(),
-            ),
-          ),
-        );
+        // 실제 경로를 닫고 재진입하면 안내만 초기화됩니다.
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('보관 화면 열기'));
         await tester.pumpAndSettle();
         expect(find.text('보관한 모임이 없어요'), findsOneWidget);
         expect(find.text('“독서 모임” 모임을 목록으로 돌려놨어요'), findsNothing);

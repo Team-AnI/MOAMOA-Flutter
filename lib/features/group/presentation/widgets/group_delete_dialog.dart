@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'group_button_variant.dart';
 import 'group_design.dart';
 import 'group_primary_button.dart';
 
@@ -41,7 +40,7 @@ class GroupDeleteDialog extends StatelessWidget {
               Expanded(
                 child: GroupPrimaryButton(
                   label: '닫기',
-                  variant: GroupButtonVariant.secondary,
+                  secondary: true,
                   onPressed: () => Navigator.pop(context, false),
                 ),
               ),
@@ -50,7 +49,7 @@ class GroupDeleteDialog extends StatelessWidget {
                 Expanded(
                   child: GroupPrimaryButton(
                     label: actionLabel!,
-                    variant: GroupButtonVariant.destructive,
+                    destructive: true,
                     onPressed: () => Navigator.pop(context, true),
                   ),
                 ),
