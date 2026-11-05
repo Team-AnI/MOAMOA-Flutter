@@ -79,7 +79,7 @@ void main() {
     final groups = FakeGroupRepository()
       ..groups = [
         group.copyWith(
-          group: group.group.copyWith(id: groupId, name: '연결 테스트 모임'),
+          group: group.group.copyWith(id: groupId, name: '스터디 모아'),
           membership: group.membership.copyWith(groupId: groupId),
         ),
       ];

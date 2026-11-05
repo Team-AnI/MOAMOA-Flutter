@@ -27,7 +27,9 @@ class GroupHomePage extends ConsumerWidget {
               child: Row(
                 children: [
                   _HeaderButton(
-                    icon: 'back',
+                    icon: 'home_back',
+                    size: 36,
+                    iconSize: 18,
                     label: '내 모임 목록',
                     onPressed: () => context.go('/groups'),
                   ),
@@ -36,6 +38,12 @@ class GroupHomePage extends ConsumerWidget {
                     name: current?.group.name ?? '',
                     size: 36,
                     photo: null,
+                    backgroundColor: GroupDesign.darkRaised,
+                    cornerRadius: 12,
+                    textStyle: GroupDesign.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -47,11 +55,11 @@ class GroupHomePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
+                  const _HeaderButton(icon: 'home_bell', label: '알림 · 준비 중'),
                   if (current?.canManageGroup ?? false) ...[
                     const SizedBox(width: 8),
                     _HeaderButton(
-                      icon: 'gear',
+                      icon: 'home_gear',
                       label: '모임 설정',
                       onPressed: () => context.push('/groups/settings'),
                     ),
@@ -164,7 +172,11 @@ class _HeaderButton extends StatelessWidget {
     required this.icon,
     required this.label,
     this.onPressed,
+    this.size = 40,
+    this.iconSize = 20,
   });
+  final double size;
+  final double iconSize;
   final String icon;
   final String label;
   final VoidCallback? onPressed;
@@ -173,15 +185,15 @@ class _HeaderButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: label,
     child: SizedBox(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       child: IconButton(
         style: IconButton.styleFrom(
           backgroundColor: GroupDesign.fill,
           disabledBackgroundColor: GroupDesign.fill,
         ),
         onPressed: onPressed,
-        icon: GroupIcon(icon, size: 20),
+        icon: GroupIcon(icon, size: iconSize),
       ),
     ),
   );
