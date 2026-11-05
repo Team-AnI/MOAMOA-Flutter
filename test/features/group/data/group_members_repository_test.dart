@@ -89,18 +89,18 @@ void main() {
       respond([]);
       expect(await repository.getMembers(groupId: 1), isEmpty);
     });
-    for (final malformed in <Object?>[
-      null,
-      {},
-      [null],
-      [member(3, role: 'OWNER')],
-      [member(3, color: 'RED')],
-      [member(0)],
-      [member(3)..['memberId'] = 1.5],
-      [member(3), member(3)],
-      [member(3)..['userName'] = 7],
+    for (final (label, malformed) in <(String, Object?)>[
+      ('목록 누락', null),
+      ('배열이 아닌 목록', {}),
+      ('null 구성원', [null]),
+      ('알 수 없는 역할', [member(3, role: 'OWNER')]),
+      ('알 수 없는 프로필 색', [member(3, color: 'RED')]),
+      ('0인 구성원 ID', [member(0)]),
+      ('실수 구성원 ID', [member(3)..['memberId'] = 1.5]),
+      ('중복 구성원 ID', [member(3), member(3)]),
+      ('숫자 이름', [member(3)..['userName'] = 7]),
     ]) {
-      test('잘못된 구성원 응답 $malformed 는 조회 실패로 처리한다', () async {
+      test('$label 응답이면 일시적 실패 사유의 GroupFailure 예외가 발생한다', () async {
         respond(malformed);
         await expectLater(
           repository.getMembers(groupId: 1),
@@ -120,16 +120,23 @@ void main() {
       404: GroupFailureReason.notFound,
       500: GroupFailureReason.unavailable,
     }.entries) {
-      test('구성원 조회 HTTP ${entry.key} 응답을 해당 실패로 분류한다', () async {
-        adapter.status = entry.key;
-        adapter.response = '';
-        await expectLater(
-          repository.getMembers(groupId: 1),
-          throwsA(
-            isA<GroupFailure>().having((e) => e.reason, 'reason', entry.value),
-          ),
-        );
-      });
+      test(
+        '구성원 조회 HTTP ${entry.key} 응답이면 지정한 사유의 GroupFailure 예외가 발생한다',
+        () async {
+          adapter.status = entry.key;
+          adapter.response = '';
+          await expectLater(
+            repository.getMembers(groupId: 1),
+            throwsA(
+              isA<GroupFailure>().having(
+                (e) => e.reason,
+                'reason',
+                entry.value,
+              ),
+            ),
+          );
+        },
+      );
     }
   });
 }

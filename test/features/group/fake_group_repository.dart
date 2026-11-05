@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'package:moamoa/features/group/domain/entities/group.dart';
-import 'package:moamoa/features/group/domain/entities/group_member_profile.dart';
 import 'package:moamoa/features/group/domain/entities/group_member.dart';
+import 'package:moamoa/features/group/domain/entities/group_member_profile.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 

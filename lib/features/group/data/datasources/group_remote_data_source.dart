@@ -1,5 +1,5 @@
-import '../models/group_update_model.dart';
 import '../models/group_member_model.dart';
+import '../models/group_update_model.dart';
 import '../models/meeting_model.dart';
 import '../requests/delete_group_request.dart';
 import '../requests/group_members_request.dart';

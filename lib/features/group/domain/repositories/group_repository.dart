@@ -1,12 +1,12 @@
 import '../entities/current_group.dart';
 import '../entities/group.dart';
-import '../entities/group_member_profile.dart';
 import '../entities/group_failure.dart';
+import '../entities/group_member_profile.dart';
 import '../usecases/params/create_group_params.dart';
 
-export '../usecases/params/create_group_params.dart';
 export '../entities/group_failure.dart';
 export '../entities/group_failure_reason.dart';
+export '../usecases/params/create_group_params.dart';
 
 /// 구현체는 인증된 사용자의 모임만 반환하고 서버에서 권한을 검증합니다.
 abstract interface class GroupRepository {

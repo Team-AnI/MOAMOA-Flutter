@@ -71,44 +71,42 @@ class _MembersList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       itemCount: state.members.length + 1,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, index) => index == 0
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(state.countLabel, style: GroupDesign.heading),
-                if (state.members.isEmpty) ...[
-                  const SizedBox(height: 24),
-                  const Text('표시할 구성원이 없어요.', style: GroupDesign.body),
-                ],
+      itemBuilder: (_, index) {
+        if (index == 0) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(state.countLabel, style: GroupDesign.heading),
+              if (state.members.isEmpty) ...[
+                const SizedBox(height: 24),
+                const Text('표시할 구성원이 없어요.', style: GroupDesign.body),
               ],
-            )
-          : _MemberTile(member: state.members[index - 1]),
-    ),
-  );
-}
-
-class _MemberTile extends StatelessWidget {
-  const _MemberTile({required this.member});
-  final GroupMemberProfile member;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: GroupDesign.fill,
-    borderRadius: BorderRadius.circular(24),
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-      minVerticalPadding: 18,
-      horizontalTitleGap: 12,
-      leading: CircleAvatar(
-        radius: 22,
-        backgroundColor: member.avatarBackground,
-        child: Text(
-          member.initial,
-          style: GroupDesign.strong.copyWith(color: member.avatarForeground),
-        ),
-      ),
-      title: Text(member.displayName, style: GroupDesign.strong),
-      subtitle: Text(member.roleLabel, style: GroupDesign.sub),
+            ],
+          );
+        }
+        final member = state.members[index - 1];
+        return Material(
+          color: GroupDesign.fill,
+          borderRadius: BorderRadius.circular(24),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+            minVerticalPadding: 18,
+            horizontalTitleGap: 12,
+            leading: CircleAvatar(
+              radius: 22,
+              backgroundColor: member.avatarBackground,
+              child: Text(
+                member.initial,
+                style: GroupDesign.strong.copyWith(
+                  color: member.avatarForeground,
+                ),
+              ),
+            ),
+            title: Text(member.displayName, style: GroupDesign.strong),
+            subtitle: Text(member.roleLabel, style: GroupDesign.sub),
+          ),
+        );
+      },
     ),
   );
 }

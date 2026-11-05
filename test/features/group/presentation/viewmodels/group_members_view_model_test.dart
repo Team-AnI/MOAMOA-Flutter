@@ -9,8 +9,8 @@ import 'package:moamoa/features/group/domain/usecases/get_group_members_impl.dar
 import 'package:moamoa/features/group/domain/usecases/params/get_group_params.dart';
 import 'package:moamoa/features/group/presentation/providers/group_members_providers.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
-import 'package:moamoa/features/group/presentation/viewmodels/group_members_view_model.dart';
 import 'package:moamoa/features/group/presentation/viewmodels/group_members_state.dart';
+import 'package:moamoa/features/group/presentation/viewmodels/group_members_view_model.dart';
 
 import '../../fake_group_repository.dart';
 
@@ -32,7 +32,7 @@ class _Repository extends FakeGroupRepository {
 
 void main() {
   group(GetGroupMembersImpl, () {
-    test('양수가 아닌 모임 ID는 서버 요청 전에 거부한다', () async {
+    test('모임 ID가 0이면 서버 요청 없이 GroupFailure 예외가 발생한다', () async {
       final fake = _Repository();
       await expectLater(
         () => GetGroupMembersImpl(groupRepository: fake)(
@@ -109,12 +109,12 @@ void main() {
       expect(container.read(groupMembersProvider(1)).requireValue, updated);
       expect(updated.members.single.userName, '최신');
     });
-    for (final reason in [
-      GroupFailureReason.unauthorized,
-      GroupFailureReason.forbidden,
-      GroupFailureReason.notFound,
+    for (final (label, reason) in [
+      ('미인증', GroupFailureReason.unauthorized),
+      ('권한 없음', GroupFailureReason.forbidden),
+      ('모임 없음', GroupFailureReason.notFound),
     ]) {
-      test('$reason 실패에서는 같은 요청을 재시도하도록 안내하지 않는다', () async {
+      test('$label 실패 시 재시도를 숨기고 구성원 목록을 비운다', () async {
         fake.response = (_) async => throw GroupFailure(reason);
         final state = await load();
         expect(state.hasFailed, isTrue);

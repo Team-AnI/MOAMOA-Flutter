@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -112,6 +113,27 @@ void main() {
         expect(find.text('김모아'), findsOneWidget);
         expect(find.text('관리자'), findsOneWidget);
         expect(find.text('이름 미설정'), findsOneWidget);
+        final avatars = tester
+            .widgetList<CircleAvatar>(find.byType(CircleAvatar))
+            .toList();
+        expect(avatars.map((avatar) => avatar.backgroundColor), [
+          const Color(0xffe5effa),
+          const Color(0xffd2d2d7),
+          const Color(0xffb8d4f2),
+          const Color(0xff1d1d1f),
+        ]);
+        expect(avatars.map((avatar) => (avatar.child! as Text).data), [
+          '김',
+          '이',
+          '박',
+          '?',
+        ]);
+        expect(avatars.map((avatar) => (avatar.child! as Text).style!.color), [
+          const Color(0xff0066cc),
+          const Color(0xff1d1d1f),
+          const Color(0xff1d1d1f),
+          Colors.white,
+        ]);
         expect(find.text('강퇴'), findsNothing);
         expect(find.text('가입 승인'), findsNothing);
         expect(tester.takeException(), isNull);
@@ -140,6 +162,24 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('아주 긴 이름의 구성원 테스트입니다'), findsOneWidget);
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.descendant(
+          of: find.text('아주 긴 이름의 구성원 테스트입니다'),
+          matching: find.byType(RichText),
+        ),
+      );
+      final boxes = paragraph.getBoxesForSelection(
+        const TextSelection(
+          baseOffset: 0,
+          extentOffset: '아주 긴 이름의 구성원 테스트입니다'.length,
+        ),
+      );
+      expect(boxes.map((box) => box.top).toSet().length, greaterThan(1));
+      expect(paragraph.didExceedMaxLines, isFalse);
+      expect(
+        tester.getRect(find.text('아주 긴 이름의 구성원 테스트입니다')).right,
+        lessThanOrEqualTo(320),
+      );
       expect(tester.takeException(), isNull);
     });
     testWidgets('요청이 끝나기 전에는 로딩을 표시한다', (tester) async {
@@ -151,7 +191,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('총 4명'), findsOneWidget);
     });
-    testWidgets('빈 목록도 새로고침할 수 있다', (tester) async {
+    testWidgets('빈 목록에서 당겨서 새로고침하면 새 구성원을 표시한다', (tester) async {
       fake.members = [];
       final (_, key) = await showPage(tester);
       await tester.pumpAndSettle();
@@ -186,7 +226,7 @@ void main() {
       GroupFailureReason.forbidden: '이 모임의 구성원만 목록을 볼 수 있어요.',
       GroupFailureReason.notFound: '모임을 찾을 수 없어요.',
     }.entries) {
-      testWidgets('${entry.key} 실패를 빈 목록으로 오인하지 않게 안내한다', (tester) async {
+      testWidgets('${entry.value} 안내를 표시하고 빈 목록과 재시도 버튼을 숨긴다', (tester) async {
         fake.failure = GroupFailure(entry.key);
         await showPage(tester);
         await tester.pumpAndSettle();
@@ -233,7 +273,7 @@ void main() {
         },
       );
     }
-    testWidgets('많은 구성원도 아래로 스크롤해 마지막 항목을 볼 수 있다', (tester) async {
+    testWidgets('구성원 목록을 아래로 스크롤하면 마지막 항목을 표시한다', (tester) async {
       fake.members = List.generate(
         40,
         (index) => GroupMemberProfile(
@@ -268,27 +308,34 @@ void main() {
       expect(tester.takeException(), isNull);
     });
     for (final role in MemberRole.values) {
-      testWidgets('$role도 홈의 전체 보기에서 목록으로 들어갔다 돌아온다', (tester) async {
-        fake.groups = [
-          makeGroup(role)
-              .copyWith(group: makeGroup(role).group.copyWith(memberCount: 4)),
-        ];
-        await container.read(groupProvider.notifier).loadGroups();
-        await container.read(groupProvider.notifier).selectGroup(1);
-        final (router, key) = await showPage(tester, path: '/groups/home');
-        await tester.pumpAndSettle();
-        if (role == MemberRole.admin) {
-          await capture(tester, key, 'members-home-393');
-        }
-        await tester.tap(find.text('전체 보기'));
-        await tester.pumpAndSettle();
-        expect(find.byType(GroupMembersPage), findsOneWidget);
-        expect(fake.calls, [1]);
-        expect(find.text('김모아'), findsOneWidget);
-        await tester.tap(find.byTooltip('뒤로'));
-        await tester.pumpAndSettle();
-        expect(router.routeInformationProvider.value.uri.path, '/groups/home');
-      });
+      testWidgets(
+        '${role == MemberRole.admin ? '관리자' : '일반 구성원'} 역할로 홈의 전체 보기에서 목록으로 들어갔다 돌아온다',
+        (tester) async {
+          fake.groups = [
+            makeGroup(
+              role,
+            ).copyWith(group: makeGroup(role).group.copyWith(memberCount: 4)),
+          ];
+          await container.read(groupProvider.notifier).loadGroups();
+          await container.read(groupProvider.notifier).selectGroup(1);
+          final (router, key) = await showPage(tester, path: '/groups/home');
+          await tester.pumpAndSettle();
+          if (role == MemberRole.admin) {
+            await capture(tester, key, 'members-home-393');
+          }
+          await tester.tap(find.text('전체 보기'));
+          await tester.pumpAndSettle();
+          expect(find.byType(GroupMembersPage), findsOneWidget);
+          expect(fake.calls, [1]);
+          expect(find.text('김모아'), findsOneWidget);
+          await tester.tap(find.byTooltip('뒤로'));
+          await tester.pumpAndSettle();
+          expect(
+            router.routeInformationProvider.value.uri.path,
+            '/groups/home',
+          );
+        },
+      );
     }
   });
 }
