@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Notice {
 
- int get id; String get title; DateTime get createdAt; String? get content;
+ int get id; String get title; DateTime get createdAt; String? get content; NoticeAuthor? get author;
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $NoticeCopyWith<Notice> get copyWith => _$NoticeCopyWithImpl<Notice>(this as Not
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,createdAt,content);
+int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author);
 
 @override
 String toString() {
-  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content)';
+  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author)';
 }
 
 
@@ -46,11 +46,11 @@ abstract mixin class $NoticeCopyWith<$Res>  {
   factory $NoticeCopyWith(Notice value, $Res Function(Notice) _then) = _$NoticeCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, DateTime createdAt, String? content
+ int id, String title, DateTime createdAt, String? content, NoticeAuthor? author
 });
 
 
-
+$NoticeAuthorCopyWith<$Res>? get author;
 
 }
 /// @nodoc
@@ -63,16 +63,29 @@ class _$NoticeCopyWithImpl<$Res>
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,}) {
   return _then(Notice(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,author: freezed == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
+as NoticeAuthor?,
   ));
 }
+/// Create a copy of Notice
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NoticeAuthorCopyWith<$Res>? get author {
+    if (_self.author == null) {
+    return null;
+  }
 
+  return $NoticeAuthorCopyWith<$Res>(_self.author!, (value) {
+    return _then(_self.copyWith(author: value));
+  });
+}
 }
 
 
@@ -154,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Notice() when $default != null:
-return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
   return orElse();
 
 }
@@ -175,10 +188,10 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)  $default,) {final _that = this;
 switch (_that) {
 case _Notice():
-return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +208,10 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  DateTime createdAt,  String? content)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)?  $default,) {final _that = this;
 switch (_that) {
 case _Notice() when $default != null:
-return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
   return null;
 
 }
@@ -210,13 +223,14 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content);case _:
 
 
 class _Notice implements Notice {
-  const _Notice({required this.id, required this.title, required this.createdAt, this.content});
+  const _Notice({required this.id, required this.title, required this.createdAt, this.content, this.author});
   
 
 @override final  int id;
 @override final  String title;
 @override final  DateTime createdAt;
 @override final  String? content;
+@override final  NoticeAuthor? author;
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
@@ -228,16 +242,16 @@ _$NoticeCopyWith<_Notice> get copyWith => __$NoticeCopyWithImpl<_Notice>(this, _
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,createdAt,content);
+int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author);
 
 @override
 String toString() {
-  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content)';
+  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author)';
 }
 
 
@@ -248,11 +262,11 @@ abstract mixin class _$NoticeCopyWith<$Res> implements $NoticeCopyWith<$Res> {
   factory _$NoticeCopyWith(_Notice value, $Res Function(_Notice) _then) = __$NoticeCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, DateTime createdAt, String? content
+ int id, String title, DateTime createdAt, String? content, NoticeAuthor? author
 });
 
 
-
+@override $NoticeAuthorCopyWith<$Res>? get author;
 
 }
 /// @nodoc
@@ -265,17 +279,30 @@ class __$NoticeCopyWithImpl<$Res>
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,}) {
   return _then(_Notice(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,author: freezed == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
+as NoticeAuthor?,
   ));
 }
 
+/// Create a copy of Notice
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NoticeAuthorCopyWith<$Res>? get author {
+    if (_self.author == null) {
+    return null;
+  }
 
+  return $NoticeAuthorCopyWith<$Res>(_self.author!, (value) {
+    return _then(_self.copyWith(author: value));
+  });
+}
 }
 
 // dart format on
