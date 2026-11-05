@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/group_repository.dart';
@@ -5,28 +7,42 @@ import '../../domain/usecases/params/get_group_params.dart';
 import '../providers/group_members_providers.dart';
 import 'group_members_state.dart';
 
-class GroupMembersViewModel extends AsyncNotifier<GroupMembersState> {
+class GroupMembersViewModel extends Notifier<GroupMembersState> {
   GroupMembersViewModel({required int groupId}) : _groupId = groupId;
   final int _groupId;
+  int _requestId = 0;
 
   @override
-  Future<GroupMembersState> build() async {
-    try {
-      final getMembers = ref.watch(getGroupMembersProvider);
-      final members = await getMembers(GetGroupParams(groupId: _groupId));
-      return GroupMembersState(members: members);
-    } on GroupFailure catch (error) {
-      return GroupMembersState(failureReason: error.reason);
-    } catch (_) {
-      return const GroupMembersState(
-        failureReason: GroupFailureReason.unavailable,
-      );
-    }
+  GroupMembersState build() {
+    ref.watch(getGroupMembersProvider);
+    final generation = ++_requestId;
+    ref.onDispose(() => _requestId++);
+    // 초기 상태가 구독된 뒤 조회합니다. 폐기되거나 다시 생성된 세대는 실행하지 않습니다.
+    scheduleMicrotask(() {
+      if (ref.mounted && generation == _requestId) unawaited(refresh());
+    });
+    return const GroupMembersState(isLoading: true);
   }
 
-  /// 새로고침과 오류 재시도를 같은 경로로 실행하고 새 응답을 기다립니다.
+  /// 새로고침 중 목록을 유지하며, 최신 요청의 결과만 상태에 반영합니다.
   Future<void> refresh() async {
-    ref.invalidateSelf();
-    await future;
+    final requestId = ++_requestId;
+    state = state.copyWith(isLoading: true, failureReason: null);
+    try {
+      final members = await ref.read(getGroupMembersProvider)(
+        GetGroupParams(groupId: _groupId),
+      );
+      if (!ref.mounted || requestId != _requestId) return;
+      state = GroupMembersState(members: members, hasLoaded: true);
+    } on GroupFailure catch (error) {
+      if (!ref.mounted || requestId != _requestId) return;
+      state = GroupMembersState(failureReason: error.reason, hasLoaded: true);
+    } catch (_) {
+      if (!ref.mounted || requestId != _requestId) return;
+      state = const GroupMembersState(
+        failureReason: GroupFailureReason.unavailable,
+        hasLoaded: true,
+      );
+    }
   }
 }

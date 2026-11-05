@@ -10,8 +10,9 @@ import 'package:moamoa/features/group/domain/repositories/group_repository.dart'
 class FakeGroupRepository implements GroupRepository {
   List<GroupMemberProfile> members = [];
   @override
-  Future<List<GroupMemberProfile>> getMembers({required int groupId}) async =>
-      members;
+  Future<List<GroupMemberProfile>> getMembersByGroupId({
+    required int groupId,
+  }) async => members;
 
   @override
   Future<Group> updateGroup({

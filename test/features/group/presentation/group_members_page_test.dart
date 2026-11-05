@@ -23,7 +23,9 @@ class _Repository extends FakeGroupRepository {
   Completer<List<GroupMemberProfile>>? pending;
   final calls = <int>[];
   @override
-  Future<List<GroupMemberProfile>> getMembers({required int groupId}) async {
+  Future<List<GroupMemberProfile>> getMembersByGroupId({
+    required int groupId,
+  }) async {
     calls.add(groupId);
     if (failure != null) throw failure!;
     return pending == null ? members : pending!.future;

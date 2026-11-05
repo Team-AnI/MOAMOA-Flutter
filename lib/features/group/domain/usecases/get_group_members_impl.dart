@@ -10,6 +10,6 @@ final class GetGroupMembersImpl implements GetGroupMembers {
 
   @override
   Future<List<GroupMemberProfile>> call(GetGroupParams params) {
-    return _groupRepository.getMembers(groupId: params.groupId);
+    return _groupRepository.getMembersByGroupId(groupId: params.groupId);
   }
 }

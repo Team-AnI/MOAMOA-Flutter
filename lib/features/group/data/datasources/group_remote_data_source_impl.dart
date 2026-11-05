@@ -25,97 +25,55 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
   final String _baseUrl;
   final Map<String, String>? Function() _authHeaders;
 
-  Future<T> _decode<T>(
-    Future<Map<String, dynamic>> response,
-    T Function(Map<String, dynamic>) parse, {
-    String parseFailureCode = 'UNAVAILABLE',
-  }) async {
-    try {
-      return parse(await response);
-    } on FormatException {
-      throw GroupApiFailure(parseFailureCode);
-    } on TypeError {
-      throw GroupApiFailure(parseFailureCode);
-    }
+  @override
+  Future<GroupUpdateModel> updateGroup(UpdateGroupRequest request) async =>
+      GroupUpdateModel.fromJson(
+        await _request(
+          'PATCH',
+          '/v1/meetings/${request.meetingId}',
+          body: request.toPatchJson(),
+        ),
+      );
+
+  @override
+  Future<int> deleteGroup(DeleteGroupRequest request) async {
+    final data = await _request('DELETE', '/v1/meetings/${request.meetingId}');
+    return data['meetingId'] as int;
   }
 
   @override
-  Future<GroupUpdateModel> updateGroup(UpdateGroupRequest request) => _decode(
-    _request(
-      'PATCH',
-      '/v1/meetings/${request.meetingId}',
-      body: request.toPatchJson(),
-    ),
-    (data) {
-      final model = GroupUpdateModel.fromJson(data);
-      if (model.meetingId != request.meetingId) {
-        throw const FormatException('모임 ID 불일치');
-      }
-      return model;
-    },
-  );
+  Future<List<GroupMemberModel>> fetchMembers(
+    GroupMembersRequest request,
+  ) async {
+    final data = await _request(
+      'GET',
+      '/v1/meetings/${request.meetingId}/members',
+    );
+    return (data['members'] as List)
+        .map(
+          (entry) => GroupMemberModel.fromJson(entry as Map<String, dynamic>),
+        )
+        .toList(growable: false);
+  }
 
   @override
-  Future<void> deleteGroup(DeleteGroupRequest request) =>
-      _decode(_request('DELETE', '/v1/meetings/${request.meetingId}'), (data) {
-        if (data['meetingId'] != request.meetingId) {
-          throw const FormatException('모임 ID 불일치');
-        }
-      });
+  Future<List<MeetingModel>> fetchMyGroups() async {
+    final data = await _request('GET', '/v1/me/meetings');
+    return (data['meetings'] as List)
+        .map((entry) => MeetingModel.fromJson(entry as Map<String, dynamic>))
+        .toList(growable: false);
+  }
 
   @override
-  Future<List<GroupMemberModel>> fetchMembers(GroupMembersRequest request) =>
-      _decode(_request('GET', '/v1/meetings/${request.meetingId}/members'), (
-        data,
-      ) {
-        final entries = data['members'];
-        if (entries is! List) throw const FormatException('잘못된 구성원 목록');
-        final members = <GroupMemberModel>[];
-        final ids = <int>{};
-        for (final entry in entries) {
-          if (entry is! Map<String, dynamic>) {
-            throw const FormatException('잘못된 구성원');
-          }
-          final member = GroupMemberModel.fromJson(entry);
-          if (!ids.add(member.memberId)) {
-            throw const FormatException('중복 구성원 ID');
-          }
-          members.add(member);
-        }
-        return List.unmodifiable(members);
-      }, parseFailureCode: 'INVALID_RESPONSE');
-
-  @override
-  Future<List<MeetingModel>> fetchMyGroups() =>
-      _decode(_request('GET', '/v1/me/meetings'), (data) {
-        final meetings = data['meetings'];
-        if (meetings is! List) throw const FormatException('잘못된 모임 목록');
-        final result = <MeetingModel>[];
-        for (final entry in meetings) {
-          if (entry is! Map<String, dynamic>) {
-            throw const FormatException('잘못된 모임');
-          }
-          // 서버 역할 확장 시 권한을 추측하지 않고 해당 항목만 제외합니다.
-          if (entry['myRole'] is String &&
-              entry['myRole'] != 'ADMIN' &&
-              entry['myRole'] != 'MEMBER') {
-            continue;
-          }
-          result.add(MeetingModel.fromJson(entry));
-        }
-        return List.unmodifiable(result);
-      });
-
-  @override
-  Future<MeetingModel> fetchGroup(int groupId) =>
-      _decode(_request('GET', '/v1/meetings/$groupId'), MeetingModel.fromJson);
+  Future<MeetingModel> fetchGroup(int groupId) async =>
+      MeetingModel.fromJson(await _request('GET', '/v1/meetings/$groupId'));
 
   @override
   Future<MeetingModel> createGroup({
     required String name,
     String? description,
-  }) => _decode(
-    _request(
+  }) async => MeetingModel.fromJson(
+    await _request(
       'POST',
       '/v1/meetings',
       body: {
@@ -124,24 +82,23 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
           'description': description,
       },
     ),
-    MeetingModel.fromJson,
   );
 
   @override
-  Future<MeetingModel> joinGroup(String inviteCode) => _decode(
-    _request('POST', '/v1/me/meetings', body: {'inviteCode': inviteCode}),
-    MeetingModel.fromJson,
-  );
+  Future<MeetingModel> joinGroup(String inviteCode) async =>
+      MeetingModel.fromJson(
+        await _request(
+          'POST',
+          '/v1/me/meetings',
+          body: {'inviteCode': inviteCode},
+        ),
+      );
 
   @override
-  Future<String> fetchInviteCode(int groupId) =>
-      _decode(_request('GET', '/v1/meetings/$groupId/invite-code'), (data) {
-        final code = data['inviteCode'];
-        if (code is! String || code.isEmpty) {
-          throw const FormatException('잘못된 초대 코드');
-        }
-        return code;
-      });
+  Future<String> fetchInviteCode(int groupId) async {
+    final data = await _request('GET', '/v1/meetings/$groupId/invite-code');
+    return data['inviteCode'] as String;
+  }
 
   Future<Map<String, dynamic>> _request(
     String method,
@@ -160,37 +117,16 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
     if (headers == null) {
       throw const GroupApiFailure('UNAUTHORIZED');
     }
-    try {
-      final response = await _dio.request<Object?>(
-        uri.resolve(cleanPath).toString(),
-        data: body,
-        options: Options(
-          method: method,
-          headers: headers,
-          contentType: Headers.jsonContentType,
-        ),
-      );
-      return _data(response.data);
-    } on DioException catch (error) {
-      final payload = error.response?.data;
-      if (payload is Map<String, dynamic> &&
-          payload['error'] is Map<String, dynamic> &&
-          (payload['error'] as Map<String, dynamic>)['code'] is String) {
-        throw _failure((payload['error'] as Map<String, dynamic>)['code']);
-      }
-      throw GroupApiFailure(switch (error.response?.statusCode) {
-        401 => 'UNAUTHORIZED',
-        403 => 'FORBIDDEN',
-        404 => 'NOT_FOUND',
-        409 => 'CONFLICT',
-        400 => 'VALIDATION_ERROR',
-        _ => 'UNAVAILABLE',
-      });
-    } on FormatException {
-      throw const GroupApiFailure('UNAVAILABLE');
-    } on TypeError {
-      throw const GroupApiFailure('UNAVAILABLE');
-    }
+    final response = await _dio.request<Object?>(
+      uri.resolve(cleanPath).toString(),
+      data: body,
+      options: Options(
+        method: method,
+        headers: headers,
+        contentType: Headers.jsonContentType,
+      ),
+    );
+    return _data(response.data);
   }
 
   Map<String, dynamic> _data(Object? payload) {

@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
+
 import '../../domain/entities/current_group.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/group_member_profile.dart';
+import '../../domain/entities/member_role.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../datasources/group_remote_data_source.dart';
 import '../models/group_api_failure.dart';
@@ -21,9 +24,31 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<T> _execute<T>(
     Future<T> Function() operation, {
     bool isJoining = false,
+    GroupFailureReason parseFailureReason = GroupFailureReason.unavailable,
   }) async {
     try {
       return await operation();
+    } on DioException catch (error) {
+      final payload = error.response?.data;
+      final details = payload is Map<String, dynamic> ? payload['error'] : null;
+      final code = details is Map<String, dynamic> ? details['code'] : null;
+      throw _failure(
+        code is String
+            ? code
+            : switch (error.response?.statusCode) {
+                401 => 'UNAUTHORIZED',
+                403 => 'FORBIDDEN',
+                404 => 'NOT_FOUND',
+                409 => 'CONFLICT',
+                400 => 'VALIDATION_ERROR',
+                _ => 'UNAVAILABLE',
+              },
+        isJoining: isJoining,
+      );
+    } on FormatException {
+      throw GroupFailure(parseFailureReason);
+    } on TypeError {
+      throw GroupFailure(parseFailureReason);
     } on GroupApiFailure catch (error) {
       throw _failure(error.code, isJoining: isJoining);
     }
@@ -31,7 +56,6 @@ class GroupRepositoryImpl implements GroupRepository {
 
   GroupFailure _failure(Object? code, {required bool isJoining}) =>
       GroupFailure(switch (code) {
-        'INVALID_RESPONSE' => GroupFailureReason.invalidResponse,
         'UNAUTHORIZED' => GroupFailureReason.unauthorized,
         'FORBIDDEN' => GroupFailureReason.forbidden,
         'NOT_FOUND' when isJoining => GroupFailureReason.invalidCode,
@@ -56,27 +80,44 @@ class GroupRepositoryImpl implements GroupRepository {
         description: description,
       ),
     );
+    if (model.meetingId != groupId) throw const FormatException('모임 ID 불일치');
     return model.toEntity();
   });
 
   @override
-  Future<void> deleteGroup({required int groupId}) => _execute(
-    () => _remoteDataSource.deleteGroup(DeleteGroupRequest(meetingId: groupId)),
-  );
+  Future<void> deleteGroup({required int groupId}) => _execute(() async {
+    final returnedId = await _remoteDataSource.deleteGroup(
+      DeleteGroupRequest(meetingId: groupId),
+    );
+    if (returnedId != groupId) throw const FormatException('모임 ID 불일치');
+  });
 
   @override
-  Future<List<GroupMemberProfile>> getMembers({required int groupId}) =>
-      _execute(() async {
-        final models = await _remoteDataSource.fetchMembers(
-          GroupMembersRequest(meetingId: groupId),
-        );
-        return models.map((model) => model.toEntity()).toList(growable: false);
-      });
+  Future<List<GroupMemberProfile>> getMembersByGroupId({
+    required int groupId,
+  }) => _execute(() async {
+    final models = await _remoteDataSource.fetchMembers(
+      GroupMembersRequest(meetingId: groupId),
+    );
+    final ids = <int>{};
+    for (final model in models) {
+      if (model.memberId is! int ||
+          model.memberId <= 0 ||
+          !ids.add(model.memberId as int)) {
+        throw const FormatException('잘못되거나 중복된 구성원 ID');
+      }
+    }
+    return models.map((model) => model.toEntity()).toList(growable: false);
+  }, parseFailureReason: GroupFailureReason.invalidResponse);
 
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {
     final models = await _remoteDataSource.fetchMyGroups();
-    return models.map((model) => model.toEntity()).toList(growable: false);
+    // 목록에서는 서버가 확장한 역할을 추측하지 않고 기존 정책대로 제외합니다.
+    return models
+        .where((model) => MemberRole.tryFromServer(model.role) != null)
+        .map(_currentGroup)
+        .toList(growable: false);
   });
 
   @override
@@ -86,23 +127,37 @@ class GroupRepositoryImpl implements GroupRepository {
           name: params.name,
           description: params.description,
         );
-        return model.toEntity(descriptionOverride: params.description);
+        return _currentGroup(model, descriptionOverride: params.description);
       });
 
   @override
   Future<CurrentGroup> joinGroup({required String inviteCode}) =>
       _execute(() async {
         final model = await _remoteDataSource.joinGroup(inviteCode);
-        return model.toEntity();
+        return _currentGroup(model);
       }, isJoining: true);
 
   @override
   Future<CurrentGroup> getGroup(int groupId) => _execute(() async {
     final model = await _remoteDataSource.fetchGroup(groupId);
-    return model.toEntity();
+    return _currentGroup(model);
   });
 
   @override
-  Future<String> getInviteCode({required int groupId}) =>
-      _execute(() => _remoteDataSource.fetchInviteCode(groupId));
+  Future<String> getInviteCode({required int groupId}) => _execute(() async {
+    final code = await _remoteDataSource.fetchInviteCode(groupId);
+    if (code.isEmpty) throw const FormatException('잘못된 초대 코드');
+    return code;
+  });
+
+  CurrentGroup _currentGroup(
+    MeetingModel model, {
+    String? descriptionOverride,
+  }) {
+    final count = model.memberCount;
+    if (count != null && (count is! int || count < 0)) {
+      throw const FormatException('잘못된 구성원 수');
+    }
+    return model.toEntity(descriptionOverride: descriptionOverride);
+  }
 }

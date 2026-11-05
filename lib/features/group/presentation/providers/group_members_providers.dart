@@ -12,7 +12,7 @@ final getGroupMembersProvider = Provider<GetGroupMembers>(
 );
 
 /// 모임별 요청·로딩·실패 상태를 분리하고 화면 종료 시 정리합니다.
-final groupMembersProvider = AsyncNotifierProvider.autoDispose
+final groupMembersProvider = NotifierProvider.autoDispose
     .family<GroupMembersViewModel, GroupMembersState, int>(
       (groupId) => GroupMembersViewModel(groupId: groupId),
     );

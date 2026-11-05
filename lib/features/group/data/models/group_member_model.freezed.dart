@@ -14,13 +14,10 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$GroupMemberModel {
-  @JsonKey(fromJson: GroupMemberModel._id)
-  int get memberId;
+  num get memberId;
   String? get userName;
-  @JsonKey(fromJson: GroupMemberModel._role)
-  MemberRole get role;
-  @JsonKey(fromJson: GroupMemberModel._color)
-  GroupProfileColor get profileColor;
+  String get role;
+  Object? get profileColor;
 
   /// Create a copy of GroupMemberModel
   /// with the given fields replaced by the non-null parameter values.
@@ -42,14 +39,21 @@ mixin _$GroupMemberModel {
             (identical(other.userName, userName) ||
                 other.userName == userName) &&
             (identical(other.role, role) || other.role == role) &&
-            (identical(other.profileColor, profileColor) ||
-                other.profileColor == profileColor));
+            const DeepCollectionEquality().equals(
+              other.profileColor,
+              profileColor,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, memberId, userName, role, profileColor);
+  int get hashCode => Object.hash(
+    runtimeType,
+    memberId,
+    userName,
+    role,
+    const DeepCollectionEquality().hash(profileColor),
+  );
 
   @override
   String toString() {
@@ -65,10 +69,10 @@ abstract mixin class $GroupMemberModelCopyWith<$Res> {
   ) = _$GroupMemberModelCopyWithImpl;
   @useResult
   $Res call({
-    @JsonKey(fromJson: GroupMemberModel._id) int memberId,
+    num memberId,
     String? userName,
-    @JsonKey(fromJson: GroupMemberModel._role) MemberRole role,
-    @JsonKey(fromJson: GroupMemberModel._color) GroupProfileColor profileColor,
+    String role,
+    Object? profileColor,
   });
 }
 
@@ -88,14 +92,14 @@ class _$GroupMemberModelCopyWithImpl<$Res>
     Object? memberId = null,
     Object? userName = freezed,
     Object? role = null,
-    Object? profileColor = null,
+    Object? profileColor = freezed,
   }) {
     return _then(
       GroupMemberModel(
         memberId: null == memberId
             ? _self.memberId
             : memberId // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as num,
         userName: freezed == userName
             ? _self.userName
             : userName // ignore: cast_nullable_to_non_nullable
@@ -103,11 +107,10 @@ class _$GroupMemberModelCopyWithImpl<$Res>
         role: null == role
             ? _self.role
             : role // ignore: cast_nullable_to_non_nullable
-                  as MemberRole,
-        profileColor: null == profileColor
+                  as String,
+        profileColor: freezed == profileColor
             ? _self.profileColor
-            : profileColor // ignore: cast_nullable_to_non_nullable
-                  as GroupProfileColor,
+            : profileColor,
       ),
     );
   }
@@ -207,11 +210,10 @@ extension GroupMemberModelPatterns on GroupMemberModel {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-      @JsonKey(fromJson: GroupMemberModel._id) int memberId,
+      num memberId,
       String? userName,
-      @JsonKey(fromJson: GroupMemberModel._role) MemberRole role,
-      @JsonKey(fromJson: GroupMemberModel._color)
-      GroupProfileColor profileColor,
+      String role,
+      Object? profileColor,
     )?
     $default, {
     required TResult orElse(),
@@ -246,11 +248,10 @@ extension GroupMemberModelPatterns on GroupMemberModel {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-      @JsonKey(fromJson: GroupMemberModel._id) int memberId,
+      num memberId,
       String? userName,
-      @JsonKey(fromJson: GroupMemberModel._role) MemberRole role,
-      @JsonKey(fromJson: GroupMemberModel._color)
-      GroupProfileColor profileColor,
+      String role,
+      Object? profileColor,
     )
     $default,
   ) {
@@ -283,11 +284,10 @@ extension GroupMemberModelPatterns on GroupMemberModel {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-      @JsonKey(fromJson: GroupMemberModel._id) int memberId,
+      num memberId,
       String? userName,
-      @JsonKey(fromJson: GroupMemberModel._role) MemberRole role,
-      @JsonKey(fromJson: GroupMemberModel._color)
-      GroupProfileColor profileColor,
+      String role,
+      Object? profileColor,
     )?
     $default,
   ) {
@@ -310,26 +310,22 @@ extension GroupMemberModelPatterns on GroupMemberModel {
 @JsonSerializable(createToJson: false)
 class _GroupMemberModel implements GroupMemberModel {
   const _GroupMemberModel({
-    @JsonKey(fromJson: GroupMemberModel._id) required this.memberId,
+    required this.memberId,
     this.userName,
-    @JsonKey(fromJson: GroupMemberModel._role) required this.role,
-    @JsonKey(fromJson: GroupMemberModel._color)
-    this.profileColor = GroupProfileColor.lightBlue,
+    required this.role,
+    this.profileColor,
   });
   factory _GroupMemberModel.fromJson(Map<String, dynamic> json) =>
       _$GroupMemberModelFromJson(json);
 
   @override
-  @JsonKey(fromJson: GroupMemberModel._id)
-  final int memberId;
+  final num memberId;
   @override
   final String? userName;
   @override
-  @JsonKey(fromJson: GroupMemberModel._role)
-  final MemberRole role;
+  final String role;
   @override
-  @JsonKey(fromJson: GroupMemberModel._color)
-  final GroupProfileColor profileColor;
+  final Object? profileColor;
 
   /// Create a copy of GroupMemberModel
   /// with the given fields replaced by the non-null parameter values.
@@ -349,14 +345,21 @@ class _GroupMemberModel implements GroupMemberModel {
             (identical(other.userName, userName) ||
                 other.userName == userName) &&
             (identical(other.role, role) || other.role == role) &&
-            (identical(other.profileColor, profileColor) ||
-                other.profileColor == profileColor));
+            const DeepCollectionEquality().equals(
+              other.profileColor,
+              profileColor,
+            ));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, memberId, userName, role, profileColor);
+  int get hashCode => Object.hash(
+    runtimeType,
+    memberId,
+    userName,
+    role,
+    const DeepCollectionEquality().hash(profileColor),
+  );
 
   @override
   String toString() {
@@ -374,10 +377,10 @@ abstract mixin class _$GroupMemberModelCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    @JsonKey(fromJson: GroupMemberModel._id) int memberId,
+    num memberId,
     String? userName,
-    @JsonKey(fromJson: GroupMemberModel._role) MemberRole role,
-    @JsonKey(fromJson: GroupMemberModel._color) GroupProfileColor profileColor,
+    String role,
+    Object? profileColor,
   });
 }
 
@@ -397,14 +400,14 @@ class __$GroupMemberModelCopyWithImpl<$Res>
     Object? memberId = null,
     Object? userName = freezed,
     Object? role = null,
-    Object? profileColor = null,
+    Object? profileColor = freezed,
   }) {
     return _then(
       _GroupMemberModel(
         memberId: null == memberId
             ? _self.memberId
             : memberId // ignore: cast_nullable_to_non_nullable
-                  as int,
+                  as num,
         userName: freezed == userName
             ? _self.userName
             : userName // ignore: cast_nullable_to_non_nullable
@@ -412,11 +415,10 @@ class __$GroupMemberModelCopyWithImpl<$Res>
         role: null == role
             ? _self.role
             : role // ignore: cast_nullable_to_non_nullable
-                  as MemberRole,
-        profileColor: null == profileColor
+                  as String,
+        profileColor: freezed == profileColor
             ? _self.profileColor
-            : profileColor // ignore: cast_nullable_to_non_nullable
-                  as GroupProfileColor,
+            : profileColor,
       ),
     );
   }

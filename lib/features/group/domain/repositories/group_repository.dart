@@ -17,7 +17,7 @@ abstract interface class GroupRepository {
   });
   Future<void> deleteGroup({required int groupId});
   Future<List<CurrentGroup>> getMyGroups();
-  Future<List<GroupMemberProfile>> getMembers({required int groupId});
+  Future<List<GroupMemberProfile>> getMembersByGroupId({required int groupId});
   Future<CurrentGroup> getGroup(int groupId);
   Future<CurrentGroup> createGroup(CreateGroupParams params);
 

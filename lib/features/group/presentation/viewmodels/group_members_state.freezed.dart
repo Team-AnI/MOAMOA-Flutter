@@ -16,6 +16,8 @@ T _$identity<T>(T value) => value;
 mixin _$GroupMembersState {
   List<GroupMemberProfile> get members;
   GroupFailureReason? get failureReason;
+  bool get isLoading;
+  bool get hasLoaded;
 
   /// Create a copy of GroupMembersState
   /// with the given fields replaced by the non-null parameter values.
@@ -34,7 +36,11 @@ mixin _$GroupMembersState {
             other is GroupMembersState &&
             const DeepCollectionEquality().equals(other.members, members) &&
             (identical(other.failureReason, failureReason) ||
-                other.failureReason == failureReason));
+                other.failureReason == failureReason) &&
+            (identical(other.isLoading, isLoading) ||
+                other.isLoading == isLoading) &&
+            (identical(other.hasLoaded, hasLoaded) ||
+                other.hasLoaded == hasLoaded));
   }
 
   @override
@@ -42,11 +48,13 @@ mixin _$GroupMembersState {
     runtimeType,
     const DeepCollectionEquality().hash(members),
     failureReason,
+    isLoading,
+    hasLoaded,
   );
 
   @override
   String toString() {
-    return 'GroupMembersState(members: $members, failureReason: $failureReason)';
+    return 'GroupMembersState(members: $members, failureReason: $failureReason, isLoading: $isLoading, hasLoaded: $hasLoaded)';
   }
 }
 
@@ -60,6 +68,8 @@ abstract mixin class $GroupMembersStateCopyWith<$Res> {
   $Res call({
     List<GroupMemberProfile> members,
     GroupFailureReason? failureReason,
+    bool isLoading,
+    bool hasLoaded,
   });
 }
 
@@ -75,7 +85,12 @@ class _$GroupMembersStateCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? members = null, Object? failureReason = freezed}) {
+  $Res call({
+    Object? members = null,
+    Object? failureReason = freezed,
+    Object? isLoading = null,
+    Object? hasLoaded = null,
+  }) {
     return _then(
       GroupMembersState(
         members: null == members
@@ -86,6 +101,14 @@ class _$GroupMembersStateCopyWithImpl<$Res>
             ? _self.failureReason
             : failureReason // ignore: cast_nullable_to_non_nullable
                   as GroupFailureReason?,
+        isLoading: null == isLoading
+            ? _self.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        hasLoaded: null == hasLoaded
+            ? _self.hasLoaded
+            : hasLoaded // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -187,6 +210,8 @@ extension GroupMembersStatePatterns on GroupMembersState {
     TResult Function(
       List<GroupMemberProfile> members,
       GroupFailureReason? failureReason,
+      bool isLoading,
+      bool hasLoaded,
     )?
     $default, {
     required TResult orElse(),
@@ -194,7 +219,12 @@ extension GroupMembersStatePatterns on GroupMembersState {
     final _that = this;
     switch (_that) {
       case _GroupMembersState() when $default != null:
-        return $default(_that.members, _that.failureReason);
+        return $default(
+          _that.members,
+          _that.failureReason,
+          _that.isLoading,
+          _that.hasLoaded,
+        );
       case _:
         return orElse();
     }
@@ -218,13 +248,20 @@ extension GroupMembersStatePatterns on GroupMembersState {
     TResult Function(
       List<GroupMemberProfile> members,
       GroupFailureReason? failureReason,
+      bool isLoading,
+      bool hasLoaded,
     )
     $default,
   ) {
     final _that = this;
     switch (_that) {
       case _GroupMembersState():
-        return $default(_that.members, _that.failureReason);
+        return $default(
+          _that.members,
+          _that.failureReason,
+          _that.isLoading,
+          _that.hasLoaded,
+        );
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -247,13 +284,20 @@ extension GroupMembersStatePatterns on GroupMembersState {
     TResult? Function(
       List<GroupMemberProfile> members,
       GroupFailureReason? failureReason,
+      bool isLoading,
+      bool hasLoaded,
     )?
     $default,
   ) {
     final _that = this;
     switch (_that) {
       case _GroupMembersState() when $default != null:
-        return $default(_that.members, _that.failureReason);
+        return $default(
+          _that.members,
+          _that.failureReason,
+          _that.isLoading,
+          _that.hasLoaded,
+        );
       case _:
         return null;
     }
@@ -266,6 +310,8 @@ class _GroupMembersState implements GroupMembersState {
   const _GroupMembersState({
     List<GroupMemberProfile> members = const [],
     this.failureReason,
+    this.isLoading = false,
+    this.hasLoaded = false,
   }) : _members = members;
 
   final List<GroupMemberProfile> _members;
@@ -279,6 +325,12 @@ class _GroupMembersState implements GroupMembersState {
 
   @override
   final GroupFailureReason? failureReason;
+  @override
+  @JsonKey()
+  final bool isLoading;
+  @override
+  @JsonKey()
+  final bool hasLoaded;
 
   /// Create a copy of GroupMembersState
   /// with the given fields replaced by the non-null parameter values.
@@ -295,7 +347,11 @@ class _GroupMembersState implements GroupMembersState {
             other is _GroupMembersState &&
             const DeepCollectionEquality().equals(other._members, _members) &&
             (identical(other.failureReason, failureReason) ||
-                other.failureReason == failureReason));
+                other.failureReason == failureReason) &&
+            (identical(other.isLoading, isLoading) ||
+                other.isLoading == isLoading) &&
+            (identical(other.hasLoaded, hasLoaded) ||
+                other.hasLoaded == hasLoaded));
   }
 
   @override
@@ -303,11 +359,13 @@ class _GroupMembersState implements GroupMembersState {
     runtimeType,
     const DeepCollectionEquality().hash(_members),
     failureReason,
+    isLoading,
+    hasLoaded,
   );
 
   @override
   String toString() {
-    return 'GroupMembersState(members: $members, failureReason: $failureReason)';
+    return 'GroupMembersState(members: $members, failureReason: $failureReason, isLoading: $isLoading, hasLoaded: $hasLoaded)';
   }
 }
 
@@ -323,6 +381,8 @@ abstract mixin class _$GroupMembersStateCopyWith<$Res>
   $Res call({
     List<GroupMemberProfile> members,
     GroupFailureReason? failureReason,
+    bool isLoading,
+    bool hasLoaded,
   });
 }
 
@@ -338,7 +398,12 @@ class __$GroupMembersStateCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $Res call({Object? members = null, Object? failureReason = freezed}) {
+  $Res call({
+    Object? members = null,
+    Object? failureReason = freezed,
+    Object? isLoading = null,
+    Object? hasLoaded = null,
+  }) {
     return _then(
       _GroupMembersState(
         members: null == members
@@ -349,6 +414,14 @@ class __$GroupMembersStateCopyWithImpl<$Res>
             ? _self.failureReason
             : failureReason // ignore: cast_nullable_to_non_nullable
                   as GroupFailureReason?,
+        isLoading: null == isLoading
+            ? _self.isLoading
+            : isLoading // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        hasLoaded: null == hasLoaded
+            ? _self.hasLoaded
+            : hasLoaded // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }

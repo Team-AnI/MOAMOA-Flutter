@@ -8,10 +8,8 @@ part of 'group_member_model.dart';
 
 _GroupMemberModel _$GroupMemberModelFromJson(Map<String, dynamic> json) =>
     _GroupMemberModel(
-      memberId: GroupMemberModel._id(json['memberId']),
+      memberId: json['memberId'] as num,
       userName: json['userName'] as String?,
-      role: GroupMemberModel._role(json['role']),
-      profileColor: json['profileColor'] == null
-          ? GroupProfileColor.lightBlue
-          : GroupMemberModel._color(json['profileColor']),
+      role: json['role'] as String,
+      profileColor: json['profileColor'],
     );

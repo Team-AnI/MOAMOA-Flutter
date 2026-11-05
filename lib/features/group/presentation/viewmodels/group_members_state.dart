@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/group_failure_reason.dart';
@@ -12,14 +11,9 @@ abstract class GroupMembersState with _$GroupMembersState {
   const factory GroupMembersState({
     @Default([]) List<GroupMemberProfile> members,
     GroupFailureReason? failureReason,
+    @Default(false) bool isLoading,
+    @Default(false) bool hasLoaded,
   }) = _GroupMembersState;
-}
-
-/// 로딩 중에는 이전 값을 유지하고 예외 상태에서는 이전 구성원 정보를 숨깁니다.
-extension GroupMembersAsyncStateX on AsyncValue<GroupMembersState> {
-  GroupMembersState? get displayState => hasError
-      ? const GroupMembersState(failureReason: GroupFailureReason.unavailable)
-      : value;
 }
 
 extension GroupMembersStateX on GroupMembersState {

@@ -24,7 +24,9 @@ class _Repository extends FakeGroupRepository {
   final calls = <int>[];
   Future<List<GroupMemberProfile>> Function(int)? response;
   @override
-  Future<List<GroupMemberProfile>> getMembers({required int groupId}) async {
+  Future<List<GroupMemberProfile>> getMembersByGroupId({
+    required int groupId,
+  }) async {
     calls.add(groupId);
     return response == null ? [_member] : response!(groupId);
   }
@@ -51,11 +53,39 @@ void main() {
         retry: (_, _) => null,
       );
     });
-    Future<GroupMembersState> load() {
-      container.listen(groupMembersProvider(1), (_, _) {});
-      return container.read(groupMembersProvider(1).future);
+    Future<GroupMembersState> load([int groupId = 1]) {
+      final completed = Completer<GroupMembersState>();
+      container.listen(groupMembersProvider(groupId), (_, next) {
+        if (!next.isLoading && !completed.isCompleted) completed.complete(next);
+      });
+      final current = container.read(groupMembersProvider(groupId));
+      if (!current.isLoading) completed.complete(current);
+      return completed.future;
     }
 
+    test('조회 결과를 기다리기 전에 초기 로딩 상태를 반환한다', () async {
+      final gate = Completer<List<GroupMemberProfile>>();
+      fake.response = (_) => gate.future;
+      final pending = load();
+      expect(container.read(groupMembersProvider(1)).isLoading, isTrue);
+      expect(container.read(groupMembersProvider(1)).members, isEmpty);
+      gate.complete([_member]);
+      expect((await pending).isLoading, isFalse);
+    });
+    test('화면이 폐기된 뒤 도착한 응답은 다시 열린 화면 상태를 바꾸지 않는다', () async {
+      final old = Completer<List<GroupMemberProfile>>();
+      fake.response = (_) => old.future;
+      final subscription = container.listen(groupMembersProvider(1), (_, _) {});
+      await Future<void>.delayed(Duration.zero);
+      subscription.close();
+      await container.pump();
+      fake.response = (_) async => [_member.copyWith(userName: '재진입')];
+      final reopened = await load();
+      old.complete([_member]);
+      await Future<void>.delayed(Duration.zero);
+      expect(container.read(groupMembersProvider(1)), reopened);
+      expect(reopened.members.single.userName, '재진입');
+    });
     test('서버 목록과 실제 개수를 표시 상태로 만든다', () async {
       final state = await load();
       expect(state.members, [_member]);
@@ -69,18 +99,19 @@ void main() {
           ? first.future
           : [_member.copyWith(memberId: 7, userName: '다른 모임')];
       final firstRequest = load();
-      container.listen(groupMembersProvider(2), (_, _) {});
-      final second = await container.read(groupMembersProvider(2).future);
+      await Future<void>.delayed(Duration.zero);
+      final second = await load(2);
       first.complete([_member]);
       await firstRequest;
-      expect(container.read(groupMembersProvider(2)).requireValue, second);
+      expect(container.read(groupMembersProvider(2)), second);
       expect(second.members.single.memberId, 7);
     });
     test('새로고침 실패 시 이전 구성원 정보를 남기지 않는다', () async {
       await load();
       fake.response = (_) async =>
           throw const GroupFailure(GroupFailureReason.forbidden);
-      final refreshed = await container.refresh(groupMembersProvider(1).future);
+      await container.read(groupMembersProvider(1).notifier).refresh();
+      final refreshed = container.read(groupMembersProvider(1));
       expect(refreshed.members, isEmpty);
       expect(refreshed.canRetry, isFalse);
       expect(refreshed.message, '이 모임의 구성원만 목록을 볼 수 있어요.');
@@ -91,7 +122,7 @@ void main() {
       expect(failed.canRetry, isTrue);
       fake.response = (_) async => [_member];
       await container.read(groupMembersProvider(1).notifier).refresh();
-      final retried = container.read(groupMembersProvider(1)).requireValue;
+      final retried = container.read(groupMembersProvider(1));
       expect(retried.hasFailed, isFalse);
       expect(retried.members, [_member]);
     });
@@ -101,12 +132,27 @@ void main() {
       final pending = load();
       await Future<void>.delayed(Duration.zero);
       fake.response = (_) async => [_member.copyWith(userName: '최신')];
-      final updated = await container.refresh(groupMembersProvider(1).future);
+      await container.read(groupMembersProvider(1).notifier).refresh();
+      final updated = container.read(groupMembersProvider(1));
       old.complete([_member]);
       await pending;
       await Future<void>.delayed(Duration.zero);
-      expect(container.read(groupMembersProvider(1)).requireValue, updated);
+      expect(container.read(groupMembersProvider(1)), updated);
       expect(updated.members.single.userName, '최신');
+    });
+    test('이전 요청의 늦은 실패가 최신 성공 목록을 지우지 않는다', () async {
+      final old = Completer<List<GroupMemberProfile>>();
+      fake.response = (_) => old.future;
+      final pending = load();
+      await Future<void>.delayed(Duration.zero);
+      fake.response = (_) async => [_member.copyWith(userName: '최신')];
+      await container.read(groupMembersProvider(1).notifier).refresh();
+      old.completeError(const GroupFailure(GroupFailureReason.forbidden));
+      await pending;
+      await Future<void>.delayed(Duration.zero);
+      final current = container.read(groupMembersProvider(1));
+      expect(current.hasFailed, isFalse);
+      expect(current.members.single.userName, '최신');
     });
     for (final (label, reason) in [
       ('미인증', GroupFailureReason.unauthorized),

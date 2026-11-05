@@ -15,7 +15,7 @@ class GroupMembersPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(groupMembersProvider(groupId)).displayState;
+    final state = ref.watch(groupMembersProvider(groupId));
     final viewModel = ref.read(groupMembersProvider(groupId).notifier);
     return Scaffold(
       backgroundColor: Colors.white,
@@ -34,7 +34,8 @@ class GroupMembersPage extends ConsumerWidget {
       body: SafeArea(
         top: false,
         child: switch (state) {
-          null => const Center(child: CircularProgressIndicator()),
+          final GroupMembersState data when data.isLoading && !data.hasLoaded =>
+            const Center(child: CircularProgressIndicator()),
           final GroupMembersState data when data.hasFailed => _MembersMessage(
             message: data.message,
             onRetry: data.canRetry ? viewModel.refresh : null,

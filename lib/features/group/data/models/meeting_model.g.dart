@@ -11,8 +11,8 @@ _MeetingModel _$MeetingModelFromJson(Map<String, dynamic> json) =>
       id: (json['meetingId'] as num).toInt(),
       name: json['name'] as String,
       description: json['description'] as String?,
-      role: MeetingModel._role(json['myRole']),
-      memberCount: MeetingModel._memberCount(json['memberCount']),
+      role: json['myRole'] as String,
+      memberCount: json['memberCount'] as num?,
     );
 
 Map<String, dynamic> _$MeetingModelToJson(_MeetingModel instance) =>
@@ -20,6 +20,6 @@ Map<String, dynamic> _$MeetingModelToJson(_MeetingModel instance) =>
       'meetingId': instance.id,
       'name': instance.name,
       'description': instance.description,
-      'myRole': MeetingModel._roleJson(instance.role),
+      'myRole': instance.role,
       'memberCount': instance.memberCount,
     };
