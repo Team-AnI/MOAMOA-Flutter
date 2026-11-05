@@ -54,6 +54,34 @@ void main() {
       expect(tester.getSize(find.byType(CircleAvatar)), const Size(32, 32));
     });
 
+    testWidgets('크기를 정하지 않으면 글자 크기 17 로 그린다', (tester) async {
+      await pumpAvatar(
+        tester,
+        const MoaProfileAvatar(userName: '김모아', color: ProfileColor.lightBlue),
+      );
+
+      expect(
+        tester.widget<Text>(find.text('김')).style?.fontSize,
+        closeTo(17, 0.001),
+      );
+    });
+
+    testWidgets('지름이 작아지면 같은 비율로 글자 크기를 줄인다', (tester) async {
+      await pumpAvatar(
+        tester,
+        const MoaProfileAvatar(
+          userName: '김모아',
+          color: ProfileColor.lightBlue,
+          size: 22,
+        ),
+      );
+
+      expect(
+        tester.widget<Text>(find.text('김')).style?.fontSize,
+        closeTo(8.5, 0.001),
+      );
+    });
+
     for (final (color, background, foreground) in [
       (ProfileColor.lightBlue, MoaColors.accentTint, MoaColors.accentText),
       (ProfileColor.gray, const Color(0xFFD2D2D7), MoaColors.textPrimary),
