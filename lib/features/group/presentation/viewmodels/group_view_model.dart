@@ -242,6 +242,7 @@ class GroupViewModel extends Notifier<GroupState> {
   String _message(Object error) {
     if (error is GroupFailure) {
       return switch (error.reason) {
+        GroupFailureReason.invalidResponse => '서버 응답을 표시할 수 없습니다.',
         GroupFailureReason.invalidCode => '유효하지 않은 초대 코드입니다.',
         GroupFailureReason.notFound => '모임을 찾을 수 없습니다. 목록을 새로고침해주세요.',
         GroupFailureReason.unauthorized => '로그인이 필요합니다.',

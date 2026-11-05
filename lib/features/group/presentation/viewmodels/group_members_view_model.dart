@@ -11,8 +11,8 @@ class GroupMembersViewModel extends AsyncNotifier<GroupMembersState> {
 
   @override
   Future<GroupMembersState> build() async {
-    final getMembers = ref.watch(getGroupMembersProvider);
     try {
+      final getMembers = ref.watch(getGroupMembersProvider);
       final members = await getMembers(GetGroupParams(groupId: _groupId));
       return GroupMembersState(members: members);
     } on GroupFailure catch (error) {
@@ -22,5 +22,11 @@ class GroupMembersViewModel extends AsyncNotifier<GroupMembersState> {
         failureReason: GroupFailureReason.unavailable,
       );
     }
+  }
+
+  /// 새로고침과 오류 재시도를 같은 경로로 실행하고 새 응답을 기다립니다.
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
   }
 }

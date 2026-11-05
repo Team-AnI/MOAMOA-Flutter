@@ -27,14 +27,15 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
 
   Future<T> _decode<T>(
     Future<Map<String, dynamic>> response,
-    T Function(Map<String, dynamic>) parse,
-  ) async {
+    T Function(Map<String, dynamic>) parse, {
+    String parseFailureCode = 'UNAVAILABLE',
+  }) async {
     try {
       return parse(await response);
     } on FormatException {
-      throw const GroupApiFailure('UNAVAILABLE');
+      throw GroupApiFailure(parseFailureCode);
     } on TypeError {
-      throw const GroupApiFailure('UNAVAILABLE');
+      throw GroupApiFailure(parseFailureCode);
     }
   }
 
@@ -82,7 +83,7 @@ class GroupRemoteDataSourceImpl implements GroupRemoteDataSource {
           members.add(member);
         }
         return List.unmodifiable(members);
-      });
+      }, parseFailureCode: 'INVALID_RESPONSE');
 
   @override
   Future<List<MeetingModel>> fetchMyGroups() =>

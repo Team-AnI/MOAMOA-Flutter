@@ -31,6 +31,7 @@ class GroupRepositoryImpl implements GroupRepository {
 
   GroupFailure _failure(Object? code, {required bool isJoining}) =>
       GroupFailure(switch (code) {
+        'INVALID_RESPONSE' => GroupFailureReason.invalidResponse,
         'UNAUTHORIZED' => GroupFailureReason.unauthorized,
         'FORBIDDEN' => GroupFailureReason.forbidden,
         'NOT_FOUND' when isJoining => GroupFailureReason.invalidCode,

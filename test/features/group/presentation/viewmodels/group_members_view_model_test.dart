@@ -32,15 +32,13 @@ class _Repository extends FakeGroupRepository {
 
 void main() {
   group(GetGroupMembersImpl, () {
-    test('모임 ID가 0이면 서버 요청 없이 GroupFailure 예외가 발생한다', () async {
+    test('전달한 모임 ID로 Repository의 구성원 목록을 반환한다', () async {
       final fake = _Repository();
-      await expectLater(
-        () => GetGroupMembersImpl(groupRepository: fake)(
-          const GetGroupParams(groupId: 0),
-        ),
-        throwsA(isA<GroupFailure>()),
+      final members = await GetGroupMembersImpl(groupRepository: fake)(
+        const GetGroupParams(groupId: 7),
       );
-      expect(fake.calls, isEmpty);
+      expect(members, [_member]);
+      expect(fake.calls, [7]);
     });
   });
   group(GroupMembersViewModel, () {
@@ -92,7 +90,8 @@ void main() {
       final failed = await load();
       expect(failed.canRetry, isTrue);
       fake.response = (_) async => [_member];
-      final retried = await container.refresh(groupMembersProvider(1).future);
+      await container.read(groupMembersProvider(1).notifier).refresh();
+      final retried = container.read(groupMembersProvider(1)).requireValue;
       expect(retried.hasFailed, isFalse);
       expect(retried.members, [_member]);
     });
@@ -113,6 +112,7 @@ void main() {
       ('미인증', GroupFailureReason.unauthorized),
       ('권한 없음', GroupFailureReason.forbidden),
       ('모임 없음', GroupFailureReason.notFound),
+      ('응답 형식', GroupFailureReason.invalidResponse),
     ]) {
       test('$label 실패 시 재시도를 숨기고 구성원 목록을 비운다', () async {
         fake.response = (_) async => throw GroupFailure(reason);

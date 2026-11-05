@@ -39,7 +39,7 @@ abstract class GroupMemberModel with _$GroupMemberModel {
     'GRAY' => GroupProfileColor.gray,
     'BLUE' => GroupProfileColor.blue,
     'DARK' => GroupProfileColor.dark,
-    _ => throw const FormatException('알 수 없는 프로필 색'),
+    _ => GroupProfileColor.lightBlue,
   };
 }
 

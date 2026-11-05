@@ -12,10 +12,12 @@ import 'pages/group_settings_page.dart';
 final List<RouteBase> groupRoutes = [
   GoRoute(
     path: '/groups/:groupId/members',
-    builder: (context, state) {
+    redirect: (_, state) {
       final id = int.tryParse(state.pathParameters['groupId'] ?? '');
-      return GroupMembersPage(groupId: id ?? 0);
+      return id == null || id <= 0 ? '/groups' : null;
     },
+    builder: (_, state) =>
+        GroupMembersPage(groupId: int.parse(state.pathParameters['groupId']!)),
   ),
   GoRoute(
     path: '/groups/settings',

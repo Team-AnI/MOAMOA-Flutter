@@ -6,4 +6,5 @@ enum GroupFailureReason {
   alreadyJoined,
   forbidden,
   unavailable,
+  invalidResponse,
 }

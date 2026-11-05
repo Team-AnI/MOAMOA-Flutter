@@ -85,6 +85,15 @@ void main() {
         GroupProfileColor.lightBlue,
       );
     });
+    for (final (label, color) in [('null', null), ('알 수 없는 색', 'RED')]) {
+      test('$label 프로필 색이면 기본 연파랑을 사용하고 모든 구성원을 반환한다', () async {
+        respond([member(3, color: color), member(5, color: 'DARK')]);
+        final result = await repository.getMembers(groupId: 1);
+        expect(result.map((entry) => entry.memberId), [3, 5]);
+        expect(result.first.profileColor, GroupProfileColor.lightBlue);
+        expect(result.last.profileColor, GroupProfileColor.dark);
+      });
+    }
     test('빈 배열은 빈 구성원 목록을 반환한다', () async {
       respond([]);
       expect(await repository.getMembers(groupId: 1), isEmpty);
@@ -94,13 +103,12 @@ void main() {
       ('배열이 아닌 목록', {}),
       ('null 구성원', [null]),
       ('알 수 없는 역할', [member(3, role: 'OWNER')]),
-      ('알 수 없는 프로필 색', [member(3, color: 'RED')]),
       ('0인 구성원 ID', [member(0)]),
       ('실수 구성원 ID', [member(3)..['memberId'] = 1.5]),
       ('중복 구성원 ID', [member(3), member(3)]),
       ('숫자 이름', [member(3)..['userName'] = 7]),
     ]) {
-      test('$label 응답이면 일시적 실패 사유의 GroupFailure 예외가 발생한다', () async {
+      test('$label 응답이면 응답 형식 사유의 GroupFailure 예외가 발생한다', () async {
         respond(malformed);
         await expectLater(
           repository.getMembers(groupId: 1),
@@ -108,7 +116,7 @@ void main() {
             isA<GroupFailure>().having(
               (e) => e.reason,
               'reason',
-              GroupFailureReason.unavailable,
+              GroupFailureReason.invalidResponse,
             ),
           ),
         );

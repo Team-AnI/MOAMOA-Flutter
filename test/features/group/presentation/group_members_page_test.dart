@@ -225,6 +225,7 @@ void main() {
       GroupFailureReason.unauthorized: '로그인이 필요해요.',
       GroupFailureReason.forbidden: '이 모임의 구성원만 목록을 볼 수 있어요.',
       GroupFailureReason.notFound: '모임을 찾을 수 없어요.',
+      GroupFailureReason.invalidResponse: '구성원 정보를 표시할 수 없어요.',
     }.entries) {
       testWidgets('${entry.value} 안내를 표시하고 빈 목록과 재시도 버튼을 숨긴다', (tester) async {
         fake.failure = GroupFailure(entry.key);
@@ -301,12 +302,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(router.routeInformationProvider.value.uri.path, '/groups');
     });
-    testWidgets('잘못된 모임 ID로는 서버를 호출하지 않는다', (tester) async {
-      await showPage(tester, path: '/groups/invalid/members');
-      await tester.pumpAndSettle();
-      expect(fake.calls, isEmpty);
-      expect(tester.takeException(), isNull);
-    });
+    for (final id in ['invalid', '0', '-7']) {
+      testWidgets('주소의 모임 ID가 $id이면 요청 없이 내 모임 목록으로 이동한다', (tester) async {
+        final (router, _) = await showPage(tester, path: '/groups/$id/members');
+        await tester.pumpAndSettle();
+        expect(fake.calls, isEmpty);
+        expect(find.byType(GroupMembersPage), findsNothing);
+        expect(router.routeInformationProvider.value.uri.path, '/groups');
+        expect(tester.takeException(), isNull);
+      });
+    }
     for (final role in MemberRole.values) {
       testWidgets(
         '${role == MemberRole.admin ? '관리자' : '일반 구성원'} 역할로 홈의 전체 보기에서 목록으로 들어갔다 돌아온다',

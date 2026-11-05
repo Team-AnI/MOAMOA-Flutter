@@ -10,9 +10,6 @@ final class GetGroupMembersImpl implements GetGroupMembers {
 
   @override
   Future<List<GroupMemberProfile>> call(GetGroupParams params) {
-    if (params.groupId <= 0) {
-      throw const GroupFailure(GroupFailureReason.validation);
-    }
     return _groupRepository.getMembers(groupId: params.groupId);
   }
 }
