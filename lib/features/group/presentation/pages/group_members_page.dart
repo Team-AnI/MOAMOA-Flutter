@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/entities/group_failure_reason.dart';
 import '../../domain/entities/group_member_profile.dart';
 import '../../domain/entities/group_profile_color.dart';
 import '../providers/group_members_providers.dart';
@@ -16,11 +15,8 @@ class GroupMembersPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final result = ref.watch(groupMembersProvider(groupId));
+    final state = ref.watch(groupMembersProvider(groupId)).displayState;
     final viewModel = ref.read(groupMembersProvider(groupId).notifier);
-    final state = result.hasError
-        ? const GroupMembersState(failureReason: GroupFailureReason.unavailable)
-        : result.value;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -63,28 +59,7 @@ class GroupMembersPage extends ConsumerWidget {
                     ],
                   );
                 }
-                final member = data.members[index - 1];
-                return Material(
-                  color: GroupDesign.fill,
-                  borderRadius: BorderRadius.circular(24),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18),
-                    minVerticalPadding: 18,
-                    horizontalTitleGap: 12,
-                    leading: CircleAvatar(
-                      radius: 22,
-                      backgroundColor: member.avatarBackground,
-                      child: Text(
-                        member.initial,
-                        style: GroupDesign.strong.copyWith(
-                          color: member.avatarForeground,
-                        ),
-                      ),
-                    ),
-                    title: Text(member.displayName, style: GroupDesign.strong),
-                    subtitle: Text(member.roleLabel, style: GroupDesign.sub),
-                  ),
-                );
+                return _MemberTile(member: data.members[index - 1]);
               },
             ),
           ),
@@ -92,6 +67,33 @@ class GroupMembersPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _MemberTile extends StatelessWidget {
+  const _MemberTile({required this.member});
+
+  final GroupMemberProfile member;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: GroupDesign.fill,
+    borderRadius: BorderRadius.circular(24),
+    child: ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18),
+      minVerticalPadding: 18,
+      horizontalTitleGap: 12,
+      leading: CircleAvatar(
+        radius: 22,
+        backgroundColor: member.avatarBackground,
+        child: Text(
+          member.initial,
+          style: GroupDesign.strong.copyWith(color: member.avatarForeground),
+        ),
+      ),
+      title: Text(member.displayName, style: GroupDesign.strong),
+      subtitle: Text(member.roleLabel, style: GroupDesign.sub),
+    ),
+  );
 }
 
 class _MembersMessage extends StatelessWidget {
