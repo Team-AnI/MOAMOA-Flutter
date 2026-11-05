@@ -176,6 +176,12 @@ void main() {
         await tester.tap(find.text(tab));
         await tester.pumpAndSettle();
         expect(find.byType(GroupHomePage), findsOneWidget);
+        await tester.longPress(find.text(tab));
+        await tester.pumpAndSettle();
+        expect(find.text('모임을 선택해주세요'), findsOneWidget);
+        expect(find.text('$tab · 준비 중'), findsNothing);
+        await tester.tapAt(const Offset(10, 100));
+        await tester.pumpAndSettle();
       }
       expect(schedules.requestedIds, isEmpty);
       expect(notices.requestedIds, isEmpty);

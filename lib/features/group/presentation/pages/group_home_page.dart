@@ -198,48 +198,58 @@ class _HomeTabs extends StatelessWidget {
     decoration: const BoxDecoration(
       border: Border(top: BorderSide(color: GroupDesign.fill)),
     ),
-    padding: const EdgeInsets.symmetric(horizontal: 8),
+    padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
     child: Row(
       children: [
-        for (final (icon, label, onTap) in <(String, String, VoidCallback?)>[
-          ('home', '홈', null),
-          ('home_calendar', '일정', onSchedules),
-          ('home_megaphone', '공지', onNotices),
-          ('wallet', '회비', null),
-          ('user', '내 정보', null),
-        ])
+        for (final (icon, label, onTap, tooltip)
+            in <(String, String, VoidCallback?, String)>[
+              ('home', '홈', null, '홈'),
+              (
+                'home_calendar',
+                '일정',
+                onSchedules,
+                onSchedules == null ? '모임을 선택해주세요' : '일정',
+              ),
+              (
+                'home_megaphone',
+                '공지',
+                onNotices,
+                onNotices == null ? '모임을 선택해주세요' : '공지',
+              ),
+              ('wallet', '회비', null, '회비 · 준비 중'),
+              ('home_user', '내 정보', null, '내 정보 · 준비 중'),
+            ])
           Expanded(
             child: Semantics(
               button: true,
               selected: label == '홈',
               enabled: onTap != null,
               child: Tooltip(
-                message: label == '홈' || onTap != null
-                    ? label
-                    : '$label · 준비 중',
+                message: tooltip,
                 child: InkWell(
                   onTap: onTap,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GroupIcon(
-                        icon,
-                        size: 24,
-                        color: label == '홈'
-                            ? GroupDesign.ink
-                            : GroupDesign.muted,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        label,
-                        style: GroupDesign.caption.copyWith(
-                          fontSize: 11,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GroupIcon(
+                          icon,
+                          size: 24,
                           color: label == '홈'
                               ? GroupDesign.ink
                               : GroupDesign.muted,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 3),
+                        Text(
+                          label,
+                          style: GroupDesign.tab.copyWith(
+                            color: label == '홈'
+                                ? GroupDesign.ink
+                                : GroupDesign.muted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

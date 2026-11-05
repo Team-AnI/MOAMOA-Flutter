@@ -39,6 +39,16 @@ abstract final class GroupDesign {
     letterSpacing: -.3,
     color: ink,
   );
+
+  /// Figma Moa4/tab.
+  static const tab = TextStyle(
+    fontFamily: 'Pretendard',
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    height: 1.27,
+    letterSpacing: 0,
+    color: muted,
+  );
   static const caption = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 12,
