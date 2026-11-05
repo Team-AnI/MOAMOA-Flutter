@@ -8,7 +8,7 @@ import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 
-/// 일정·공지·회비 영역은 담당 기능에서 연결합니다.
+/// 선택한 모임의 일정·공지 목록으로 이동하는 모임 홈입니다.
 class GroupHomePage extends ConsumerWidget {
   const GroupHomePage({super.key});
 
@@ -143,7 +143,15 @@ class GroupHomePage extends ConsumerWidget {
                       ),
               ),
             ),
-            const _HomeTabs(),
+            _HomeTabs(
+              onSchedules: current == null
+                  ? null
+                  : () =>
+                        context.push('/meetings/${current.group.id}/schedules'),
+              onNotices: current == null
+                  ? null
+                  : () => context.push('/meetings/${current.group.id}/notices'),
+            ),
           ],
         ),
       ),
@@ -180,7 +188,10 @@ class _HeaderButton extends StatelessWidget {
 }
 
 class _HomeTabs extends StatelessWidget {
-  const _HomeTabs();
+  const _HomeTabs({required this.onSchedules, required this.onNotices});
+
+  final VoidCallback? onSchedules;
+  final VoidCallback? onNotices;
   @override
   Widget build(BuildContext context) => Container(
     height: 64,
@@ -190,35 +201,47 @@ class _HomeTabs extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 8),
     child: Row(
       children: [
-        for (final tab in const [
-          ('home', '홈'),
-          ('home_calendar', '일정'),
-          ('home_megaphone', '공지'),
-          ('wallet', '회비'),
-          ('user', '내 정보'),
+        for (final (icon, label, onTap) in <(String, String, VoidCallback?)>[
+          ('home', '홈', null),
+          ('home_calendar', '일정', onSchedules),
+          ('home_megaphone', '공지', onNotices),
+          ('wallet', '회비', null),
+          ('user', '내 정보', null),
         ])
           Expanded(
-            child: Tooltip(
-              message: tab.$2 == '홈' ? '홈' : '${tab.$2} · 준비 중',
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GroupIcon(
-                    tab.$1,
-                    size: 24,
-                    color: tab.$2 == '홈' ? GroupDesign.ink : GroupDesign.muted,
+            child: Semantics(
+              button: true,
+              selected: label == '홈',
+              enabled: onTap != null,
+              child: Tooltip(
+                message: label == '홈' || onTap != null
+                    ? label
+                    : '$label · 준비 중',
+                child: InkWell(
+                  onTap: onTap,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GroupIcon(
+                        icon,
+                        size: 24,
+                        color: label == '홈'
+                            ? GroupDesign.ink
+                            : GroupDesign.muted,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        label,
+                        style: GroupDesign.caption.copyWith(
+                          fontSize: 11,
+                          color: label == '홈'
+                              ? GroupDesign.ink
+                              : GroupDesign.muted,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    tab.$2,
-                    style: GroupDesign.caption.copyWith(
-                      fontSize: 11,
-                      color: tab.$2 == '홈'
-                          ? GroupDesign.ink
-                          : GroupDesign.muted,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
