@@ -23,14 +23,16 @@ class MoaProfileAvatar extends StatelessWidget {
   // 기본 지름 44 일 때 글자 크기 17(MoaText.titleS)과 같은 비율입니다.
   static const _fontSizeRatio = 17 / 44;
 
-  // 회색·파랑 배경은 아직 MoaColors 토큰이 없어 구성원 목록(#82)의 값을 그대로 씁니다.
-  static const _grayBackground = Color(0xFFD2D2D7);
-  static const _blueBackground = Color(0xFFB8D4F2);
+  double get _radius => size / 2;
+
+  double get _fontSize => size * _fontSizeRatio;
+
+  String get _initial => userName.profileInitial;
 
   Color get _background => switch (color) {
     ProfileColor.lightBlue => MoaColors.accentTint,
-    ProfileColor.gray => _grayBackground,
-    ProfileColor.blue => _blueBackground,
+    ProfileColor.gray => MoaColors.profileGray,
+    ProfileColor.blue => MoaColors.profileBlue,
     ProfileColor.dark => MoaColors.accent,
   };
 
@@ -43,14 +45,11 @@ class MoaProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: size / 2,
+      radius: _radius,
       backgroundColor: _background,
       child: Text(
-        profileInitial(userName),
-        style: MoaText.titleS.copyWith(
-          color: _foreground,
-          fontSize: size * _fontSizeRatio,
-        ),
+        _initial,
+        style: MoaText.titleS.copyWith(color: _foreground, fontSize: _fontSize),
       ),
     );
   }

@@ -84,8 +84,8 @@ void main() {
 
     for (final (color, background, foreground) in [
       (ProfileColor.lightBlue, MoaColors.accentTint, MoaColors.accentText),
-      (ProfileColor.gray, const Color(0xFFD2D2D7), MoaColors.textPrimary),
-      (ProfileColor.blue, const Color(0xFFB8D4F2), MoaColors.textPrimary),
+      (ProfileColor.gray, MoaColors.profileGray, MoaColors.textPrimary),
+      (ProfileColor.blue, MoaColors.profileBlue, MoaColors.textPrimary),
       (ProfileColor.dark, MoaColors.accent, MoaColors.textInverse),
     ]) {
       testWidgets('${color.name} 프로필 색에 맞는 배경과 글자색으로 그린다', (tester) async {
