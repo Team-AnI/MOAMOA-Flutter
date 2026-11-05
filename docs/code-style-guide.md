@@ -297,12 +297,18 @@ class ScheduleListPage extends ConsumerWidget {
           children: list.map((s) => _ScheduleCard(schedule: s)).toList(),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Text(e is ScheduleException ? e.message : '일시적인 오류가 발생했어요.'),
-        ),
+        error: (e, _) => Center(child: Text(e.scheduleErrorMessage)),
       ),
     );
   }
+}
+
+// 화면에 보여줄 문구는 build 에서 계산하지 않고 Extension getter 로 꺼냅니다. (3번 파일 구성 규칙 참고)
+extension ScheduleErrorMessageX on Object {
+  String get scheduleErrorMessage => switch (this) {
+    ScheduleException(:final message) => message,
+    _ => '일시적인 오류가 발생했어요.',
+  };
 }
 
 // View — Widget (같은 화면에서만 쓰면 같은 파일에 private 로 둡니다. 3번 파일 구성 규칙 참고)
@@ -347,7 +353,8 @@ const NoticeRepositoryImpl({required NoticeRemoteDataSource noticeRemoteDataSour
 
 > 이슈 #51 의 제안(wjddns0122)입니다. 팀 확정 전까지 "제안" 으로 둡니다.
 
-- `family` 키는 값 객체로 받습니다. 인자가 여러 개일 때는 요청 클래스(freezed) 또는 이름 있는 record(`typedef NoticeDetailArgs = ({int meetingId, int noticeId});`)로 묶습니다.
+- `family` 키는 값 객체로 받습니다. 인자가 여러 개일 때는 요청 클래스(freezed, 예: `ScheduleListRequest`)로 묶습니다.
+- `typedef ScheduleArgs = ({...});` 처럼 record 에 typedef 로 이름을 붙이는 방식은 쓰지 않습니다. 사용처에서 무엇을 담는지 읽히지 않기 때문입니다. (#60)
 - ViewModel 은 키 객체를 받지 않고, Provider 정의에서 값을 꺼내 **named 값**으로 생성자에 넘깁니다.
 
 요청 클래스(`ScheduleListRequest`), ViewModel 생성자, Provider 는 위 계층별 예시와 같습니다. 핵심만 다시 보면 다음과 같습니다.
@@ -381,16 +388,48 @@ final schedules = ref.watch(scheduleListProvider(request));
 ### 2-4. Model / Entity / Request
 
 - Entity, Model, Request, State 는 `freezed` 로 작성합니다 (불변 + `==`/`copyWith` 자동 생성).
+- UseCase 의 `XxxParams` 는 `freezed` 를 쓰지 않습니다. 값을 바꾸거나 비교할 일이 없는 입력 묶음이라 위 UseCase 예시처럼 일반 클래스로 둡니다. (#38)
 - Model → Entity 변환은 `extension NoticeModelX { Notice toEntity() }` 로 둡니다.
 - DataSource 메서드의 인자는 `XxxRequest` DTO 로 받습니다. 경로 변수(`meetingId` 등)는 `@JsonKey(includeToJson: false)` 로 본문에서 뺍니다. 일부만 보내는 수정 요청은 `@JsonKey(includeIfNull: false)` 를 씁니다.
 - 팀 결정 필요: Repository 인터페이스가 낱개 인자를 받을지, UseCase 의 `XxxParams` 를 받을지는 아직 정해지지 않았습니다.
+- 주소 파라미터 파싱처럼 Repository 와 상관없는 화면 입력 검사는 UseCase 가 아니라 화면·라우트에서 처리합니다. (#60)
 
 ## 3. 파일 구성 규칙
 
 > 전체 폴더 구조(Feature-First + Layered Architecture)는 프로젝트 README 의 아키텍처 섹션을 따릅니다. (README 에 해당 섹션이 작성되면 링크로 교체) 여기서는 그 구조 안에서 파일을 나누는 기준만 정의합니다.
 
 - **위젯 분리 기준**: `build()` 내부가 3~4 depth 이상 중첩되거나 50줄을 넘으면 별도 위젯 클래스로 분리합니다. 그 화면에서만 쓰는 위젯은 private(`_`) 클래스로 같은 파일에, 다른 화면에서도 재사용하는 위젯은 `widgets/` 폴더에 public 클래스로 둡니다.
+- **분리는 한 단계만**: 화면의 `build()` 에서 UI 구조가 바로 보여야 합니다. `_ManageContent → _ManageSection` 처럼 private 위젯이 다른 private 위젯을 다시 부르는 구조는 만들지 않고, 화면에서 한 단계만 분리합니다. (#63)
+- **필요 없는 계층 위젯은 만들지 않습니다**: `ref` 를 쓰지 않고 값만 그대로 넘기는 중간 위젯이나, 상태가 없는데 쓰는 `StatefulWidget` 은 두지 않습니다. (#63, #75)
+- **`build()` 에서 값을 계산하지 않습니다**: `build()` 는 화면을 그리기 시작하는 메서드라 조건 판단·문구 조합 같은 계산을 두지 않고, model·state 나 위젯의 getter 로 꺼내 씁니다. 화면에 보여줄 값(표시용 이름·문구·색)은 `Extension` getter 로 둡니다. (#63)
+- **콜백은 메서드로**: 여러 줄이거나 여러 곳에서 쓰는 콜백은 `build()` 안의 익명 함수 대신 메서드로 분리합니다. (#60)
 - 파일 하나에는 public 클래스 1개만 둡니다. 예외: private 헬퍼 위젯/클래스, 그리고 한 UseCase 파일 안의 `XxxParams` / 추상 `Xxx` / `XxxImpl` 세트(아래 UseCase 예시).
+
+```dart
+// ✕ private 위젯이 두 단계로 이어지고, build 안에서 문구를 만듭니다.
+class _ScheduleSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [for (final s in schedules) _ScheduleCard(schedule: s)],
+  );
+}
+
+class _ScheduleCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) =>
+      Text('${schedule.date.month}월 ${schedule.date.day}일');
+}
+
+// ○ 화면에서 한 단계만 분리하고, 표시 값은 Extension getter 로 꺼냅니다.
+extension ScheduleDisplayX on Schedule {
+  String get dateLabel => '${date.month}월 ${date.day}일';
+}
+
+class _ScheduleCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Text(schedule.dateLabel);
+}
+```
 
 다른 화면에서도 재사용한다면 `_ScheduleCard` 대신 `ScheduleCard`로 public 클래스를 만들고 `widgets/schedule_card.dart`로 옮깁니다.
 
@@ -455,31 +494,31 @@ linter:
 
 ```dart
 void main() {
-  group('GetGroupInviteCode', () {
+  group(GetGroupInviteCode, () {
     test('역할이 관리자이면 초대 코드 조회를 허용한다', () async {
       // 준비 → 실행 → 결과 검증
     });
   });
 
-  group('ValidateTitle', () {
+  group(ValidateTitle, () {
     test('제목이 비어 있으면 검증 오류 결과를 반환한다', () {
       // 반환된 결과의 오류 값을 검증합니다.
     });
   });
 
-  group('CreateGroup', () {
+  group(CreateGroup, () {
     test('이름이 비어 있으면 GroupFailure 예외가 발생한다', () {
       // expect(() => 호출(), throwsA(isA<GroupFailure>()));
     });
   });
 
-  group('GroupViewModel', () {
+  group(GroupViewModel, () {
     test('목록 조회에 실패하면 오류 상태가 된다', () async {
       // ...
     });
   });
 
-  group('GroupFormPage', () {
+  group(GroupFormPage, () {
     testWidgets('목록을 조회하는 동안 가입 버튼을 비활성화한다', (tester) async {
       // ...
     });
@@ -491,19 +530,19 @@ void main() {
 
 ```dart
 void main() {
-  group('GroupListPage', () {
+  group(GroupListPage, () {
     testWidgets('목록이 비어 있는 초기 화면에 모임 만들기 버튼을 표시한다', (tester) async {
       // ...
     });
   });
 
-  group('CloseButton', () {
+  group(CloseButton, () {
     testWidgets('닫기 의미의 접근성 레이블을 제공한다', (tester) async {
       // ...
     });
   });
 
-  group('GroupPrimaryButton', () {
+  group(GroupPrimaryButton, () {
     testWidgets('비활성 상태에서는 전달받은 onPressed 콜백을 호출하지 않는다', (tester) async {
       // ...
     });
@@ -515,6 +554,7 @@ void main() {
 
 - 모든 테스트를 대상별 `group`으로 묶습니다. 단일 테스트만 있는 파일도 동일합니다.
 - 테스트 대상 클래스·메서드·기능명을 사용합니다.
+- 대상이 클래스이면 따옴표 없이 타입을 그대로 넘기고(`group(CreateGroup, …)`), 함수·provider·동작 단위이면 문자열로 적습니다(`group('formatNoticeDate', …)`). 클래스 이름을 바꾸면 group 이름도 함께 바뀝니다. (#38)
 - 하위 테스트의 공통 맥락을 담고 불필요하게 깊은 중첩을 만들지 않습니다.
 - 영문 클래스·메서드명은 그대로 사용해도 됩니다.
 - 최종 실행 결과에서 group과 test 설명을 함께 읽어도 뜻이 명확해야 합니다.
@@ -522,7 +562,7 @@ void main() {
 
 ```dart
 void main() {
-  group('CreateGroup', () {
+  group(CreateGroup, () {
     test('이름이 비어 있으면 저장소를 호출하지 않고 검증 예외가 발생한다', () async {
       // ...
     });
@@ -542,7 +582,7 @@ void main() {
 ```dart
 void main() {
   // 아래 최대 길이 50자는 예시이며, 실제 확정된 계약에 맞춥니다.
-  group('ValidateTitle', () {
+  group(ValidateTitle, () {
     test('제목이 최대 길이 50자이면 검증을 통과한다', () {
       // ...
     });
@@ -551,7 +591,7 @@ void main() {
     });
   });
 
-  group('GroupFormPage', () {
+  group(GroupFormPage, () {
     for (final width in [320.0, 393.0]) {
       testWidgets('화면 너비 ${width}px에서 가입 버튼이 잘리지 않는다', (tester) async {
         // ...
