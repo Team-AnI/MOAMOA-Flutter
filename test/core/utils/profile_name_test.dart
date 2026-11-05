@@ -21,6 +21,10 @@ void main() {
       expect(profileInitial(' 김모아'), '김');
     });
 
+    test('여러 코드로 된 이모지로 시작하면 이모지 한 글자를 돌려준다', () {
+      expect(profileInitial('👨‍👩‍👧 가족'), '👨‍👩‍👧');
+    });
+
     test('탈퇴한 사용자도 첫 글자를 돌려준다', () {
       expect(profileInitial('탈퇴한 사용자'), '탈');
     });
