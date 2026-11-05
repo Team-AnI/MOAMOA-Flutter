@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 /// Figma Moa4의 색상과 타이포그래피.
 abstract final class GroupDesign {
   static const ink = Color(0xff1d1d1f);
-  static const darkRaised = Color(0xff272729);
   static const fill = Color(0xfff5f5f7);
   static const secondary = Color(0xff333333);
   static const muted = Color(0xff7a7a7a);
   static const blue = Color(0xff0066cc);
   static const tint = Color(0xffe5effa);
+  static const darkRaised = Color(0xff272729);
   static const title = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 26,
