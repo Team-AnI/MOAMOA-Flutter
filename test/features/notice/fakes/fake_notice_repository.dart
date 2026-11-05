@@ -41,6 +41,12 @@ class FakeNoticeRepository implements NoticeRepository {
   /// 값이 있으면 deleteNotice 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? deleteGate;
 
+  /// markNoticeRead 로 읽음 처리를 요청한 공지 ID (호출 순서대로)
+  final List<int> readNoticeIds = [];
+
+  /// 값이 있으면 markNoticeRead 만 이 예외를 던집니다. (상세 조회는 성공하고 읽음만 실패하는 상황)
+  NoticeException? readError;
+
   int _nextId = 1000;
 
   void _throwIfError() {
@@ -130,5 +136,14 @@ class FakeNoticeRepository implements NoticeRepository {
     await deleteGate?.future;
     _throwIfError();
     notices.removeAt(_indexOf(noticeId));
+  }
+
+  @override
+  Future<void> markNoticeRead({
+    required int meetingId,
+    required int noticeId,
+  }) async {
+    readNoticeIds.add(noticeId);
+    if (readError != null) throw readError!;
   }
 }

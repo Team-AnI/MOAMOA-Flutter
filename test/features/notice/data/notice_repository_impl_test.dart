@@ -8,10 +8,13 @@ import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 
 /// 서버 대신 정해 둔 응답을 돌려주는 Dio 어댑터
 class _StubAdapter implements HttpClientAdapter {
-  _StubAdapter(this.statusCode, this.body);
+  _StubAdapter(this.statusCode, this.body, this.requests);
 
   final int statusCode;
   final String body;
+
+  /// 값이 있으면 보낸 요청을 순서대로 담습니다.
+  final List<RequestOptions>? requests;
 
   @override
   Future<ResponseBody> fetch(
@@ -19,6 +22,7 @@ class _StubAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    requests?.add(options);
     return ResponseBody.fromString(
       body,
       statusCode,
@@ -32,8 +36,13 @@ class _StubAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-NoticeRepositoryImpl _repositoryWith(int statusCode, String body) {
-  final dio = Dio()..httpClientAdapter = _StubAdapter(statusCode, body);
+NoticeRepositoryImpl _repositoryWith(
+  int statusCode,
+  String body, {
+  List<RequestOptions>? requests,
+}) {
+  final dio = Dio()
+    ..httpClientAdapter = _StubAdapter(statusCode, body, requests);
   return NoticeRepositoryImpl(
     noticeRemoteDataSource: NoticeRemoteDataSourceImpl(dio: dio),
   );
@@ -81,6 +90,34 @@ void main() {
           isA<NoticeException>()
               .having((e) => e.code, 'code', 'NOT_FOUND')
               .having((e) => e.message, 'message', '요청한 리소스를 찾을 수 없습니다.'),
+        ),
+      );
+    });
+
+    test('읽음 처리는 본문 없이 PUT .../reads/me 로 요청한다', () async {
+      final requests = <RequestOptions>[];
+      final repository = _repositoryWith(200, '''
+      {"success": true, "error": null,
+       "data": {"noticeId": 30, "readAt": "2026-10-07T10:05:00+09:00"}}
+    ''', requests: requests);
+
+      await repository.markNoticeRead(meetingId: 1, noticeId: 30);
+
+      expect(requests.single.method, 'PUT');
+      expect(requests.single.path, '/v1/meetings/1/notices/30/reads/me');
+      expect(requests.single.data, isNull);
+    });
+
+    test('읽음 처리 실패 응답이면 서버의 코드를 담은 NoticeException 예외가 발생한다', () async {
+      final repository = _repositoryWith(404, '''
+      {"success": false, "data": null,
+       "error": {"code": "NOT_FOUND", "message": "요청한 리소스를 찾을 수 없습니다."}}
+    ''');
+
+      await expectLater(
+        repository.markNoticeRead(meetingId: 1, noticeId: 30),
+        throwsA(
+          isA<NoticeException>().having((e) => e.code, 'code', 'NOT_FOUND'),
         ),
       );
     });

@@ -4,6 +4,7 @@ import 'package:moamoa/features/notice/domain/usecases/create_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/delete_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notice_detail.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notices.dart';
+import 'package:moamoa/features/notice/domain/usecases/mark_notice_read.dart';
 import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
 
 import '../fakes/fake_notice_repository.dart';
@@ -219,6 +220,19 @@ void main() {
       await deleteNotice(const DeleteNoticeParams(meetingId: 1, noticeId: 1));
 
       expect(repository.notices.map((notice) => notice.id), [2]);
+    });
+  });
+
+  group(MarkNoticeRead, () {
+    test('지정한 공지의 읽음 처리를 Repository 에 요청한다', () async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
+      final markNoticeRead = MarkNoticeReadImpl(noticeRepository: repository);
+
+      await markNoticeRead(
+        const MarkNoticeReadParams(meetingId: 1, noticeId: 1),
+      );
+
+      expect(repository.readNoticeIds, [1]);
     });
   });
 }

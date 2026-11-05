@@ -4,6 +4,7 @@ import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
+import '../models/mark_notice_read_request.dart';
 import '../models/notice_list_model.dart';
 import '../models/notice_model.dart';
 import '../models/update_notice_request.dart';
@@ -57,6 +58,13 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
   Future<void> deleteNotice(DeleteNoticeRequest request) async {
     await _dio.delete<Map<String, dynamic>>(
       '/v1/meetings/${request.meetingId}/notices/${request.noticeId}',
+    );
+  }
+
+  @override
+  Future<void> markNoticeRead(MarkNoticeReadRequest request) async {
+    await _dio.put<Map<String, dynamic>>(
+      '/v1/meetings/${request.meetingId}/notices/${request.noticeId}/reads/me',
     );
   }
 
