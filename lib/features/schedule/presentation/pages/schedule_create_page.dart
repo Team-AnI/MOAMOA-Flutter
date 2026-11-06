@@ -69,7 +69,7 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
       backgroundColor: MoaColors.page,
       appBar: MoaAppBar(),
       body: SafeArea(
-        child: ScheduleForm(
+        child: ScheduleForm.create(
           heading: '일정 만들기',
           submitLabel: '일정 만들기',
           isSubmitting: state.status == ScheduleCreateStatus.submitting,

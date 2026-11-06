@@ -10,17 +10,44 @@ import '../schedule_format.dart';
 /// - 입력: 이름, 시작 일시(필수), 종료 일시(선택), 장소(선택), 설명(선택)
 /// - 제출: 아래 버튼. 이름이나 시작 일시가 비어 있거나 [isSubmitting] 이면 비활성화됩니다.
 /// - [heading]: 입력 영역 맨 위 제목. 없으면 그리지 않습니다. [submitLabel]: 하단 버튼 글자
-/// - [initial]: 수정할 일정. 있으면 그 값으로 채워서 시작합니다.
-/// - [onSubmit]: 버튼을 누르면 현재 입력값과 함께 호출됩니다.
+/// - [initial]: 수정할 일정. 수정 폼은 이 값으로 채워서 시작합니다.
 class ScheduleForm extends StatefulWidget {
-  const ScheduleForm({
+  /// 일정 만들기 폼입니다. 버튼을 누르면 [onSubmit] 이 모든 입력값과 함께 호출됩니다.
+  const ScheduleForm.create({
     super.key,
     this.heading,
     required this.submitLabel,
     required this.isSubmitting,
-    required this.onSubmit,
-    this.initial,
-  });
+    required void Function({
+      required String title,
+      required String description,
+      required DateTime startAt,
+      DateTime? endAt,
+      required String location,
+    })
+    onSubmit,
+  }) : _onCreate = onSubmit,
+       _onEdit = null,
+       initial = null;
+
+  /// 일정 수정 폼입니다. 바뀐 값이 없으면 버튼이 비활성화됩니다.
+  /// 버튼을 누르면 [onSubmit] 이 바뀐 값만 담아 호출됩니다. 바뀌지 않은 값은 null 입니다.
+  const ScheduleForm.edit({
+    super.key,
+    required this.submitLabel,
+    required this.isSubmitting,
+    required Schedule this.initial,
+    required void Function({
+      String? title,
+      String? description,
+      DateTime? startAt,
+      DateTime? endAt,
+      String? location,
+    })
+    onSubmit,
+  }) : _onEdit = onSubmit,
+       _onCreate = null,
+       heading = null;
 
   final String? heading;
   final String submitLabel;
@@ -32,8 +59,16 @@ class ScheduleForm extends StatefulWidget {
     required DateTime startAt,
     DateTime? endAt,
     required String location,
-  })
-  onSubmit;
+  })?
+  _onCreate;
+  final void Function({
+    String? title,
+    String? description,
+    DateTime? startAt,
+    DateTime? endAt,
+    String? location,
+  })?
+  _onEdit;
 
   @override
   State<ScheduleForm> createState() => _ScheduleFormState();
@@ -49,10 +84,56 @@ class _ScheduleFormState extends State<ScheduleForm> {
   late DateTime? _startAt = widget.initial?.startAt.toLocal();
   late DateTime? _endAt = widget.initial?.endAt?.toLocal();
 
+  /// 수정 폼에서 바뀌었는지 판단하는 값들입니다. 바뀌지 않았으면 null 입니다.
+  String? get _changedTitle => _changedText(_title, widget.initial?.title);
+  String? get _changedDescription =>
+      _changedText(_description, widget.initial?.description);
+  String? get _changedLocation =>
+      _changedText(_location, widget.initial?.location);
+  DateTime? get _changedStartAt =>
+      _changedTime(_startAt, widget.initial?.startAt);
+  DateTime? get _changedEndAt => _changedTime(_endAt, widget.initial?.endAt);
+
+  /// 만들기 폼은 항상 true, 수정 폼은 바뀐 값이 하나라도 있을 때 true 입니다.
+  bool get _hasChanges =>
+      widget.initial == null ||
+      _changedTitle != null ||
+      _changedDescription != null ||
+      _changedLocation != null ||
+      _changedStartAt != null ||
+      _changedEndAt != null;
+
+  /// 이름과 시작 일시가 있고, 바뀐 값이 있고, 제출 중이 아닐 때만 제출할 수 있습니다.
+  bool get _canSubmit =>
+      !widget.isSubmitting &&
+      _title.text.trim().isNotEmpty &&
+      _startAt != null &&
+      _hasChanges;
+
   @override
   void initState() {
     super.initState();
-    _title.addListener(() => setState(() {}));
+    _title.addListener(_onTextChanged);
+    _location.addListener(_onTextChanged);
+    _description.addListener(_onTextChanged);
+  }
+
+  /// 입력이 바뀌면 제출 버튼 상태를 다시 계산합니다.
+  void _onTextChanged() => setState(() {});
+
+  /// [controller] 의 앞뒤 공백을 지운 값이 [original] 과 다를 때만 돌려줍니다.
+  String? _changedText(TextEditingController controller, String? original) {
+    final trimmed = controller.text.trim();
+    return trimmed == original ? null : trimmed;
+  }
+
+  /// [value] 가 [original] 과 다른 순간일 때만 돌려줍니다.
+  /// 서버 응답은 UTC, 입력 폼은 로컬 시각이라 `==` 대신 같은 순간인지로 비교합니다.
+  /// 종료 일시를 비우는 수정은 아직 지원하지 않아서 [value] 가 null 이면 바꾸지 않습니다.
+  DateTime? _changedTime(DateTime? value, DateTime? original) {
+    if (value == null) return null;
+    if (original != null && value.isAtSameMomentAs(original)) return null;
+    return value;
   }
 
   @override
@@ -92,15 +173,22 @@ class _ScheduleFormState extends State<ScheduleForm> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  /// 현재 입력값으로 제출합니다.
+  /// 현재 입력값으로 제출합니다. 만들기는 모든 입력값을, 수정은 바뀐 값만 넘깁니다.
   void _submit() {
     FocusScope.of(context).unfocus();
-    widget.onSubmit(
+    widget._onCreate?.call(
       title: _title.text,
       description: _description.text,
       startAt: _startAt!,
       endAt: _endAt,
       location: _location.text,
+    );
+    widget._onEdit?.call(
+      title: _changedTitle,
+      description: _changedDescription,
+      startAt: _changedStartAt,
+      endAt: _changedEndAt,
+      location: _changedLocation,
     );
   }
 
@@ -134,12 +222,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
         ),
         _SubmitButton(
           label: widget.submitLabel,
-          onPressed:
-              widget.isSubmitting ||
-                  _title.text.trim().isEmpty ||
-                  _startAt == null
-              ? null
-              : _submit,
+          onPressed: _canSubmit ? _submit : null,
         ),
       ],
     );
@@ -264,7 +347,7 @@ class _PickerField extends StatelessWidget {
 }
 
 /// 하단 제출 버튼입니다. [onPressed] 가 null 이면 비활성화됩니다.
-/// (이름이나 시작 일시가 비어 있거나 제출 중일 때)
+/// (이름이나 시작 일시가 비어 있거나, 수정 폼에서 바뀐 값이 없거나, 제출 중일 때)
 class _SubmitButton extends StatelessWidget {
   const _SubmitButton({required this.label, required this.onPressed});
 

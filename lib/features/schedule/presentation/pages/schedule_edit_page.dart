@@ -44,13 +44,13 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
     }
   }
 
-  /// 입력한 값으로 일정 수정을 요청합니다.
+  /// 바뀐 값으로 일정 수정을 요청합니다. 바뀌지 않은 값은 null 입니다.
   void _submit({
-    required String title,
-    required String description,
-    required DateTime startAt,
+    String? title,
+    String? description,
+    DateTime? startAt,
     DateTime? endAt,
-    required String location,
+    String? location,
   }) {
     ref
         .read(scheduleEditProvider(_id).notifier)
@@ -75,7 +75,7 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
       appBar: MoaAppBar(title: '일정 수정', showClose: true),
       body: SafeArea(
         child: schedule.when(
-          data: (s) => ScheduleForm(
+          data: (s) => ScheduleForm.edit(
             submitLabel: '수정 완료',
             isSubmitting: state.status == ScheduleEditStatus.submitting,
             initial: s,

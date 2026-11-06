@@ -17,31 +17,11 @@ void main() {
   late ProviderContainer container;
 
   final startAt = DateTime(2026, 10, 11, 7);
-  final endAt = DateTime(2026, 10, 11, 9);
   final original = Schedule(id: 20, title: '정모', startAt: startAt);
   const scheduleId = ScheduleId(meetingId: 1, scheduleId: 20);
 
-  // 바뀐 필드 비교용으로 모든 필드가 채워진 일정과, 같은 일정을 서버처럼 UTC 로 받은 일정입니다.
-  final detailed = Schedule(
-    id: 21,
-    title: '10월 정기 러닝',
-    description: '반포 한강공원 집합',
-    startAt: startAt,
-    endAt: endAt,
-    location: '반포 한강공원',
-  );
-  const detailedId = ScheduleId(meetingId: 1, scheduleId: 21);
-  final detailedUtc = detailed.copyWith(
-    id: 22,
-    startAt: startAt.toUtc(),
-    endAt: endAt.toUtc(),
-  );
-  const detailedUtcId = ScheduleId(meetingId: 1, scheduleId: 22);
-
   setUp(() {
-    repository = FakeScheduleRepository(
-      schedules: [original, detailed, detailedUtc],
-    );
+    repository = FakeScheduleRepository(schedules: [original]);
     container = ProviderContainer(
       overrides: [scheduleRepositoryProvider.overrideWithValue(repository)],
     );
@@ -57,28 +37,6 @@ void main() {
   }
 
   ScheduleEditState state() => container.read(scheduleEditProvider(scheduleId));
-
-  /// [id] 일정을 수정 제출합니다. 넘기지 않은 값은 [detailed] 와 같고, [clearEnd] 이면 종료 일시를 비웁니다.
-  Future<void> edit(
-    ScheduleId id, {
-    String title = '10월 정기 러닝',
-    String description = '반포 한강공원 집합',
-    DateTime? start,
-    DateTime? end,
-    bool clearEnd = false,
-    String location = '반포 한강공원',
-  }) {
-    container.listen(scheduleEditProvider(id), (_, _) {});
-    return container
-        .read(scheduleEditProvider(id).notifier)
-        .submit(
-          title: title,
-          description: description,
-          startAt: start ?? startAt,
-          endAt: clearEnd ? null : end ?? endAt,
-          location: location,
-        );
-  }
 
   group('ScheduleEditViewModel', () {
     test('제출 전에는 초기 상태이다', () {
@@ -175,83 +133,20 @@ void main() {
       expect(repository.listCallCount, 2);
     });
 
-    test('바뀐 필드만 요청에 담아 저장한다', () async {
-      await edit(detailedId, title: '11월 정기 러닝', location: '잠실 공원');
+    test('넘긴 값만 요청에 담고 넘기지 않은 값은 null 로 저장한다', () async {
+      await container
+          .read(scheduleEditProvider(scheduleId).notifier)
+          .submit(title: '11월 정기 러닝', location: '잠실 공원');
 
       expect(
         repository.updateCalls.single,
         const ScheduleUpdateRequest(
           meetingId: 1,
-          scheduleId: 21,
+          scheduleId: 20,
           title: '11월 정기 러닝',
           location: '잠실 공원',
         ),
       );
-    });
-
-    test('시작·종료 일시가 바뀌면 바뀐 일시를 요청에 담는다', () async {
-      final newStart = DateTime(2026, 10, 12, 7);
-      final newEnd = DateTime(2026, 10, 12, 9);
-
-      await edit(detailedId, start: newStart, end: newEnd);
-
-      final request = repository.updateCalls.single;
-      expect(request.startAt, newStart);
-      expect(request.endAt, newEnd);
-      expect(request.title, isNull);
-    });
-
-    test('바뀐 필드가 없으면 저장하지 않는다', () async {
-      await edit(detailedId);
-
-      expect(repository.updateCalls, isEmpty);
-    });
-
-    test('제목 앞뒤 공백은 지우고, 공백만 바뀐 입력은 바뀌지 않은 것으로 본다', () async {
-      await edit(detailedId, title: '  10월 정기 러닝  ');
-
-      expect(repository.updateCalls, isEmpty);
-    });
-
-    test('종료 일시만 비우면 저장하지 않는다', () async {
-      await edit(detailedId, clearEnd: true);
-
-      expect(repository.updateCalls, isEmpty);
-    });
-
-    test('종료 일시가 없던 일정에 종료 일시를 넣으면 요청에 담는다', () async {
-      await edit(scheduleId, title: '정모', description: '', location: '');
-
-      expect(repository.updateCalls.single.endAt, endAt);
-    });
-
-    test('설명이나 장소를 비우면 빈 문자열로 보낸다', () async {
-      await edit(detailedId, description: '   ', location: '');
-
-      final request = repository.updateCalls.single;
-      expect(request.description, '');
-      expect(request.location, '');
-    });
-
-    // 서버 응답의 시각은 UTC 로, 입력 폼의 시각은 로컬로 들어온다.
-    test('UTC 로 받은 일정과 같은 순간의 로컬 일시이면 일시가 바뀌지 않은 것으로 본다', () async {
-      await edit(
-        detailedUtcId,
-        title: '11월 정기 러닝',
-        start: startAt.toLocal(),
-        end: endAt.toLocal(),
-      );
-
-      final request = repository.updateCalls.single;
-      expect(request.title, '11월 정기 러닝');
-      expect(request.startAt, isNull);
-      expect(request.endAt, isNull);
-    });
-
-    test('UTC 로 받은 일정을 바꾸지 않고 저장하면 저장하지 않는다', () async {
-      await edit(detailedUtcId, start: startAt.toLocal(), end: endAt.toLocal());
-
-      expect(repository.updateCalls, isEmpty);
     });
   });
 }

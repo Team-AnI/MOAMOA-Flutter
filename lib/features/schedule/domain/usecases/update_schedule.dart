@@ -22,14 +22,6 @@ final class UpdateScheduleParams extends Params {
   final DateTime? startAt;
   final DateTime? endAt;
   final String? location;
-
-  /// 바뀐 필드가 하나라도 있는지 알려줍니다.
-  bool get hasChanges =>
-      title != null ||
-      description != null ||
-      startAt != null ||
-      endAt != null ||
-      location != null;
 }
 
 /// "일정 수정"을 담당합니다.
