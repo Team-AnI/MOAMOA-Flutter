@@ -22,8 +22,8 @@ Team AnI의 MOAMOA Flutter 앱 저장소입니다.
 
 | 항목 | 버전 |
 | --- | --- |
-| Flutter | **3.44.9** (stable, revision `6b182d2c75`) |
-| Dart | **3.12.2** (`sdk: ^3.12.2`) |
+| Flutter | **3.47.8** (stable, revision `737ba8f885`) |
+| Dart | **3.13.7** (`sdk: ^3.13.7`) |
 | Java (JDK) | **17** |
 | Gradle | 9.1.0 (Gradle Wrapper 사용) |
 | Android | `compileSdk` / `minSdk` / `targetSdk` 는 Flutter 기본값 사용 |

@@ -1,14 +1,9 @@
-/// UseCase 파라미터 공통 추상 클래스
-abstract class Params {
-  const Params();
-}
+import 'params.dart';
 
-/// 파라미터가 필요 없는 UseCase 에서 사용
-final class NoParams extends Params {
-  const NoParams();
-}
+export 'no_params.dart';
+export 'params.dart';
 
-/// UseCase 공통 추상 클래스
+/// UseCase 공통 추상 클래스입니다.
 abstract class Usecase<Result, P extends Params> {
   Future<Result> call(P params);
 }

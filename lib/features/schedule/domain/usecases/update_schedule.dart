@@ -22,6 +22,17 @@ final class UpdateScheduleParams extends Params {
   final DateTime? startAt;
   final DateTime? endAt;
   final String? location;
+
+  @override
+  List<Object?> get props => [
+    meetingId,
+    scheduleId,
+    title,
+    description,
+    startAt,
+    endAt,
+    location,
+  ];
 }
 
 /// "일정 수정"을 담당합니다.

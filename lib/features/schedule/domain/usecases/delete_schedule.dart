@@ -11,6 +11,9 @@ final class DeleteScheduleParams extends Params {
 
   final int meetingId;
   final int scheduleId;
+
+  @override
+  List<Object?> get props => [meetingId, scheduleId];
 }
 
 /// "일정 취소"를 담당합니다.
