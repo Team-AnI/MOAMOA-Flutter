@@ -75,10 +75,7 @@ final scheduleListProvider =
 
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<ScheduleDetailViewModel, Schedule, ScheduleId>(
-      (id) => ScheduleDetailViewModel(
-        meetingId: id.meetingId,
-        scheduleId: id.scheduleId,
-      ),
+      (id) => ScheduleDetailViewModel(id: id),
     );
 
 /// 인자는 일정을 만들 모임의 id 입니다.
@@ -92,20 +89,14 @@ final scheduleCreateProvider = NotifierProvider.autoDispose
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleEditProvider = NotifierProvider.autoDispose
     .family<ScheduleEditViewModel, ScheduleEditState, ScheduleId>(
-      (id) => ScheduleEditViewModel(
-        meetingId: id.meetingId,
-        scheduleId: id.scheduleId,
-      ),
+      (id) => ScheduleEditViewModel(id: id),
     );
 
 /// 인자는 취소할 일정입니다.
 /// autoDispose: 화면을 닫으면 이전 요청 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleDeleteProvider = NotifierProvider.autoDispose
     .family<ScheduleDeleteViewModel, ScheduleDeleteState, ScheduleId>(
-      (id) => ScheduleDeleteViewModel(
-        meetingId: id.meetingId,
-        scheduleId: id.scheduleId,
-      ),
+      (id) => ScheduleDeleteViewModel(id: id),
     );
 
 /// 캘린더 탭의 월/선택 날짜. 목록 페이지가 구독을 유지하므로 탭을 오가도 값이 남습니다.

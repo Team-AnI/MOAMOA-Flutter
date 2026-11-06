@@ -2,15 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_id.dart';
 import 'schedule_edit_state.dart';
 import 'schedule_edit_status.dart';
 
-/// 일정 수정 ViewModel 입니다. [scheduleId] 일정을 수정하고 제출 과정을 [ScheduleEditState] 로 알립니다.
+/// 일정 수정 ViewModel 입니다. [id] 일정을 수정하고 제출 과정을 [ScheduleEditState] 로 알립니다.
 class ScheduleEditViewModel extends Notifier<ScheduleEditState> {
-  ScheduleEditViewModel({required this.meetingId, required this.scheduleId});
+  ScheduleEditViewModel({required this.id});
 
-  final int meetingId;
-  final int scheduleId;
+  final ScheduleId id;
 
   @override
   ScheduleEditState build() => const ScheduleEditState();
@@ -32,8 +32,8 @@ class ScheduleEditViewModel extends Notifier<ScheduleEditState> {
     try {
       await ref.read(updateScheduleProvider)(
         UpdateScheduleParams(
-          meetingId: meetingId,
-          scheduleId: scheduleId,
+          meetingId: id.meetingId,
+          scheduleId: id.scheduleId,
           title: title,
           description: description,
           startAt: startAt,
