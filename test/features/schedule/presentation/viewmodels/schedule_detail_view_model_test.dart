@@ -29,9 +29,8 @@ void main() {
 
   test('일정 상세를 불러온다', () async {
     final schedule = await container.read(
-      scheduleDetailProvider(
-        const ScheduleId(meetingId: 1, scheduleId: 20),
-      ).future,
+      scheduleDetailProvider(const ScheduleId(meetingId: 1, scheduleId: 20))
+          .future,
     );
 
     expect(schedule, run);
@@ -40,9 +39,8 @@ void main() {
   test('없는 일정이면 오류 상태가 된다', () async {
     await expectLater(
       container.read(
-        scheduleDetailProvider(
-          const ScheduleId(meetingId: 1, scheduleId: 999),
-        ).future,
+        scheduleDetailProvider(const ScheduleId(meetingId: 1, scheduleId: 999))
+            .future,
       ),
       throwsStateError,
     );

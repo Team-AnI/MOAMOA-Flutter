@@ -34,9 +34,8 @@ class _ScheduleCreatePageState extends ConsumerState<ScheduleCreatePage> {
     if (next == ScheduleCreateStatus.success) {
       context.pop();
     } else if (next == ScheduleCreateStatus.failure) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('일정을 만들지 못했어요')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('일정을 만들지 못했어요')));
     }
   }
 

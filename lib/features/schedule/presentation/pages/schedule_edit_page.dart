@@ -38,9 +38,8 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
     if (next == ScheduleEditStatus.success) {
       context.pop();
     } else if (next == ScheduleEditStatus.failure) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(ScheduleFailureSnackBar(message: '일정을 수정하지 못했어요'));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(ScheduleFailureSnackBar(message: '일정을 수정하지 못했어요'));
     }
   }
 

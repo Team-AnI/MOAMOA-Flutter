@@ -38,9 +38,8 @@ class ScheduleDetailPage extends ConsumerWidget {
     if (next == ScheduleDeleteStatus.success) {
       context.pop();
     } else if (next == ScheduleDeleteStatus.failure) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(ScheduleFailureSnackBar(message: '일정을 취소하지 못했어요'));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(ScheduleFailureSnackBar(message: '일정을 취소하지 못했어요'));
     }
   }
 
@@ -116,9 +115,8 @@ class _EditButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
     final isCancelling = ref.watch(
-      scheduleDeleteProvider(
-        id,
-      ).select((s) => s.status == ScheduleDeleteStatus.submitting),
+      scheduleDeleteProvider(id)
+          .select((s) => s.status == ScheduleDeleteStatus.submitting),
     );
 
     return Padding(
@@ -355,9 +353,8 @@ class _CancelButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
     final isCancelling = ref.watch(
-      scheduleDeleteProvider(
-        id,
-      ).select((s) => s.status == ScheduleDeleteStatus.submitting),
+      scheduleDeleteProvider(id)
+          .select((s) => s.status == ScheduleDeleteStatus.submitting),
     );
 
     return Center(
