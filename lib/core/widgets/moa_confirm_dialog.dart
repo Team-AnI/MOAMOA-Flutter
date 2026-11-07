@@ -1,28 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 
-/// 확인 팝업. 확인을 누르면 true, 취소하면 false 를 돌려줍니다.
-Future<bool?> showMoaConfirmDialog(
-  BuildContext context, {
-  required String title,
-  required String message,
-  required String confirmLabel,
-  String cancelLabel = '취소',
-}) {
-  return showDialog<bool>(
-    context: context,
-    builder: (context) => _ConfirmDialog(
-      title: title,
-      message: message,
-      confirmLabel: confirmLabel,
-      cancelLabel: cancelLabel,
-    ),
-  );
-}
-
 /// 확인 팝업의 틀 (흰 배경, 둥근 모서리, 안쪽 여백)
-class _ConfirmDialog extends StatelessWidget {
-  const _ConfirmDialog({
+///
+/// 화면에서는 `showMoaConfirmDialog` 로 띄웁니다.
+/// 확인을 누르면 true, 취소하면 false 로 닫힙니다.
+class MoaConfirmDialog extends StatelessWidget {
+  const MoaConfirmDialog({
+    super.key,
     required this.title,
     required this.message,
     required this.confirmLabel,

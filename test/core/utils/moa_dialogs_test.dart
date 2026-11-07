@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
-import 'package:moamoa/core/widgets/moa_dialogs.dart';
+import 'package:moamoa/core/utils/moa_dialogs.dart';
 
 void main() {
   /// [onPressed] 를 실행하는 버튼 하나만 있는 화면을 띄웁니다.
