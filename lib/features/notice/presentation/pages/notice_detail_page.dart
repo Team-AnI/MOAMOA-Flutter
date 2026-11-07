@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/widgets/moa_dialogs.dart';
-import 'package:moamoa/core/widgets/moa_error_view.dart';
+import 'package:moamoa/core/widgets/moa_error_widget.dart';
 import 'package:moamoa/core/widgets/moa_snack_bar.dart';
 
 import '../../domain/entities/notice.dart';
@@ -101,12 +101,12 @@ class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
           loading: () => const Center(child: CircularProgressIndicator()),
           // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
           error: (error, _) => isNoticeNotFound(error)
-              ? MoaErrorView(
+              ? MoaErrorWidget(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go(_listPath),
                 )
-              : MoaErrorView(
+              : MoaErrorWidget(
                   message: noticeErrorMessage(error),
                   onAction: () => ref.invalidate(noticeDetailProvider(_args)),
                 ),

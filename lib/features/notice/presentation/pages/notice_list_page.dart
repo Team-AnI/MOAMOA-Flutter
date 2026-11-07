@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:moamoa/core/widgets/moa_error_view.dart';
+import 'package:moamoa/core/widgets/moa_error_widget.dart';
 import 'package:moamoa/core/widgets/moa_snack_bar.dart';
 
 import '../../domain/entities/notice.dart';
@@ -93,7 +93,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
                         onTapNotice: _goDetail,
                       ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => MoaErrorView(
+                error: (error, _) => MoaErrorWidget(
                   message: noticeErrorMessage(error),
                   onAction: () =>
                       ref.invalidate(noticeListProvider(widget.meetingId)),

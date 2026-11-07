@@ -4,8 +4,8 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 /// 조회 실패 화면. 안내 문구와 다시 시도 버튼을 가운데에 보여줍니다.
 ///
 /// 문구는 호출하는 쪽이 정합니다. (예: 기능별 예외를 사용자 문구로 바꾼 값)
-class MoaErrorView extends StatelessWidget {
-  const MoaErrorView({
+class MoaErrorWidget extends StatelessWidget {
+  const MoaErrorWidget({
     super.key,
     required this.message,
     required this.onAction,
