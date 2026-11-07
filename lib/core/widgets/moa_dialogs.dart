@@ -47,7 +47,22 @@ class _ConfirmDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _DialogMessage(title: title, message: message),
+            // 제목과 안내 문구
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: MoaText.titleM),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
             // 취소는 false, 확인은 true 로 팝업을 닫습니다.
             Row(
@@ -73,33 +88,6 @@ class _ConfirmDialog extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// 확인 팝업의 제목과 안내 문구
-class _DialogMessage extends StatelessWidget {
-  const _DialogMessage({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: MoaText.titleM),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-          ),
-        ],
       ),
     );
   }
