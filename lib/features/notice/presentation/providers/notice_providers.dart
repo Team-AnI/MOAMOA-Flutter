@@ -13,6 +13,8 @@ import '../../domain/usecases/delete_notice.dart';
 import '../../domain/usecases/get_notice_detail.dart';
 import '../../domain/usecases/get_notices.dart';
 import '../../domain/usecases/update_notice.dart';
+import '../viewmodels/notice_delete_state.dart';
+import '../viewmodels/notice_delete_view_model.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../viewmodels/notice_list_state.dart';
 import '../viewmodels/notice_list_view_model.dart';
@@ -69,6 +71,11 @@ final noticeListProvider = AsyncNotifierProvider.autoDispose
 final noticeDetailProvider = AsyncNotifierProvider.autoDispose
     .family<NoticeDetailViewModel, Notice, NoticeDetailArgs>(
       (args) => NoticeDetailViewModel(args: args),
+    );
+
+final noticeDeleteProvider = NotifierProvider.autoDispose
+    .family<NoticeDeleteViewModel, NoticeDeleteState, NoticeDetailArgs>(
+      (args) => NoticeDeleteViewModel(args: args),
     );
 
 final noticeWriteProvider = AsyncNotifierProvider.autoDispose

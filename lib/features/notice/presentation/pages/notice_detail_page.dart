@@ -9,12 +9,14 @@ import '../../domain/entities/notice.dart';
 import '../notice_error.dart';
 import '../notice_format.dart';
 import '../providers/notice_providers.dart';
+import '../viewmodels/notice_delete_state.dart';
+import '../viewmodels/notice_delete_status.dart';
 import '../viewmodels/notice_detail_view_model.dart';
 import '../widgets/notice_colors.dart';
 import '../widgets/notice_role_retry_button.dart';
 
 /// 공지 상세 화면
-class NoticeDetailPage extends ConsumerStatefulWidget {
+class NoticeDetailPage extends ConsumerWidget {
   const NoticeDetailPage({
     super.key,
     required this.meetingId,
@@ -24,77 +26,73 @@ class NoticeDetailPage extends ConsumerStatefulWidget {
   final int meetingId;
   final int noticeId;
 
-  @override
-  ConsumerState<NoticeDetailPage> createState() => _NoticeDetailPageState();
-}
-
-class _NoticeDetailPageState extends ConsumerState<NoticeDetailPage> {
-  /// 삭제 요청이 진행 중인 동안 버튼을 다시 누르지 못하게 합니다.
-  bool _isDeleting = false;
-
-  NoticeDetailArgs get _args =>
-      (meetingId: widget.meetingId, noticeId: widget.noticeId);
+  NoticeDetailArgs get _args => (meetingId: meetingId, noticeId: noticeId);
 
   /// 이 모임의 공지 목록 경로
-  String get _listPath => '/meetings/${widget.meetingId}/notices';
+  String get _listPath => '/meetings/$meetingId/notices';
 
-  Future<void> _delete() async {
-    if (_isDeleting) return;
-
+  /// 삭제할지 묻고, 확인하면 삭제를 요청합니다.
+  ///
+  /// 팝업의 응답은 삭제를 요청할지만 뜻합니다. 성공 · 실패는 삭제 상태가 바뀌면
+  /// [_onDeleteStateChanged] 에서 처리합니다.
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showMoaConfirmDialog(
       context,
       title: '공지를 삭제할까요?',
       message: '삭제한 공지는 되돌릴 수 없어요.',
       confirmLabel: '삭제',
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !context.mounted) return;
 
-    setState(() => _isDeleting = true);
-    Object? failure;
-    try {
-      await ref.read(noticeDetailProvider(_args).notifier).delete();
-    } catch (error) {
-      failure = error;
-    }
-    if (!mounted) return;
+    await ref.read(noticeDeleteProvider(_args).notifier).delete();
+  }
 
-    if (failure != null) {
-      setState(() => _isDeleting = false);
-      showMoaSnackBar(context, message: noticeErrorMessage(failure));
-      return;
-    }
-    // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
-    showMoaSnackBar(context, message: '공지를 삭제했어요.');
-    // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(_listPath);
+  void _onDeleteStateChanged(BuildContext context, NoticeDeleteState next) {
+    switch (next.status) {
+      case NoticeDeleteStatus.success:
+        // 스낵바는 화면이 닫힌 뒤에도 이어서 보이므로 목록에서 삭제 결과를 알 수 있습니다.
+        showMoaSnackBar(context, message: '공지를 삭제했어요.');
+        // 목록 없이 단독으로 열린 상세라 닫을 화면이 없으면 목록으로 이동합니다.
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go(_listPath);
+        }
+      case NoticeDeleteStatus.failure:
+        showMoaSnackBar(context, message: noticeErrorMessage(next.error));
+      case NoticeDeleteStatus.initial || NoticeDeleteStatus.deleting:
+        break;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(
+      noticeDeleteProvider(_args),
+      (_, next) => _onDeleteStateChanged(context, next),
+    );
     final notice = ref.watch(noticeDetailProvider(_args));
-    final access = ref.watch(noticeWriteAccessProvider(widget.meetingId));
+    final isDeleting = ref.watch(noticeDeleteProvider(_args)).isDeleting;
+    final access = ref.watch(noticeWriteAccessProvider(meetingId));
     final canWrite = access.canWrite;
 
     // 삭제 요청 중에는 화면을 닫지 않습니다. 닫으면 삭제 결과 안내와 목록 새로고침이 빠집니다.
     return PopScope(
-      canPop: !_isDeleting,
+      canPop: !isDeleting,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: _DetailAppBar(
-          onBack: _isDeleting ? null : () => context.pop(),
+          onBack: isDeleting ? null : () => context.pop(),
           onRetryRole: notice.hasValue ? access.retryRole : null,
           // 수정 화면은 작성 화면을 재사용하며, 기존 제목·내용이 채워진 채로 열립니다.
           onEdit: canWrite && notice.hasValue
-              ? () => context.push(
-                  '/meetings/${widget.meetingId}/notices/${widget.noticeId}/edit',
-                )
+              ? () =>
+                    context.push('/meetings/$meetingId/notices/$noticeId/edit')
               : null,
-          onDelete: canWrite && notice.hasValue ? _delete : null,
-          isDeleting: _isDeleting,
+          onDelete: canWrite && notice.hasValue
+              ? () => _confirmDelete(context, ref)
+              : null,
+          isDeleting: isDeleting,
         ),
         body: notice.when(
           data: (notice) => _NoticeContent(notice: notice),
