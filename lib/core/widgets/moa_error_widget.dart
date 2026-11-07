@@ -30,36 +30,26 @@ class MoaErrorWidget extends StatelessWidget {
               style: MoaText.body.copyWith(color: MoaColors.textSecondary),
             ),
             const SizedBox(height: 16),
-            _ErrorActionButton(label: actionLabel, onPressed: onAction),
+            // 다시 시도 버튼 (연한 배경, 둥근 모서리)
+            FilledButton(
+              onPressed: onAction,
+              style: FilledButton.styleFrom(
+                backgroundColor: MoaColors.fill,
+                foregroundColor: MoaColors.textPrimary,
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              // MoaText 에는 글자색이 들어 있어서, 버튼 전경색과 같은 색으로 덮어씁니다.
+              child: Text(
+                actionLabel,
+                style: MoaText.button.copyWith(color: MoaColors.textPrimary),
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// 오류 화면의 다시 시도 버튼 (연한 배경, 둥근 모서리)
-class _ErrorActionButton extends StatelessWidget {
-  const _ErrorActionButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: onPressed,
-      style: FilledButton.styleFrom(
-        backgroundColor: MoaColors.fill,
-        foregroundColor: MoaColors.textPrimary,
-        minimumSize: const Size(0, 48),
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      // MoaText 에는 글자색이 들어 있어서, 버튼 전경색과 같은 색으로 덮어씁니다.
-      child: Text(
-        label,
-        style: MoaText.button.copyWith(color: MoaColors.textPrimary),
       ),
     );
   }
