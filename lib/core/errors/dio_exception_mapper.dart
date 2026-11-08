@@ -9,7 +9,7 @@ import 'api_exception.dart';
 extension DioExceptionMapperX on DioException {
   ApiException toApiException() {
     final response = this.response;
-    // 응답 자체를 받지 못한 경우 (연결 실패, 시간 초과)
+    // 응답 자체를 받지 못한 경우 (연결 실패, 시간 초과, 요청 취소 등)
     if (response == null) {
       return const ApiException(code: ApiErrorCode.network);
     }

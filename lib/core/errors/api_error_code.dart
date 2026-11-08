@@ -12,7 +12,7 @@ enum ApiErrorCode {
   conflict,
   unprocessableEntity,
 
-  /// 응답 자체를 받지 못했습니다. (연결 실패, 시간 초과)
+  /// 응답 자체를 받지 못했습니다. (연결 실패, 시간 초과, 요청 취소 등)
   network,
 
   /// 응답은 받았지만 형식이 다르거나 명세에 없는 코드입니다.
