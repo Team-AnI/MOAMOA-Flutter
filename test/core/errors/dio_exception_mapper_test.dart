@@ -34,6 +34,23 @@ void main() {
       );
     });
 
+    test('응답 본문이 Map<dynamic, dynamic> 이어도 code 와 message 를 담는다', () {
+      final exception = failure(404, <dynamic, dynamic>{
+        'error': <dynamic, dynamic>{
+          'code': 'NOT_FOUND',
+          'message': '공지사항을 찾을 수 없습니다.',
+        },
+      }).toApiException();
+
+      expect(
+        exception,
+        const ApiException(
+          code: ApiErrorCode.notFound,
+          message: '공지사항을 찾을 수 없습니다.',
+        ),
+      );
+    });
+
     test('응답을 받지 못하면 network 로 바꾸고 문구는 비워 둔다', () {
       final exception = DioException(
         requestOptions: options,

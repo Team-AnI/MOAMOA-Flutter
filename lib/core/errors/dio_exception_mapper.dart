@@ -15,8 +15,9 @@ extension DioExceptionMapperX on DioException {
     }
 
     final body = response.data;
-    final error = body is Map<String, dynamic> ? body['error'] : null;
-    if (error is Map<String, dynamic> && error['code'] != null) {
+    // 디코더 설정에 따라 Map<dynamic, dynamic> 으로 올 수 있어 Map 으로 검사합니다.
+    final error = body is Map ? body['error'] : null;
+    if (error is Map && error['code'] != null) {
       final message = error['message'];
       return ApiException(
         code: ApiErrorCode.fromServer(error['code']),
