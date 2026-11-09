@@ -9,18 +9,22 @@ import 'api_exception.dart';
 extension DioExceptionMapperX on DioException {
   ApiException toApiException() {
     final response = this.response;
-    // 응답 자체를 받지 못한 경우 (연결 실패, 시간 초과, 요청 취소 등)
     if (response == null) {
+      // 응답은 받았지만 본문을 해석하지 못한 경우 (잘못된 JSON 등). Dio 는 response 없이 넘깁니다.
+      if (error is FormatException) {
+        return const ApiException(code: ApiErrorCode.unknown);
+      }
+      // 응답 자체를 받지 못한 경우 (연결 실패, 시간 초과, 요청 취소 등)
       return const ApiException(code: ApiErrorCode.network);
     }
 
     final body = response.data;
     // 디코더 설정에 따라 Map<dynamic, dynamic> 으로 올 수 있어 Map 으로 검사합니다.
-    final error = body is Map ? body['error'] : null;
-    if (error is Map && error['code'] != null) {
-      final message = error['message'];
+    final errorBody = body is Map ? body['error'] : null;
+    if (errorBody is Map && errorBody['code'] != null) {
+      final message = errorBody['message'];
       return ApiException(
-        code: ApiErrorCode.fromServer(error['code']),
+        code: ApiErrorCode.fromServer(errorBody['code']),
         message: message is String ? message : null,
       );
     }

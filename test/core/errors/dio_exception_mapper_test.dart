@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/errors/api_error_code.dart';
@@ -81,5 +83,49 @@ void main() {
 
       expect(exception.message, isNull);
     });
+
+    // 실제 Dio 가 응답 본문(JSON)을 해석하다 실패하면 response 없이 FormatException 을 넘깁니다.
+    for (final statusCode in [200, 500]) {
+      test(
+        'HTTP $statusCode 응답의 JSON 이 깨져 있으면 network 가 아니라 unknown 으로 바꾼다',
+        () async {
+          final dio = Dio()..httpClientAdapter = _BrokenJsonAdapter(statusCode);
+
+          final exception = await dio
+              .get<Map<String, dynamic>>('/v1/meetings/1/notices')
+              .then<ApiException>(
+                (_) => fail('요청이 성공하면 안 됩니다.'),
+                onError: (Object e) => (e as DioException).toApiException(),
+              );
+
+          expect(exception, const ApiException(code: ApiErrorCode.unknown));
+        },
+      );
+    }
   });
+}
+
+/// Content-Type 은 JSON 인데 본문이 깨진 응답을 돌려주는 Dio 어댑터
+class _BrokenJsonAdapter implements HttpClientAdapter {
+  _BrokenJsonAdapter(this.statusCode);
+
+  final int statusCode;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    return ResponseBody.fromString(
+      '{broken-json',
+      statusCode,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }
