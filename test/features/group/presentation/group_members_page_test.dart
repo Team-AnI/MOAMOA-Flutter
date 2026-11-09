@@ -142,6 +142,21 @@ void main() {
         await capture(tester, key, 'members-${width.toInt()}');
       });
     }
+    testWidgets('알 수 없는 역할도 이름과 함께 표시하고 나머지 구성원을 유지한다', (tester) async {
+      fake.members = [
+        fake.members.first.copyWith(role: MemberRole.unknown),
+        ...fake.members.skip(1),
+      ];
+      await showPage(tester);
+      await tester.pumpAndSettle();
+      expect(find.text('총 4명'), findsOneWidget);
+      expect(find.text('알 수 없는 역할'), findsOneWidget);
+      expect(find.text('김모아'), findsOneWidget);
+      expect(find.text('이모아'), findsOneWidget);
+      expect(find.text('관리자'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('긴 이름도 작은 화면과 큰 글자에서 잘리지 않고 줄바꿈한다', (tester) async {
       fake.members = [
         fake.members.first.copyWith(userName: '아주 긴 이름의 구성원 테스트입니다'),
@@ -316,7 +331,11 @@ void main() {
     }
     for (final role in MemberRole.values) {
       testWidgets(
-        '${role == MemberRole.admin ? '관리자' : '일반 구성원'} 역할로 홈의 전체 보기에서 목록으로 들어갔다 돌아온다',
+        '${switch (role) {
+          MemberRole.admin => '관리자',
+          MemberRole.member => '일반 구성원',
+          MemberRole.unknown => '알 수 없는 역할',
+        }} 역할로 홈의 전체 보기에서 목록으로 들어갔다 돌아온다',
         (tester) async {
           fake.groups = [
             makeGroup(

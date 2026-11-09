@@ -53,7 +53,7 @@ void main() {
   });
   tearDown(() => dio.close());
 
-  test('알 수 없는 역할 항목을 제외해도 정상 모임은 조회된다', () async {
+  test('새 역할의 모임도 누락 없이 조회하고 관리자 권한을 제한한다', () async {
     adapter.response = {
       'success': true,
       'data': {
@@ -64,7 +64,9 @@ void main() {
       },
     };
     final groups = await repository.getMyGroups();
-    expect(groups.map((e) => e.group.id), [1]);
+    expect(groups.map((e) => e.group.id), [1, 2]);
+    expect(groups.last.membership.role, MemberRole.unknown);
+    expect(groups.last.canManageGroup, isFalse);
   });
   for (final entry in {
     401: GroupFailureReason.unauthorized,
@@ -235,7 +237,13 @@ void main() {
       'success': true,
       'data': {'meetingId': 1, 'name': '러닝', 'myRole': 'OWNER'},
     };
-    await expectLater(repository.getGroup(1), throwsA(isA<GroupFailure>()));
+    final current = await repository.getGroup(1);
+    expect(current.membership.role, MemberRole.unknown);
+    expect(current.canManageGroup, isFalse);
+    expect(current.canWriteNotices, isFalse);
+    expect(current.canCreateSchedules, isFalse);
+    expect(current.canConfirmSchedules, isFalse);
+    expect(current.canViewInviteCode, isFalse);
   });
 
   test('잘못된 envelope는 오류 처리한다', () async {

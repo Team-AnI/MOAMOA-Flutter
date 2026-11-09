@@ -55,8 +55,8 @@ void main() {
       );
       expect(adapter.requests.single.headers['Authorization'], 'Bearer test');
     });
-    test('DataSource는 서버 역할을 보존하고 Repository가 알 수 없는 역할을 분류한다', () async {
-      respond([member(3, role: 'OWNER')]);
+    test('새 역할을 알 수 없는 역할로 변환하고 다른 구성원과 함께 반환한다', () async {
+      respond([member(3, role: 'OWNER'), member(5, role: 'ADMIN'), member(7)]);
       final source = GroupRemoteDataSourceImpl(
         dio: dio,
         baseUrl: 'https://example.test',
@@ -65,17 +65,14 @@ void main() {
       final models = await source.fetchMembers(
         const GroupMembersRequest(meetingId: 1),
       );
-      expect(models.single.role, 'OWNER');
-      await expectLater(
-        repository.getMembersByGroupId(groupId: 1),
-        throwsA(
-          isA<GroupFailure>().having(
-            (e) => e.reason,
-            'reason',
-            GroupFailureReason.invalidResponse,
-          ),
-        ),
-      );
+      expect(models.first.role, 'OWNER');
+      final result = await repository.getMembersByGroupId(groupId: 1);
+      expect(result.map((entry) => entry.memberId), [3, 5, 7]);
+      expect(result.map((entry) => entry.role), [
+        MemberRole.unknown,
+        MemberRole.admin,
+        MemberRole.member,
+      ]);
     });
     test('memberId를 유지하고 서버의 목록 순서를 바꾸지 않는다', () async {
       respond([member(5), member(3, role: 'ADMIN')]);
@@ -130,7 +127,8 @@ void main() {
       ('목록 누락', null),
       ('배열이 아닌 목록', {}),
       ('null 구성원', [null]),
-      ('알 수 없는 역할', [member(3, role: 'OWNER')]),
+      ('역할 누락', [member(3)..remove('role')]),
+      ('숫자 역할', [member(3)..['role'] = 7]),
       ('0인 구성원 ID', [member(0)]),
       ('실수 구성원 ID', [member(3)..['memberId'] = 1.5]),
       ('중복 구성원 ID', [member(3), member(3)]),

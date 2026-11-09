@@ -36,5 +36,9 @@ extension GroupMemberProfileDisplayX on GroupMemberProfile {
   String get initial => userName == null || userName!.trim().isEmpty
       ? '?'
       : String.fromCharCode(userName!.trim().runes.first);
-  String get roleLabel => role == MemberRole.admin ? '관리자' : '구성원';
+  String get roleLabel => switch (role) {
+    MemberRole.admin => '관리자',
+    MemberRole.member => '구성원',
+    MemberRole.unknown => '알 수 없는 역할',
+  };
 }

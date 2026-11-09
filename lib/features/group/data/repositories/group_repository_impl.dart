@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import '../../domain/entities/current_group.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/group_member_profile.dart';
-import '../../domain/entities/member_role.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../datasources/group_remote_data_source.dart';
 import '../models/group_api_failure.dart';
@@ -113,11 +112,7 @@ class GroupRepositoryImpl implements GroupRepository {
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {
     final models = await _remoteDataSource.fetchMyGroups();
-    // 목록에서는 서버가 확장한 역할을 추측하지 않고 기존 정책대로 제외합니다.
-    return models
-        .where((model) => MemberRole.tryFromServer(model.role) != null)
-        .map(_currentGroup)
-        .toList(growable: false);
+    return models.map(_currentGroup).toList(growable: false);
   });
 
   @override

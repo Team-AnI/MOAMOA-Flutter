@@ -1,10 +1,11 @@
 /// 모임 안에서 구성원이 가진 역할입니다.
 enum MemberRole {
   admin,
-  member;
+  member,
+  unknown;
 
   static MemberRole fromServer(String value) =>
-      tryFromServer(value) ?? (throw const FormatException('알 수 없는 모임 역할입니다.'));
+      tryFromServer(value) ?? MemberRole.unknown;
 
   static MemberRole? tryFromServer(String value) => switch (value) {
     'ADMIN' => MemberRole.admin,

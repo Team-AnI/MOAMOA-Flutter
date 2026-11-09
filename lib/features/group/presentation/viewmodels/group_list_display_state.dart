@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../../domain/entities/member_role.dart';
 import 'group_list_preferences.dart';
 import 'group_state.dart';
 
@@ -61,7 +62,11 @@ extension GroupListDisplayStateX on GroupListDisplayState {
   bool get isManageEmpty => manageGroups.isEmpty;
   bool get isArchiveEmpty => archivedGroups.isEmpty;
   String menuSubtitle(CurrentGroup current) => [
-    current.canViewInviteCode ? '관리자' : '구성원',
+    switch (current.membership.role) {
+      MemberRole.admin => '관리자',
+      MemberRole.member => '구성원',
+      MemberRole.unknown => '알 수 없는 역할',
+    },
     if (current.group.memberCount != null) '구성원 ${current.group.memberCount}명',
   ].join(' · ');
 
