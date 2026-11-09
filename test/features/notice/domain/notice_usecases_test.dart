@@ -9,7 +9,7 @@ import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
 import '../fakes/fake_notice_repository.dart';
 
 void main() {
-  group('GetNotices', () {
+  group(GetNotices, () {
     late GetNotices getNotices;
 
     setUp(() {
@@ -27,17 +27,24 @@ void main() {
       expect(result.hasNext, isTrue);
     });
 
-    test('마지막 페이지는 남은 공지만 조회하고 hasNext 가 false 다', () async {
+    test('25개 중 마지막 페이지를 조회하면 남은 5개만 돌려준다', () async {
       final result = await getNotices(
         const GetNoticesParams(meetingId: 1, page: 1),
       );
 
       expect(result.notices, hasLength(5));
+    });
+
+    test('마지막 페이지를 조회하면 다음 페이지가 없다고 알려준다', () async {
+      final result = await getNotices(
+        const GetNoticesParams(meetingId: 1, page: 1),
+      );
+
       expect(result.hasNext, isFalse);
     });
   });
 
-  group('GetNoticeDetail', () {
+  group(GetNoticeDetail, () {
     late GetNoticeDetail getNoticeDetail;
 
     setUp(() {
@@ -56,7 +63,7 @@ void main() {
       expect(notice.content, '10일까지 납부');
     });
 
-    test('없는 공지를 조회하면 NoticeException 을 던진다', () async {
+    test('없는 공지를 조회하면 NoticeException 예외가 발생한다', () async {
       expect(
         () => getNoticeDetail(
           const GetNoticeDetailParams(meetingId: 1, noticeId: 999),
@@ -66,7 +73,7 @@ void main() {
     });
   });
 
-  group('CreateNotice', () {
+  group(CreateNotice, () {
     late FakeNoticeRepository repository;
     late CreateNotice createNotice;
 
@@ -75,8 +82,8 @@ void main() {
       createNotice = CreateNoticeImpl(noticeRepository: repository);
     });
 
-    test('제목과 내용의 앞뒤 공백을 제거해 공지를 작성하고 id 를 반환한다', () async {
-      final id = await createNotice(
+    test('제목과 내용의 앞뒤 공백을 제거해 공지를 작성한다', () async {
+      await createNotice(
         const CreateNoticeParams(
           meetingId: 1,
           title: '  10월 회비 안내  ',
@@ -84,33 +91,62 @@ void main() {
         ),
       );
 
-      expect(repository.notices.single.id, id);
       expect(repository.notices.single.title, '10월 회비 안내');
       expect(repository.notices.single.content, '10일까지 납부');
     });
 
-    test('제목이 비어 있으면 작성하지 않고 NoticeException 을 던진다', () async {
+    test('공지를 작성하면 새 공지의 id 를 반환한다', () async {
+      final id = await createNotice(
+        const CreateNoticeParams(meetingId: 1, title: '제목', content: '내용'),
+      );
+
+      expect(repository.notices.single.id, id);
+    });
+
+    test('제목이 비어 있으면 NoticeException 예외가 발생한다', () async {
       await expectLater(
         createNotice(
           const CreateNoticeParams(meetingId: 1, title: '   ', content: '내용'),
         ),
         throwsA(isA<NoticeException>()),
       );
+    });
+
+    test('제목이 비어 있으면 공지를 작성하지 않는다', () async {
+      try {
+        await createNotice(
+          const CreateNoticeParams(meetingId: 1, title: '   ', content: '내용'),
+        );
+      } on NoticeException catch (_) {
+        // 예외 발생은 위 테스트에서 확인합니다.
+      }
+
       expect(repository.notices, isEmpty);
     });
 
-    test('내용이 비어 있으면 작성하지 않고 NoticeException 을 던진다', () async {
+    test('내용이 비어 있으면 NoticeException 예외가 발생한다', () async {
       await expectLater(
         createNotice(
           const CreateNoticeParams(meetingId: 1, title: '제목', content: ''),
         ),
         throwsA(isA<NoticeException>()),
       );
+    });
+
+    test('내용이 비어 있으면 공지를 작성하지 않는다', () async {
+      try {
+        await createNotice(
+          const CreateNoticeParams(meetingId: 1, title: '제목', content: ''),
+        );
+      } on NoticeException catch (_) {
+        // 예외 발생은 위 테스트에서 확인합니다.
+      }
+
       expect(repository.notices, isEmpty);
     });
   });
 
-  group('UpdateNotice', () {
+  group(UpdateNotice, () {
     late FakeNoticeRepository repository;
     late UpdateNotice updateNotice;
 
@@ -130,28 +166,50 @@ void main() {
       expect(repository.notices.single.content, '새 내용');
     });
 
-    test('제목을 공백으로 수정하면 NoticeException 을 던진다', () async {
+    test('제목을 공백으로 수정하면 NoticeException 예외가 발생한다', () async {
       await expectLater(
         updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, title: '  '),
         ),
         throwsA(isA<NoticeException>()),
       );
+    });
+
+    test('제목을 공백으로 수정하면 기존 제목을 유지한다', () async {
+      try {
+        await updateNotice(
+          const UpdateNoticeParams(meetingId: 1, noticeId: 1, title: '  '),
+        );
+      } on NoticeException catch (_) {
+        // 예외 발생은 위 테스트에서 확인합니다.
+      }
+
       expect(repository.notices.single.title, '기존 제목');
     });
 
-    test('내용을 공백으로 수정하면 NoticeException 을 던진다', () async {
+    test('내용을 공백으로 수정하면 NoticeException 예외가 발생한다', () async {
       await expectLater(
         updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, content: ''),
         ),
         throwsA(isA<NoticeException>()),
       );
+    });
+
+    test('내용을 공백으로 수정하면 기존 내용을 유지한다', () async {
+      try {
+        await updateNotice(
+          const UpdateNoticeParams(meetingId: 1, noticeId: 1, content: ''),
+        );
+      } on NoticeException catch (_) {
+        // 예외 발생은 위 테스트에서 확인합니다.
+      }
+
       expect(repository.notices.single.content, '기존 내용');
     });
   });
 
-  group('DeleteNotice', () {
+  group(DeleteNotice, () {
     test('공지를 삭제한다', () async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1), buildNotice(2)],
