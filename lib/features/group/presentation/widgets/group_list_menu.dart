@@ -142,7 +142,7 @@ class _MenuAction extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: destructive && onTap != null
-                  ? const Color(0xfffdecec)
+                  ? GroupDesign.dangerTint
                   : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -164,7 +164,7 @@ class _MenuAction extends StatelessWidget {
                     color: onTap == null
                         ? GroupDesign.muted
                         : destructive
-                        ? const Color(0xffe30000)
+                        ? GroupDesign.danger
                         : GroupDesign.ink,
                   ),
                 ),

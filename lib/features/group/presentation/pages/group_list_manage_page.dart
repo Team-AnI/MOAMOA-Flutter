@@ -8,19 +8,13 @@ import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 import '../widgets/group_tab_bar.dart';
+import 'group_archived_page.dart';
 
 class GroupListManagePage extends ConsumerWidget {
-  const GroupListManagePage({super.key, this.archivedOnly = false});
-  final bool archivedOnly;
+  const GroupListManagePage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final display = ref.watch(groupListDisplayProvider);
-    final adminGroups = archivedOnly
-        ? display.archivedAdminGroups
-        : display.manageAdminGroups;
-    final memberGroups = archivedOnly
-        ? display.archivedMemberGroups
-        : display.manageMemberGroups;
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: const GroupTabBar(),
@@ -33,21 +27,13 @@ class GroupListManagePage extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          archivedOnly
-                              ? '목록에 다시 표시할 수 있어요'
-                              : '섹션 안에서 끌어서 순서를 바꿔요',
-                          style: GroupDesign.sub,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          archivedOnly ? '보관한 모임' : '모임 관리',
-                          style: GroupDesign.title,
-                        ),
+                        Text('섹션 안에서 끌어서 순서를 바꿔요', style: GroupDesign.sub),
+                        SizedBox(height: 4),
+                        Text('모임 관리', style: GroupDesign.title),
                       ],
                     ),
                   ),
@@ -73,64 +59,52 @@ class GroupListManagePage extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 children: [
-                  if (archivedOnly
-                      ? display.isArchiveEmpty
-                      : display.isManageEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 28),
-                      child: Text(
-                        archivedOnly ? '보관한 모임이 없어요.' : '표시할 모임이 없어요.',
-                        style: GroupDesign.body,
-                      ),
+                  if (display.isManageEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 28),
+                      child: Text('표시할 모임이 없어요.', style: GroupDesign.body),
                     ),
-                  if (adminGroups.isNotEmpty)
+                  if (display.manageAdminGroups.isNotEmpty)
                     _ManageSection(
                       title: '관리 중인 모임',
                       topPadding: 4,
-                      groups: adminGroups,
-                      archivedOnly: archivedOnly,
+                      groups: display.manageAdminGroups,
                       display: display,
                     ),
-                  if (memberGroups.isNotEmpty)
+                  if (display.manageMemberGroups.isNotEmpty)
                     _ManageSection(
                       title: '참여 중인 모임',
-                      topPadding: archivedOnly
-                          ? display.archivedMemberSectionPadding
-                          : display.manageMemberSectionPadding,
-                      groups: memberGroups,
-                      archivedOnly: archivedOnly,
+                      topPadding: display.manageMemberSectionPadding,
+                      groups: display.manageMemberGroups,
                       display: display,
                     ),
-                  if (!archivedOnly) ...[
-                    const SizedBox(height: 12),
-                    Material(
-                      color: GroupDesign.fill,
-                      borderRadius: BorderRadius.circular(24),
-                      child: ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        leading: const GroupIcon('list_archive', size: 20),
-                        title: const Text('보관한 모임', style: GroupDesign.strong),
-                        subtitle: Text(
-                          '${display.archivedCount}개 · 목록에서 숨겨져요',
-                          style: GroupDesign.sub,
-                        ),
-                        trailing: const GroupIcon('chevron', size: 16),
-                        onTap: () => Navigator.of(context).push<void>(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const GroupListManagePage(archivedOnly: true),
-                          ),
+                  const SizedBox(height: 12),
+                  Material(
+                    color: GroupDesign.fill,
+                    borderRadius: BorderRadius.circular(24),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      leading: const GroupIcon('list_archive', size: 20),
+                      title: const Text('보관한 모임', style: GroupDesign.strong),
+                      subtitle: Text(
+                        '${display.archivedCount}개 · 목록에서 숨겨져요',
+                        style: GroupDesign.sub,
+                      ),
+                      trailing: const GroupIcon('chevron', size: 16),
+                      onTap: () => Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (context) => const GroupArchivedPage(),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      '고정한 모임은 목록 맨 위에 보여요. 보관한 모임의 기록은 그대로 남아요.',
-                      style: GroupDesign.sub,
-                    ),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '고정한 모임은 목록 맨 위에 보여요. 보관한 모임의 기록은 그대로 남아요.',
+                    style: GroupDesign.sub,
+                  ),
                 ],
               ),
             ),
@@ -145,7 +119,6 @@ class _ManageSection extends ConsumerWidget {
   const _ManageSection({
     required this.title,
     required this.groups,
-    required this.archivedOnly,
     required this.topPadding,
     required this.display,
   });
@@ -153,7 +126,6 @@ class _ManageSection extends ConsumerWidget {
   final double topPadding;
   final String title;
   final List<CurrentGroup> groups;
-  final bool archivedOnly;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
@@ -185,14 +157,13 @@ class _ManageSection extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    if (!archivedOnly)
-                      ReorderableDragStartListener(
-                        index: index,
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: GroupIcon('list_drag', size: 16),
-                        ),
+                    ReorderableDragStartListener(
+                      index: index,
+                      child: const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: GroupIcon('list_drag', size: 16),
                       ),
+                    ),
                     GroupMark(name: current.group.name, size: 44),
                     const SizedBox(width: 12),
                     Expanded(
@@ -213,29 +184,28 @@ class _ManageSection extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    if (!archivedOnly)
-                      IconButton(
-                        tooltip: display.isPinned(current.group.id)
-                            ? '고정 해제'
-                            : '맨 위에 고정',
-                        onPressed: () => ref
-                            .read(groupListPreferencesProvider.notifier)
-                            .togglePin(current.group.id),
-                        style: IconButton.styleFrom(
-                          backgroundColor: display.isPinned(current.group.id)
-                              ? GroupDesign.tint
-                              : Colors.white,
-                        ),
-                        icon: GroupIcon(
-                          'list_pin',
-                          size: 18,
-                          color: display.isPinned(current.group.id)
-                              ? GroupDesign.blue
-                              : GroupDesign.ink,
-                        ),
-                      ),
                     IconButton(
-                      tooltip: archivedOnly ? '목록에 다시 표시' : '보관하기',
+                      tooltip: display.isPinned(current.group.id)
+                          ? '고정 해제'
+                          : '맨 위에 고정',
+                      onPressed: () => ref
+                          .read(groupListPreferencesProvider.notifier)
+                          .togglePin(current.group.id),
+                      style: IconButton.styleFrom(
+                        backgroundColor: display.isPinned(current.group.id)
+                            ? GroupDesign.tint
+                            : Colors.white,
+                      ),
+                      icon: GroupIcon(
+                        'list_pin',
+                        size: 18,
+                        color: display.isPinned(current.group.id)
+                            ? GroupDesign.blue
+                            : GroupDesign.ink,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '보관하기',
                       onPressed: () => ref
                           .read(groupListPreferencesProvider.notifier)
                           .toggleArchive(current.group.id),

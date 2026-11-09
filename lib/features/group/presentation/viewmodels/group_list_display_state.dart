@@ -40,10 +40,6 @@ extension GroupListDisplayStateX on GroupListDisplayState {
     source.groups.where((group) => isArchived(group.group.id)),
     pinnedFirst: false,
   );
-  List<CurrentGroup> get archivedAdminGroups =>
-      _role(archivedGroups, admin: true);
-  List<CurrentGroup> get archivedMemberGroups =>
-      _role(archivedGroups, admin: false);
   int get archivedCount => archivedGroups.length;
   bool get hasGroups => source.groups.isNotEmpty;
   bool get showEmpty =>
@@ -55,8 +51,6 @@ extension GroupListDisplayStateX on GroupListDisplayState {
       source.errorMessage == null;
   double get memberSectionPadding => adminGroups.isEmpty ? 20 : 24;
   double get manageMemberSectionPadding => manageAdminGroups.isEmpty ? 4 : 16;
-  double get archivedMemberSectionPadding =>
-      archivedAdminGroups.isEmpty ? 4 : 16;
 
   bool get isManageEmpty => manageGroups.isEmpty;
   bool get isArchiveEmpty => archivedGroups.isEmpty;

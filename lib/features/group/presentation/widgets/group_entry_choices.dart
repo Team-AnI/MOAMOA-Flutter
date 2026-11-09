@@ -62,7 +62,7 @@ class _Choice extends StatelessWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: dark ? const Color(0xff272729) : Colors.white,
+                color: dark ? GroupDesign.darkRaised : Colors.white,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: GroupIcon(icon, size: 22),

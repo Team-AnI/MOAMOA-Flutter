@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'group_design.dart';
 import 'group_field.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';
@@ -59,7 +60,7 @@ class GroupProfileStep extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(0x14000000),
+                        color: GroupDesign.shadow,
                         offset: Offset(0, 2),
                         blurRadius: 4,
                       ),
@@ -77,7 +78,7 @@ class GroupProfileStep extends StatelessWidget {
                                   context: context,
                                   isScrollControlled: true,
                                   backgroundColor: Colors.white,
-                                  barrierColor: const Color(0x8f000000),
+                                  barrierColor: GroupDesign.barrier,
                                   shape: const RoundedRectangleBorder(),
                                   builder: (_) => const GroupPhotoSheet(),
                                 );

@@ -7,6 +7,7 @@ import '../providers/group_providers.dart';
 import '../viewmodels/group_state.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_field.dart';
+import '../widgets/group_feedback_card.dart';
 import '../widgets/group_page_layout.dart';
 import '../widgets/group_page_title.dart';
 import '../widgets/group_primary_button.dart';
@@ -42,7 +43,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
   late final _description = TextEditingController(
     text: widget.initial.group.description ?? '',
   );
-  String? _error;
+  GroupState? _failure;
   final _form = GlobalKey<FormState>();
   bool get _changed =>
       _name.text.trim() != widget.initial.group.name ||
@@ -62,13 +63,13 @@ class _EditFormState extends ConsumerState<_EditForm> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    setState(() => _error = null);
+    setState(() => _failure = null);
     final saved = await ref
         .read(groupProvider.notifier)
         .update(name: _name.text, description: _description.text);
     if (!mounted) return;
     if (saved == null) {
-      setState(() => _error = ref.read(groupProvider).errorMessage);
+      setState(() => _failure = ref.read(groupProvider));
       return;
     }
     context.go('/groups/home');
@@ -80,11 +81,24 @@ class _EditFormState extends ConsumerState<_EditForm> {
     return PopScope(
       canPop: !busy,
       child: GroupPageLayout(
-        isBack: true,
+        title: '모임 정보 수정',
         onClose: busy ? null : () => context.go('/groups/settings'),
-        bottom: GroupPrimaryButton(
-          label: busy ? '저장 중…' : '저장',
-          onPressed: busy || !_canSave ? null : _save,
+        bottom: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_failure != null) ...[
+              GroupFeedbackCard(
+                title: _failure!.editFailureTitle,
+                message: _failure!.editFailureMessage,
+                warning: true,
+              ),
+              const SizedBox(height: 12),
+            ],
+            GroupPrimaryButton(
+              label: busy ? '저장 중…' : '저장',
+              onPressed: busy || !_canSave ? null : _save,
+            ),
+          ],
         ),
         child: Form(
           key: _form,
@@ -92,8 +106,8 @@ class _EditFormState extends ConsumerState<_EditForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const GroupPageTitle(
-                title: '모임 정보 수정',
-                subtitle: '모임 이름과 소개를 변경할 수 있어요.',
+                title: '모임 정보를 수정해요',
+                subtitle: '모임의 이름과 소개를 변경할 수 있어요.',
               ),
               GroupField(
                 controller: _name,
@@ -101,27 +115,20 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 hint: '모임 이름을 입력해주세요',
                 requiredValue: true,
                 maxLength: 20,
+                helper: '20자까지 적을 수 있어요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _failure = null),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               GroupField(
                 controller: _description,
                 label: '모임 소개',
                 hint: '모임을 소개해주세요',
                 multiline: true,
+                helper: '선택 사항이에요.',
                 enabled: !busy,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() => _failure = null),
               ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    _error!,
-                    style: GroupDesign.body,
-                    semanticsLabel: '저장 실패: $_error',
-                  ),
-                ),
               const SizedBox(height: 24),
             ],
           ),

@@ -71,7 +71,7 @@ class GroupField extends StatelessWidget {
                     ),
                   ),
             hintStyle: GroupDesign.body.copyWith(
-              color: const Color(0xffcccccc),
+              color: GroupDesign.onDarkSecondary,
             ),
             filled: true,
             fillColor: GroupDesign.fill,

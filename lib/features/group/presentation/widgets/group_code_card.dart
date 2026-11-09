@@ -33,7 +33,7 @@ class GroupCodeCard extends StatelessWidget {
         Text(
           '초대 코드',
           textAlign: TextAlign.center,
-          style: GroupDesign.sub.copyWith(color: const Color(0xffcccccc)),
+          style: GroupDesign.sub.copyWith(color: GroupDesign.onDarkSecondary),
         ),
         const SizedBox(height: 6),
         SelectableText(
@@ -50,7 +50,9 @@ class GroupCodeCard extends StatelessWidget {
         Text(
           approval ? '승인 후 가입' : '바로 가입',
           textAlign: TextAlign.center,
-          style: GroupDesign.caption.copyWith(color: const Color(0xffcccccc)),
+          style: GroupDesign.caption.copyWith(
+            color: GroupDesign.onDarkSecondary,
+          ),
         ),
         const SizedBox(height: 20),
         Row(
@@ -61,7 +63,7 @@ class GroupCodeCard extends StatelessWidget {
                 child: FilledButton(
                   onPressed: () => _copy(context),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xff38383a),
+                    backgroundColor: GroupDesign.darkFill,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

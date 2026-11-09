@@ -270,7 +270,7 @@ class _GroupFormContent extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 16),
             child: Text(
               error!,
-              style: GroupDesign.body.copyWith(color: const Color(0xffe30000)),
+              style: GroupDesign.body.copyWith(color: GroupDesign.danger),
             ),
           ),
         if (alreadyJoined)

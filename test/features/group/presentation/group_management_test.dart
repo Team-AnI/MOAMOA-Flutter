@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ import '../fake_group_repository.dart';
 class _ManagementRepository extends FakeGroupRepository {
   int updates = 0, deletes = 0;
   String? sentName, sentDescription;
-  GroupFailure? failure;
+  Exception? failure;
   Completer<Group>? pendingUpdate;
   Completer<void>? pendingDelete;
 
@@ -51,6 +52,73 @@ class _ManagementRepository extends FakeGroupRepository {
     if (failure != null) throw failure!;
     if (pendingDelete != null) return pendingDelete!.future;
     return super.deleteGroup(groupId: groupId);
+  }
+}
+
+/// 서버의 변경은 끝났지만 응답만 시간 초과된 상황을 재현합니다.
+class _ResponseTimeoutAdapter extends StubAdapter {
+  bool deletedOnServer = false, updatedOnServer = false;
+  int deletes = 0, updates = 0;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    status = 200;
+    if (options.method == 'DELETE') {
+      deletes++;
+      if (!deletedOnServer) {
+        deletedOnServer = true;
+        requests.add(options);
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.receiveTimeout,
+        );
+      }
+      status = 404;
+      response = {
+        'success': false,
+        'error': {'code': 'NOT_FOUND'},
+      };
+    } else if (options.method == 'PATCH') {
+      updates++;
+      if (!updatedOnServer) {
+        updatedOnServer = true;
+        requests.add(options);
+        throw DioException(
+          requestOptions: options,
+          type: DioExceptionType.receiveTimeout,
+        );
+      }
+      response = {
+        'success': true,
+        'data': {'meetingId': 1, 'name': '새 이름', 'description': '소개'},
+      };
+    } else if (options.path.endsWith('/me/meetings')) {
+      response = {
+        'success': true,
+        'data': {
+          'meetings': deletedOnServer
+              ? []
+              : [
+                  {'meetingId': 1, 'name': '모임', 'myRole': 'ADMIN'},
+                ],
+        },
+      };
+    } else {
+      response = {
+        'success': true,
+        'data': {
+          'meetingId': 1,
+          'name': '모임',
+          'description': '소개',
+          'myRole': 'ADMIN',
+        },
+      };
+    }
+    return super.fetch(options, requestStream, cancelFuture);
   }
 }
 
@@ -394,7 +462,7 @@ void main() {
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
       expect(find.text('수정한 이름'), findsOneWidget);
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('저장 결과를 확인하지 못했어요'), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
@@ -430,6 +498,39 @@ void main() {
         isNotNull,
       );
     });
+    for (final field in [0, 1]) {
+      testWidgets('저장 실패 후 ${field == 0 ? '이름을' : '소개를'} 수정하면 이전 오류 안내를 지운다', (
+        tester,
+      ) async {
+        await showPage(tester, '/groups/edit');
+        await tester.enterText(find.byType(TextFormField).first, '수정한 이름');
+        await tester.pump();
+        fake.failure = const GroupFailure(GroupFailureReason.unavailable);
+        await tester.tap(find.text('저장'));
+        await tester.pumpAndSettle();
+        expect(find.text('저장 결과를 확인하지 못했어요'), findsOneWidget);
+        await tester.enterText(find.byType(TextFormField).at(field), '다시 수정');
+        await tester.pump();
+        expect(find.text('저장 결과를 확인하지 못했어요'), findsNothing);
+        expect(find.text('다시 수정'), findsOneWidget);
+        expect(
+          tester
+              .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
+              .onPressed,
+          isNotNull,
+        );
+        expect(fake.updates, 1);
+      });
+    }
+    testWidgets('알 수 없는 예외로 저장에 실패해도 입력 보존 안내를 표시한다', (tester) async {
+      await showPage(tester, '/groups/edit');
+      await tester.enterText(find.byType(TextFormField).first, '새 모임');
+      await tester.pump();
+      fake.failure = Exception('unexpected');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+      expect(find.text('입력한 내용은 그대로 두었어요. 다시 시도해 주세요'), findsOneWidget);
+    });
   });
   group('GroupSettingsPage', () {
     testWidgets('이미 삭제된 모임을 삭제하면 목록으로 이동한다', (tester) async {
@@ -438,7 +539,7 @@ void main() {
       fake.groups = []; // 서버에서도 이미 삭제되어 목록 재조회에 포함되지 않습니다.
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(router.routeInformationProvider.value.uri.path, '/groups');
       expect(container.read(groupProvider).groups, isEmpty);
@@ -447,7 +548,7 @@ void main() {
       await showPage(tester, '/groups/settings');
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('취소'));
+      await tester.tap(find.text('닫기'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 0);
     });
@@ -455,17 +556,17 @@ void main() {
       final router = await showPage(tester, '/groups/settings');
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 1);
       expect(router.routeInformationProvider.value.uri.path, '/groups');
     });
-    testWidgets('삭제 실패 시 설정 화면에 오류를 표시한다', (tester) async {
+    testWidgets('삭제에 실패하면 실패 확인창에 오류를 표시한다', (tester) async {
       final router = await showPage(tester, '/groups/settings');
       fake.failure = const GroupFailure(GroupFailureReason.forbidden);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       expect(
         router.routeInformationProvider.value.uri.path,
@@ -480,19 +581,123 @@ void main() {
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
       fake.failure = null;
-      await tester.tap(find.text('모임 삭제'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.text('다시 시도'));
       await tester.pumpAndSettle();
       expect(fake.deletes, 2);
       expect(router.routeInformationProvider.value.uri.path, '/groups');
       expect(container.read(groupProvider).currentGroup, isNull);
     });
+
+    for (final reason in [
+      GroupFailureReason.forbidden,
+      GroupFailureReason.validation,
+      GroupFailureReason.unauthorized,
+    ]) {
+      testWidgets('${reason.name}로 삭제에 실패하면 재시도 동작을 제공하지 않는다', (tester) async {
+        await showPage(tester, '/groups/settings');
+        fake.failure = GroupFailure(reason);
+        await tester.tap(find.text('모임 삭제'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
+        await tester.pumpAndSettle();
+        expect(find.text('모임을 삭제하지 못했어요'), findsOneWidget);
+        expect(find.text('다시 시도'), findsNothing);
+        await tester.tap(find.text('닫기'));
+        await tester.pumpAndSettle();
+        expect(fake.deletes, 1);
+      });
+    }
+    testWidgets('알 수 없는 예외로 삭제에 실패하면 재시도할 수 있다', (tester) async {
+      final router = await showPage(tester, '/groups/settings');
+      fake.failure = Exception('unexpected');
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
+      await tester.pumpAndSettle();
+      expect(find.text('다시 시도'), findsOneWidget);
+      fake.failure = null;
+      await tester.tap(find.text('다시 시도'));
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/groups');
+      expect(fake.deletes, 2);
+    });
+    for (final name in ['독서 모임', '스터디 모아']) {
+      testWidgets('$name 삭제 확인은 조사 오류 없이 대상을 표시한다', (tester) async {
+        fake.groups = [
+          fake.groups.single.copyWith(
+            group: fake.groups.single.group.copyWith(name: name),
+          ),
+        ];
+        await container.read(groupProvider.notifier).selectGroup(1);
+        await showPage(tester, '/groups/settings');
+        await tester.tap(find.text('모임 삭제'));
+        await tester.pumpAndSettle();
+        expect(find.text('“$name” 모임을 삭제할까요?'), findsOneWidget);
+      });
+    }
   });
   group('GroupSettingsPage / GroupEditPage', () {
+    Future<_ResponseTimeoutAdapter> useApiRepository() async {
+      final adapter = _ResponseTimeoutAdapter();
+      final dio = Dio()..httpClientAdapter = adapter;
+      addTearDown(() => dio.close());
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          groupRepositoryProvider.overrideWithValue(
+            GroupRepositoryImpl(
+              remoteDataSource: GroupRemoteDataSourceImpl(
+                dio: dio,
+                baseUrl: 'https://example.test',
+                authHeaders: () => {'Authorization': 'test'},
+              ),
+            ),
+          ),
+        ],
+      );
+      await container.read(groupProvider.notifier).loadGroups();
+      await container.read(groupProvider.notifier).selectGroup(1);
+      return adapter;
+    }
+
+    testWidgets('서버 삭제 후 응답 시간 초과에서는 모임 잔존을 단정하지 않고 재시도 404를 정리한다', (
+      tester,
+    ) async {
+      final adapter = (await tester.runAsync(useApiRepository))!;
+      final router = await showPage(tester, '/groups/settings');
+      await tester.tap(find.text('모임 삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
+      await tester.pumpAndSettle();
+      expect(adapter.deletedOnServer, isTrue);
+      expect(find.text('삭제 결과를 확인하지 못했어요'), findsOneWidget);
+      expect(find.textContaining('그대로 남아'), findsNothing);
+      await tester.tap(find.text('다시 시도'));
+      await tester.pumpAndSettle();
+      expect(adapter.deletes, 2);
+      expect(container.read(groupProvider).groups, isEmpty);
+      expect(router.routeInformationProvider.value.uri.path, '/groups');
+    });
+    testWidgets('서버 수정 후 응답 시간 초과에서도 저장 실패를 단정하지 않고 입력을 보존한다', (tester) async {
+      final adapter = (await tester.runAsync(useApiRepository))!;
+      await showPage(tester, '/groups/edit');
+      await tester.enterText(find.byType(TextFormField).first, '새 이름');
+      await tester.pump();
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+      expect(adapter.updatedOnServer, isTrue);
+      expect(find.text('저장 결과를 확인하지 못했어요'), findsOneWidget);
+      expect(find.text('새 이름'), findsOneWidget);
+      expect(find.textContaining('바로 바뀌어'), findsNothing);
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+      expect(adapter.updates, 2);
+      expect(container.read(groupProvider).currentGroup?.group.name, '새 이름');
+    });
+
     testWidgets('저장 실패 문구는 설정으로 돌아가면 표시하지 않는다', (tester) async {
       final router = await showPage(tester, '/groups/edit');
       await tester.enterText(find.byType(TextFormField).first, '수정');
@@ -500,22 +705,24 @@ void main() {
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('저장'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('저장 결과를 확인하지 못했어요'), findsOneWidget);
       router.go('/groups/settings');
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsNothing);
+      expect(find.text('저장 결과를 확인하지 못했어요'), findsNothing);
     });
     testWidgets('삭제 실패 문구는 편집 화면에 전달하지 않는다', (tester) async {
       final router = await showPage(tester, '/groups/settings');
       fake.failure = const GroupFailure(GroupFailureReason.unavailable);
       await tester.tap(find.text('모임 삭제'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제'));
+      await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsOneWidget);
+      expect(find.text('삭제 결과를 확인하지 못했어요'), findsOneWidget);
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
       router.go('/groups/edit');
       await tester.pumpAndSettle();
-      expect(find.textContaining('요청을 완료하지 못했습니다'), findsNothing);
+      expect(find.text('삭제 결과를 확인하지 못했어요'), findsNothing);
     });
     testWidgets('구성원은 직접 설정·편집 경로로 들어와도 관리 동작을 볼 수 없다', (tester) async {
       fake.groups = [makeGroup(MemberRole.member)];
@@ -567,7 +774,7 @@ void main() {
           fake.pendingDelete = Completer<void>();
           await tester.tap(find.text('모임 삭제'));
           await tester.pumpAndSettle();
-          await tester.tap(find.text('삭제'));
+          await tester.tap(find.widgetWithText(FilledButton, '모임 삭제'));
         }
         await tester.pumpAndSettle();
         expect(container.read(groupProvider).isSubmitting, true);
@@ -586,6 +793,10 @@ void main() {
           );
         }
         await tester.pumpAndSettle();
+        if (!editing) {
+          await tester.tap(find.text('닫기'));
+          await tester.pumpAndSettle();
+        }
         await tester.binding.handlePopRoute();
         for (var frame = 0; frame < 10; frame++) {
           await tester.pump(const Duration(milliseconds: 100));
