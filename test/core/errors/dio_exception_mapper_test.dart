@@ -36,6 +36,14 @@ void main() {
       );
     });
 
+    test('서버 code 가 있으면 HTTP 상태보다 code 를 따른다', () {
+      final exception = failure(400, {
+        'error': {'code': 'VALIDATION_ERROR', 'message': '제목을 입력해 주세요.'},
+      }).toApiException();
+
+      expect(exception.code, ApiErrorCode.validation);
+    });
+
     test('응답 본문이 Map<dynamic, dynamic> 이어도 code 와 message 를 담는다', () {
       final exception = failure(404, <dynamic, dynamic>{
         'error': <dynamic, dynamic>{
@@ -70,10 +78,18 @@ void main() {
 
     test('error 에 code 가 없으면 HTTP 상태 코드로 정한다', () {
       final exception = failure(409, {
-        'error': {'message': '충돌'},
+        'error': {'message': '이미 처리된 요청입니다.'},
       }).toApiException();
 
       expect(exception.code, ApiErrorCode.conflict);
+    });
+
+    test('error 에 code 가 없어도 서버 message 는 담는다', () {
+      final exception = failure(409, {
+        'error': {'message': '이미 처리된 요청입니다.'},
+      }).toApiException();
+
+      expect(exception.message, '이미 처리된 요청입니다.');
     });
 
     test('message 가 문자열이 아니면 문구를 비워 둔다', () {

@@ -21,14 +21,14 @@ extension DioExceptionMapperX on DioException {
     final body = response.data;
     // 디코더 설정에 따라 Map<dynamic, dynamic> 으로 올 수 있어 Map 으로 검사합니다.
     final errorBody = body is Map ? body['error'] : null;
-    if (errorBody is Map && errorBody['code'] != null) {
-      final message = errorBody['message'];
-      return ApiException(
-        code: ApiErrorCode.fromServer(errorBody['code']),
-        message: message is String ? message : null,
-      );
-    }
-    // 실패 응답 형식이 아니면 HTTP 상태 코드로 보완합니다.
-    return ApiException(code: ApiErrorCode.fromStatusCode(response.statusCode));
+    final code = errorBody is Map ? errorBody['code'] : null;
+    final message = errorBody is Map ? errorBody['message'] : null;
+    return ApiException(
+      // 실패 응답에 code 가 없으면 HTTP 상태 코드로 보완합니다.
+      code: code != null
+          ? ApiErrorCode.fromServer(code)
+          : ApiErrorCode.fromStatusCode(response.statusCode),
+      message: message is String ? message : null,
+    );
   }
 }
