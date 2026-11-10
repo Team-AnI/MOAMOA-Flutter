@@ -145,6 +145,10 @@ void main() {
                 expect(find.byType(NoticeListPage), findsOneWidget);
                 expect(notices.requestedIds, [groupId]);
                 expect(find.text('연결된 공지'), findsOneWidget);
+                expect(
+                  find.byTooltip('공지 작성'),
+                  role == MemberRole.admin ? findsOneWidget : findsNothing,
+                );
               }
               if (role == MemberRole.admin) {
                 await capture(
@@ -186,6 +190,21 @@ void main() {
       expect(schedules.requestedIds, isEmpty);
       expect(notices.requestedIds, isEmpty);
     });
+    testWidgets('홈 진입 후 모임을 선택하면 공지 탭이 활성화되어 선택 모임으로 이동한다', (tester) async {
+      await open(tester, selected: false, groupId: 19);
+      await container.read(groupProvider.notifier).selectGroup(19);
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('공지'), findsOneWidget);
+      await tester.tap(find.text('공지'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NoticeListPage), findsOneWidget);
+      expect(notices.requestedIds, [19]);
+      expect(find.byTooltip('공지 작성'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('일정 API 연결이 없으면 기존 오류 화면을 표시하고 홈으로 돌아온다', (tester) async {
       await open(tester, scheduleFailure: true);
       await tester.tap(find.text('일정'));

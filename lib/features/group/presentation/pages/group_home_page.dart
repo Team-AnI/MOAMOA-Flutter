@@ -151,7 +151,7 @@ class GroupHomePage extends ConsumerWidget {
                       ),
               ),
             ),
-            _HomeTabs(groupId: current?.group.id),
+            const _HomeTabs(),
           ],
         ),
       ),
@@ -191,73 +191,74 @@ class _HeaderButton extends StatelessWidget {
   );
 }
 
-class _HomeTabs extends StatelessWidget {
-  const _HomeTabs({required this.groupId});
-
-  final int? groupId;
-
-  bool get hasSelectedGroup => groupId != null;
+class _HomeTabs extends ConsumerWidget {
+  const _HomeTabs();
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 64,
-    decoration: const BoxDecoration(
-      border: Border(top: BorderSide(color: GroupDesign.fill)),
-    ),
-    padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-    child: Row(
-      children: [
-        const _HomeTab(
-          icon: 'home',
-          label: '홈',
-          tooltip: '홈',
-          isSelected: true,
-        ),
-        _HomeTab(
-          icon: 'home_calendar',
-          label: '일정',
-          tooltip: hasSelectedGroup ? '일정' : '모임을 선택해주세요',
-          onTap: hasSelectedGroup
-              ? () => context.push('/meetings/$groupId/schedules')
-              : null,
-        ),
-        _HomeTab(
-          icon: 'home_megaphone',
-          label: '공지',
-          tooltip: hasSelectedGroup ? '공지' : '모임을 선택해주세요',
-          onTap: hasSelectedGroup
-              ? () => context.push('/meetings/$groupId/notices')
-              : null,
-        ),
-        const _HomeTab(icon: 'wallet', label: '회비', tooltip: '회비 · 준비 중'),
-        const _HomeTab(
-          icon: 'home_user',
-          label: '내 정보',
-          tooltip: '내 정보 · 준비 중',
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(
+      groupProvider.select((state) => state.currentGroup?.group.id),
+    );
+    return Container(
+      height: 64,
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: GroupDesign.fill)),
+      ),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      child: Row(
+        children: [
+          const _HomeTab(icon: 'home', label: '홈', isSelected: true),
+          _HomeTab(
+            icon: 'home_calendar',
+            label: '일정',
+            groupId: groupId,
+            routeSegment: 'schedules',
+          ),
+          _HomeTab(
+            icon: 'home_megaphone',
+            label: '공지',
+            groupId: groupId,
+            routeSegment: 'notices',
+          ),
+          const _HomeTab(icon: 'wallet', label: '회비'),
+          const _HomeTab(icon: 'home_user', label: '내 정보'),
+        ],
+      ),
+    );
+  }
 }
 
 class _HomeTab extends StatelessWidget {
   const _HomeTab({
     required this.icon,
     required this.label,
-    required this.tooltip,
-    this.onTap,
+    this.groupId,
+    this.routeSegment,
     this.isSelected = false,
   });
 
   final String icon;
   final String label;
-  final String tooltip;
-  final VoidCallback? onTap;
+  final int? groupId;
+  final String? routeSegment;
   final bool isSelected;
 
   Color get foregroundColor => isSelected ? GroupDesign.ink : GroupDesign.muted;
 
-  bool get isEnabled => isSelected || onTap != null;
+  bool get canNavigate => groupId != null && routeSegment != null;
+
+  bool get isEnabled => isSelected || canNavigate;
+
+  String get tooltip {
+    if (isSelected) return label;
+    if (routeSegment == null) return '$label · 준비 중';
+    return groupId == null ? '모임을 선택해주세요' : label;
+  }
+
+  VoidCallback? _onTap(BuildContext context) {
+    if (!canNavigate) return null;
+    return () => context.push('/meetings/$groupId/$routeSegment');
+  }
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -268,7 +269,7 @@ class _HomeTab extends StatelessWidget {
       child: Tooltip(
         message: tooltip,
         child: InkWell(
-          onTap: onTap,
+          onTap: _onTap(context),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
