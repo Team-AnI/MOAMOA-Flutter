@@ -18,6 +18,9 @@ class _FakeServer implements HttpClientAdapter {
   int refreshStatus = 200;
   int refreshCount = 0;
 
+  /// true 이면 재발급이 200 이지만 본문이 JSON 이 아닌 HTML 입니다. (점검 페이지 등)
+  bool refreshReturnsHtml = false;
+
   /// 값이 있으면 재발급 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? refreshGate;
 
@@ -40,6 +43,15 @@ class _FakeServer implements HttpClientAdapter {
       refreshCount++;
       await refreshGate?.future;
       if (refreshStatus != 200) return _json(refreshStatus, _error);
+      if (refreshReturnsHtml) {
+        return ResponseBody.fromString(
+          '<html>점검 중</html>',
+          200,
+          headers: {
+            Headers.contentTypeHeader: ['text/html'],
+          },
+        );
+      }
       return _json(200, {
         'success': true,
         'data': {'accessToken': 'new-access', 'refreshToken': 'new-refresh'},
@@ -258,6 +270,39 @@ void main() {
 
       expect(await storage.read(), isNotNull);
       expect(expiredCount, 0);
+    });
+
+    test('재발급 응답이 JSON 이 아니면 멈추지 않고 원래 401 오류를 넘긴다', () async {
+      server
+        ..validAccessToken = 'expired-on-server'
+        ..refreshReturnsHtml = true;
+
+      await expectLater(
+        dio.get<dynamic>('/v1/me'),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.response?.statusCode,
+            'statusCode',
+            401,
+          ),
+        ),
+      );
+    });
+
+    test('재발급 응답이 JSON 이 아니면 저장된 토큰을 그대로 둔다', () async {
+      server
+        ..validAccessToken = 'expired-on-server'
+        ..refreshReturnsHtml = true;
+
+      await expectLater(
+        dio.get<dynamic>('/v1/me'),
+        throwsA(isA<DioException>()),
+      );
+
+      expect(
+        await storage.read(),
+        const AuthTokens(accessToken: 'access', refreshToken: 'refresh'),
+      );
     });
 
     test('재발급 뒤 다시 보낸 요청이 실패하면 그 오류를 넘긴다', () async {

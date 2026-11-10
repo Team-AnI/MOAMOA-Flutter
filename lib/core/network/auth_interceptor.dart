@@ -74,11 +74,13 @@ class AuthInterceptor extends QueuedInterceptor {
   /// 리프레시 토큰이 만료되거나 이미 쓰였으면(401) 토큰을 지우고 다시 로그인하게 합니다.
   Future<AuthTokens?> _refresh(String refreshToken) async {
     try {
-      final response = await _plainDio.post<Map<String, dynamic>>(
+      // 점검 페이지처럼 JSON 이 아닌 본문이 와도 타입 오류가 나지 않게 dynamic 으로 받습니다.
+      final response = await _plainDio.post<dynamic>(
         '/v1/auth/refresh',
         data: {'refreshToken': refreshToken},
       );
-      final data = response.data?['data'];
+      final body = response.data;
+      final data = body is Map ? body['data'] : null;
       if (data is! Map) return null;
       final accessToken = data['accessToken'];
       final newRefreshToken = data['refreshToken'];
