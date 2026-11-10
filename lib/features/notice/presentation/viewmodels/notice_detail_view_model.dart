@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/notice.dart';
-import '../../domain/entities/notice_exception.dart';
 import '../../domain/usecases/get_notice_detail.dart';
 import '../../domain/usecases/mark_notice_read.dart';
 import '../providers/notice_providers.dart';
@@ -46,8 +45,9 @@ class NoticeDetailViewModel extends AsyncNotifier<Notice> {
           noticeId: _args.noticeId,
         ),
       );
-    } on NoticeException {
-      // 읽음 기록 실패는 사용자에게 알리지 않습니다.
+    } on Exception {
+      // 읽음 기록 실패는 사용자에게 알리지 않습니다. 기다리지 않는 요청이라 여기서 잡지 않으면
+      // 처리되지 않은 오류로 남으므로, 공지 예외뿐 아니라 모든 Exception 을 잡습니다.
     }
   }
 }

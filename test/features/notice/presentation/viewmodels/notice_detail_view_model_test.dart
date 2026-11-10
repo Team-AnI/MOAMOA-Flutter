@@ -120,5 +120,21 @@ void main() {
       expect(uncaught, isEmpty);
       expect(slow.readNoticeIds, isEmpty);
     });
+    test('읽음 처리가 공지 예외가 아닌 오류로 실패해도 처리되지 않은 오류를 남기지 않는다', () async {
+      final uncaught = <Object>[];
+      await runZonedGuarded(() async {
+        final failing = FakeNoticeRepository(notices: [buildNotice(1)])
+          ..readError = Exception('시간 초과');
+        final zoned = ProviderContainer.test(
+          overrides: [noticeRepositoryProvider.overrideWithValue(failing)],
+          retry: (_, _) => null,
+        );
+        zoned.listen(noticeDetailProvider(args), (_, _) {});
+        await zoned.read(noticeDetailProvider(args).future);
+        await Future<void>.delayed(Duration.zero);
+      }, (error, _) => uncaught.add(error));
+
+      expect(uncaught, isEmpty);
+    });
   });
 }

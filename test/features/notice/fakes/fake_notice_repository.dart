@@ -45,7 +45,7 @@ class FakeNoticeRepository implements NoticeRepository {
   final List<int> readNoticeIds = [];
 
   /// 값이 있으면 markNoticeRead 만 이 예외를 던집니다. (상세 조회는 성공하고 읽음만 실패하는 상황)
-  NoticeException? readError;
+  Exception? readError;
 
   int _nextId = 1000;
 
