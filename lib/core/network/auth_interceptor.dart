@@ -12,6 +12,7 @@ const noAuthExtra = {AuthInterceptor.requiresAuthKey: false};
 ///
 /// [QueuedInterceptor] 라서 여러 요청이 동시에 401 이어도 하나씩 처리합니다.
 /// 먼저 처리한 요청이 재발급하면, 뒤의 요청은 바뀐 토큰으로 다시 보내기만 합니다.
+/// 요청을 보낸 뒤 로그아웃하거나 다른 계정으로 로그인해 토큰이 바뀌었으면 다시 보내지 않습니다.
 class AuthInterceptor extends QueuedInterceptor {
   AuthInterceptor({
     required TokenStorage tokenStorage,
@@ -28,6 +29,13 @@ class AuthInterceptor extends QueuedInterceptor {
   /// 재발급과 다시 보내기에 쓰는 Dio. 이 인터셉터를 붙이지 않아야 서로 기다리며 멈추지 않습니다.
   final Dio _plainDio;
   final void Function() _onSessionExpired;
+
+  /// 이 인터셉터가 마지막으로 재발급하기 전의 액세스 토큰과 재발급한 토큰
+  ///
+  /// 401 을 받은 요청의 토큰이 [_replacedAccessToken] 이고 저장된 토큰이 [_issuedTokens] 이면
+  /// 같은 로그인에서 다른 요청이 먼저 재발급한 것이라 바뀐 토큰으로 다시 보냅니다.
+  String? _replacedAccessToken;
+  AuthTokens? _issuedTokens;
 
   @override
   Future<void> onRequest(
@@ -59,12 +67,15 @@ class AuthInterceptor extends QueuedInterceptor {
       final tokens = await _tokenStorage.read();
       if (tokens == null) return handler.next(err);
 
+      final sentAuthorization = options.headers['Authorization'];
       var current = tokens;
-      // 다른 요청이 먼저 재발급했으면 바뀐 토큰으로 다시 보내기만 합니다.
-      if (options.headers['Authorization'] == _bearer(tokens.accessToken)) {
-        final refreshed = await _refresh(tokens.refreshToken);
+      if (sentAuthorization == _bearer(tokens.accessToken)) {
+        final refreshed = await _refresh(tokens);
         if (refreshed == null) return handler.next(err);
         current = refreshed;
+      } else if (!_isRefreshedAfter(sentAuthorization, tokens)) {
+        // 보낸 뒤 로그아웃·다른 계정 로그인으로 토큰이 바뀌었으면 다른 계정으로 다시 보내지 않습니다.
+        return handler.next(err);
       }
 
       _attach(options, current.accessToken);
@@ -80,12 +91,13 @@ class AuthInterceptor extends QueuedInterceptor {
   /// 7-3 으로 새 토큰을 받아 저장합니다. 실패하면 null 입니다.
   ///
   /// 리프레시 토큰이 만료되거나 이미 쓰였으면(401) 토큰을 지우고 다시 로그인하게 합니다.
-  Future<AuthTokens?> _refresh(String refreshToken) async {
+  /// 재발급하는 사이 로그아웃하거나 다른 계정으로 로그인했으면 결과를 저장하거나 지우지 않습니다.
+  Future<AuthTokens?> _refresh(AuthTokens previous) async {
     try {
       // 점검 페이지처럼 JSON 이 아닌 본문이 와도 타입 오류가 나지 않게 dynamic 으로 받습니다.
       final response = await _plainDio.post<dynamic>(
         '/v1/auth/refresh',
-        data: {'refreshToken': refreshToken},
+        data: {'refreshToken': previous.refreshToken},
       );
       final body = response.data;
       final data = body is Map ? body['data'] : null;
@@ -97,19 +109,36 @@ class AuthInterceptor extends QueuedInterceptor {
         accessToken: accessToken,
         refreshToken: newRefreshToken,
       );
-      await _tokenStorage.save(tokens);
+      final saved = await _tokenStorage.saveIfUnchanged(
+        refreshToken: previous.refreshToken,
+        tokens: tokens,
+      );
+      if (!saved) return null;
+      _replacedAccessToken = previous.accessToken;
+      _issuedTokens = tokens;
       return tokens;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
         // 토큰을 지우지 못해도 다시 로그인해야 한다는 사실은 알립니다.
+        var sameSession = true;
         try {
-          await _tokenStorage.clear();
+          sameSession = await _tokenStorage.clearIfUnchanged(
+            refreshToken: previous.refreshToken,
+          );
         } finally {
-          _onSessionExpired();
+          if (sameSession) _onSessionExpired();
         }
       }
       return null;
     }
+  }
+
+  /// [sentAuthorization] 로 보낸 뒤 같은 로그인에서 이 인터셉터가 재발급해 [stored] 가 됐는지
+  bool _isRefreshedAfter(Object? sentAuthorization, AuthTokens stored) {
+    final replacedAccessToken = _replacedAccessToken;
+    return replacedAccessToken != null &&
+        sentAuthorization == _bearer(replacedAccessToken) &&
+        stored == _issuedTokens;
   }
 
   bool _requiresAuth(RequestOptions options) =>

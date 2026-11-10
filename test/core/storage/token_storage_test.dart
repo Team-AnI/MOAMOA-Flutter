@@ -30,7 +30,7 @@ void main() {
 
     setUp(() {
       FlutterSecureStorage.setMockInitialValues({});
-      storage = const TokenStorage(secureStorage: FlutterSecureStorage());
+      storage = TokenStorage(secureStorage: const FlutterSecureStorage());
     });
 
     test('저장한 토큰을 그대로 읽는다', () async {
@@ -65,7 +65,9 @@ void main() {
 
     test('새 토큰 저장이 실패하면 이전 토큰 쌍이 그대로 남는다', () async {
       await storage.save(tokens);
-      const failing = TokenStorage(secureStorage: _WriteFailingSecureStorage());
+      final failing = TokenStorage(
+        secureStorage: const _WriteFailingSecureStorage(),
+      );
 
       await expectLater(
         failing.save(
@@ -81,6 +83,85 @@ void main() {
       await storage.save(tokens);
 
       await storage.clear();
+
+      expect(await storage.read(), isNull);
+    });
+
+    group('saveIfUnchanged', () {
+      const next = AuthTokens(
+        accessToken: 'access-2',
+        refreshToken: 'refresh-2',
+      );
+
+      test('저장된 리프레시 토큰이 같으면 새 토큰으로 바꾼다', () async {
+        await storage.save(tokens);
+
+        final saved = await storage.saveIfUnchanged(
+          refreshToken: 'refresh',
+          tokens: next,
+        );
+
+        expect(saved, isTrue);
+        expect(await storage.read(), next);
+      });
+
+      test('저장된 리프레시 토큰이 다르면 바꾸지 않는다', () async {
+        await storage.save(tokens);
+
+        final saved = await storage.saveIfUnchanged(
+          refreshToken: 'refresh-old',
+          tokens: next,
+        );
+
+        expect(saved, isFalse);
+        expect(await storage.read(), tokens);
+      });
+
+      test('지운 뒤에는 새 토큰을 저장하지 않는다', () async {
+        final saved = await storage.saveIfUnchanged(
+          refreshToken: 'refresh',
+          tokens: next,
+        );
+
+        expect(saved, isFalse);
+        expect(await storage.read(), isNull);
+      });
+    });
+
+    group('clearIfUnchanged', () {
+      test('저장된 리프레시 토큰이 같으면 지운다', () async {
+        await storage.save(tokens);
+
+        final cleared = await storage.clearIfUnchanged(refreshToken: 'refresh');
+
+        expect(cleared, isTrue);
+        expect(await storage.read(), isNull);
+      });
+
+      test('저장된 리프레시 토큰이 다르면 지우지 않는다', () async {
+        await storage.save(tokens);
+
+        final cleared = await storage.clearIfUnchanged(
+          refreshToken: 'refresh-old',
+        );
+
+        expect(cleared, isFalse);
+        expect(await storage.read(), tokens);
+      });
+    });
+
+    test('바꾸는 중에 지우면 바꾼 뒤에 지워 토큰이 남지 않는다', () async {
+      await storage.save(tokens);
+
+      final saving = storage.saveIfUnchanged(
+        refreshToken: 'refresh',
+        tokens: const AuthTokens(
+          accessToken: 'access-2',
+          refreshToken: 'refresh-2',
+        ),
+      );
+      final clearing = storage.clear();
+      await Future.wait([saving, clearing]);
 
       expect(await storage.read(), isNull);
     });

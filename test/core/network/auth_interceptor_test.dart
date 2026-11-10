@@ -24,6 +24,9 @@ class _FakeServer implements HttpClientAdapter {
   /// 값이 있으면 재발급 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? refreshGate;
 
+  /// 값이 있으면 첫 요청의 응답을 complete 될 때까지 붙잡아 둡니다. (재발급 경로 제외)
+  Completer<void>? firstRequestGate;
+
   /// 재발급 뒤 다시 보낸 요청에 돌려줄 상태 코드 (기본 200)
   int retryStatus = 200;
 
@@ -57,6 +60,7 @@ class _FakeServer implements HttpClientAdapter {
         'data': {'accessToken': 'new-access', 'refreshToken': 'new-refresh'},
       });
     }
+    if (requests.length == 1) await firstRequestGate?.future;
     final fixedStatus = this.fixedStatus;
     if (fixedStatus != null) return _json(fixedStatus, _error);
     final auth = options.headers['Authorization'];
@@ -82,7 +86,7 @@ class _FakeServer implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-/// [readFailsFrom] 번째 read 부터, 또는 clear 에서 예외를 던지는 토큰 저장소
+/// [readFailsFrom] 번째 read 부터, 또는 재발급 실패로 지울 때 예외를 던지는 토큰 저장소
 class _FailingTokenStorage extends TokenStorage {
   _FailingTokenStorage({this.readFailsFrom, this.clearFails = false})
     : super(secureStorage: const FlutterSecureStorage());
@@ -102,9 +106,9 @@ class _FailingTokenStorage extends TokenStorage {
   }
 
   @override
-  Future<void> clear() async {
+  Future<bool> clearIfUnchanged({required String refreshToken}) async {
     if (clearFails) throw Exception('저장소 오류');
-    return super.clear();
+    return super.clearIfUnchanged(refreshToken: refreshToken);
   }
 }
 
@@ -117,7 +121,7 @@ void main() {
 
     setUp(() async {
       FlutterSecureStorage.setMockInitialValues({});
-      storage = const TokenStorage(secureStorage: FlutterSecureStorage());
+      storage = TokenStorage(secureStorage: const FlutterSecureStorage());
       await storage.save(
         const AuthTokens(accessToken: 'access', refreshToken: 'refresh'),
       );
@@ -347,6 +351,106 @@ void main() {
         ),
       );
     });
+
+    group('로그인 변경', () {
+      const accountB = AuthTokens(
+        accessToken: 'account-b',
+        refreshToken: 'refresh-b',
+      );
+
+      /// 첫 요청이 서버에 도착할 때까지 기다립니다.
+      Future<void> untilFirstRequestArrives() async {
+        while (server.requests.isEmpty) {
+          await Future<void>.delayed(Duration.zero);
+        }
+      }
+
+      /// 재발급 요청이 서버에 도착할 때까지 기다립니다.
+      Future<void> untilRefreshArrives() async {
+        while (server.refreshCount == 0) {
+          await Future<void>.delayed(Duration.zero);
+        }
+      }
+
+      test('보낸 뒤 다른 계정으로 로그인했으면 401 요청을 그 계정으로 다시 보내지 않는다', () async {
+        server
+          ..validAccessToken = 'account-b'
+          ..firstRequestGate = Completer<void>();
+
+        final request = dio.patch<dynamic>('/v1/me');
+        await untilFirstRequestArrives();
+        await storage.save(accountB);
+        server.firstRequestGate!.complete();
+
+        await expectLater(request, throwsA(isA<DioException>()));
+        expect(server.requests, hasLength(1));
+        expect(server.refreshCount, 0);
+      });
+
+      test('재발급한 뒤 다른 계정으로 로그인했으면 재발급 전에 보낸 요청을 그 계정으로 다시 보내지 않는다', () async {
+        server
+          ..validAccessToken = 'account-b'
+          ..firstRequestGate = Completer<void>();
+
+        // 첫 요청의 응답을 붙잡아 두는 동안 두 번째 요청이 재발급합니다.
+        final first = dio.patch<dynamic>('/v1/me');
+        await untilFirstRequestArrives();
+        await dio.get<dynamic>('/v1/me/meetings');
+        await storage.save(accountB);
+        server.firstRequestGate!.complete();
+
+        await expectLater(first, throwsA(isA<DioException>()));
+        expect(
+          server.requests.map((r) => r.headers['Authorization']),
+          isNot(contains('Bearer account-b')),
+        );
+      });
+
+      test('재발급하는 사이 로그아웃했으면 재발급한 토큰을 저장하지 않는다', () async {
+        server
+          ..validAccessToken = 'expired-on-server'
+          ..refreshGate = Completer<void>();
+
+        final request = dio.get<dynamic>('/v1/me');
+        await untilRefreshArrives();
+        await storage.clear();
+        server.refreshGate!.complete();
+
+        await expectLater(request, throwsA(isA<DioException>()));
+        expect(await storage.read(), isNull);
+      });
+
+      test('재발급하는 사이 다른 계정으로 로그인했으면 재발급이 401 이어도 새 토큰을 지우지 않는다', () async {
+        server
+          ..validAccessToken = 'expired-on-server'
+          ..refreshStatus = 401
+          ..refreshGate = Completer<void>();
+
+        final request = dio.get<dynamic>('/v1/me');
+        await untilRefreshArrives();
+        await storage.save(accountB);
+        server.refreshGate!.complete();
+
+        await expectLater(request, throwsA(isA<DioException>()));
+        expect(await storage.read(), accountB);
+      });
+
+      test('재발급하는 사이 다른 계정으로 로그인했으면 재발급이 401 이어도 다시 로그인하라고 알리지 않는다', () async {
+        server
+          ..validAccessToken = 'expired-on-server'
+          ..refreshStatus = 401
+          ..refreshGate = Completer<void>();
+
+        final request = dio.get<dynamic>('/v1/me');
+        await untilRefreshArrives();
+        await storage.save(accountB);
+        server.refreshGate!.complete();
+
+        await expectLater(request, throwsA(isA<DioException>()));
+        expect(expiredCount, 0);
+      });
+    });
+
     group('토큰 저장소 오류', () {
       Dio dioWith(TokenStorage tokenStorage) {
         final options = BaseOptions(baseUrl: 'https://api.test');
