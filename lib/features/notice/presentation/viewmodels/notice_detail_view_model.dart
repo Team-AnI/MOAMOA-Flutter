@@ -29,7 +29,8 @@ class NoticeDetailViewModel extends AsyncNotifier<Notice> {
       ),
     );
     // 상세를 보여준 뒤 읽음으로 기록합니다. 응답은 기다리지 않습니다. (3-6)
-    unawaited(_markRead());
+    // 불러오는 사이 화면을 나가 provider 가 정리됐으면 ref 를 쓸 수 없어 보내지 않습니다.
+    if (ref.mounted) unawaited(_markRead());
     return notice;
   }
 

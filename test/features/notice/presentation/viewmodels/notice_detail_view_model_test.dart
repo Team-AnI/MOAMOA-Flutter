@@ -98,5 +98,27 @@ void main() {
 
       expect(repository.readNoticeIds, [1]);
     });
+    test('상세를 불러오는 사이 화면을 나가면 처리되지 않은 오류 없이 읽음 처리를 보내지 않는다', () async {
+      final uncaught = <Object>[];
+      final slow = FakeNoticeRepository(notices: [buildNotice(1)])
+        ..detailGate = Completer<void>();
+      await runZonedGuarded(() async {
+        final zoned = ProviderContainer.test(
+          overrides: [noticeRepositoryProvider.overrideWithValue(slow)],
+          retry: (_, _) => null,
+        );
+        final screen = zoned.listen(noticeDetailProvider(args), (_, _) {});
+        await Future<void>.delayed(Duration.zero);
+
+        // 응답이 오기 전에 화면을 닫아 provider 가 정리되게 합니다.
+        screen.close();
+        await Future<void>.delayed(Duration.zero);
+        slow.detailGate!.complete();
+        await Future<void>.delayed(Duration.zero);
+      }, (error, _) => uncaught.add(error));
+
+      expect(uncaught, isEmpty);
+      expect(slow.readNoticeIds, isEmpty);
+    });
   });
 }
