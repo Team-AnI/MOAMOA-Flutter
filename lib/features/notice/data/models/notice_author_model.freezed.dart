@@ -16,7 +16,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NoticeAuthorModel {
 
- int get memberId; String? get userName;
+ int get memberId; String? get userName;/// LIGHT_BLUE · GRAY · BLUE · DARK
+ String? get profileColor;
 /// Create a copy of NoticeAuthorModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +30,16 @@ $NoticeAuthorModelCopyWith<NoticeAuthorModel> get copyWith => _$NoticeAuthorMode
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeAuthorModel&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeAuthorModel&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.profileColor, profileColor) || other.profileColor == profileColor));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,memberId,userName);
+int get hashCode => Object.hash(runtimeType,memberId,userName,profileColor);
 
 @override
 String toString() {
-  return 'NoticeAuthorModel(memberId: $memberId, userName: $userName)';
+  return 'NoticeAuthorModel(memberId: $memberId, userName: $userName, profileColor: $profileColor)';
 }
 
 
@@ -49,7 +50,7 @@ abstract mixin class $NoticeAuthorModelCopyWith<$Res>  {
   factory $NoticeAuthorModelCopyWith(NoticeAuthorModel value, $Res Function(NoticeAuthorModel) _then) = _$NoticeAuthorModelCopyWithImpl;
 @useResult
 $Res call({
- int memberId, String? userName
+ int memberId, String? userName, String? profileColor
 });
 
 
@@ -66,10 +67,11 @@ class _$NoticeAuthorModelCopyWithImpl<$Res>
 
 /// Create a copy of NoticeAuthorModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? memberId = null,Object? userName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? memberId = null,Object? userName = freezed,Object? profileColor = freezed,}) {
   return _then(NoticeAuthorModel(
 memberId: null == memberId ? _self.memberId : memberId // ignore: cast_nullable_to_non_nullable
 as int,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String?,profileColor: freezed == profileColor ? _self.profileColor : profileColor // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -155,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int memberId,  String? userName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int memberId,  String? userName,  String? profileColor)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NoticeAuthorModel() when $default != null:
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   return orElse();
 
 }
@@ -176,10 +178,10 @@ return $default(_that.memberId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int memberId,  String? userName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int memberId,  String? userName,  String? profileColor)  $default,) {final _that = this;
 switch (_that) {
 case _NoticeAuthorModel():
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +198,10 @@ return $default(_that.memberId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int memberId,  String? userName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int memberId,  String? userName,  String? profileColor)?  $default,) {final _that = this;
 switch (_that) {
 case _NoticeAuthorModel() when $default != null:
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   return null;
 
 }
@@ -211,11 +213,13 @@ return $default(_that.memberId,_that.userName);case _:
 @JsonSerializable()
 
 class _NoticeAuthorModel implements NoticeAuthorModel {
-  const _NoticeAuthorModel({required this.memberId, this.userName});
+  const _NoticeAuthorModel({required this.memberId, this.userName, this.profileColor});
   factory _NoticeAuthorModel.fromJson(Map<String, dynamic> json) => _$NoticeAuthorModelFromJson(json);
 
 @override final  int memberId;
 @override final  String? userName;
+/// LIGHT_BLUE · GRAY · BLUE · DARK
+@override final  String? profileColor;
 
 /// Create a copy of NoticeAuthorModel
 /// with the given fields replaced by the non-null parameter values.
@@ -230,16 +234,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeAuthorModel&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeAuthorModel&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.profileColor, profileColor) || other.profileColor == profileColor));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,memberId,userName);
+int get hashCode => Object.hash(runtimeType,memberId,userName,profileColor);
 
 @override
 String toString() {
-  return 'NoticeAuthorModel(memberId: $memberId, userName: $userName)';
+  return 'NoticeAuthorModel(memberId: $memberId, userName: $userName, profileColor: $profileColor)';
 }
 
 
@@ -250,7 +254,7 @@ abstract mixin class _$NoticeAuthorModelCopyWith<$Res> implements $NoticeAuthorM
   factory _$NoticeAuthorModelCopyWith(_NoticeAuthorModel value, $Res Function(_NoticeAuthorModel) _then) = __$NoticeAuthorModelCopyWithImpl;
 @override @useResult
 $Res call({
- int memberId, String? userName
+ int memberId, String? userName, String? profileColor
 });
 
 
@@ -267,10 +271,11 @@ class __$NoticeAuthorModelCopyWithImpl<$Res>
 
 /// Create a copy of NoticeAuthorModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? memberId = null,Object? userName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? memberId = null,Object? userName = freezed,Object? profileColor = freezed,}) {
   return _then(_NoticeAuthorModel(
 memberId: null == memberId ? _self.memberId : memberId // ignore: cast_nullable_to_non_nullable
 as int,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
+as String?,profileColor: freezed == profileColor ? _self.profileColor : profileColor // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

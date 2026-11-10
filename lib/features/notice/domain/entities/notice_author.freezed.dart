@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NoticeAuthor {
 
- int get memberId; String? get userName;
+ int get memberId; String? get userName; ProfileColor get profileColor;
 /// Create a copy of NoticeAuthor
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $NoticeAuthorCopyWith<NoticeAuthor> get copyWith => _$NoticeAuthorCopyWithImpl<N
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeAuthor&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NoticeAuthor&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.profileColor, profileColor) || other.profileColor == profileColor));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memberId,userName);
+int get hashCode => Object.hash(runtimeType,memberId,userName,profileColor);
 
 @override
 String toString() {
-  return 'NoticeAuthor(memberId: $memberId, userName: $userName)';
+  return 'NoticeAuthor(memberId: $memberId, userName: $userName, profileColor: $profileColor)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $NoticeAuthorCopyWith<$Res>  {
   factory $NoticeAuthorCopyWith(NoticeAuthor value, $Res Function(NoticeAuthor) _then) = _$NoticeAuthorCopyWithImpl;
 @useResult
 $Res call({
- int memberId, String? userName
+ int memberId, String? userName, ProfileColor profileColor
 });
 
 
@@ -63,11 +63,12 @@ class _$NoticeAuthorCopyWithImpl<$Res>
 
 /// Create a copy of NoticeAuthor
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? memberId = null,Object? userName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? memberId = null,Object? userName = freezed,Object? profileColor = null,}) {
   return _then(NoticeAuthor(
 memberId: null == memberId ? _self.memberId : memberId // ignore: cast_nullable_to_non_nullable
 as int,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,profileColor: null == profileColor ? _self.profileColor : profileColor // ignore: cast_nullable_to_non_nullable
+as ProfileColor,
   ));
 }
 
@@ -152,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int memberId,  String? userName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int memberId,  String? userName,  ProfileColor profileColor)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NoticeAuthor() when $default != null:
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   return orElse();
 
 }
@@ -173,10 +174,10 @@ return $default(_that.memberId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int memberId,  String? userName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int memberId,  String? userName,  ProfileColor profileColor)  $default,) {final _that = this;
 switch (_that) {
 case _NoticeAuthor():
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +194,10 @@ return $default(_that.memberId,_that.userName);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int memberId,  String? userName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int memberId,  String? userName,  ProfileColor profileColor)?  $default,) {final _that = this;
 switch (_that) {
 case _NoticeAuthor() when $default != null:
-return $default(_that.memberId,_that.userName);case _:
+return $default(_that.memberId,_that.userName,_that.profileColor);case _:
   return null;
 
 }
@@ -208,11 +209,12 @@ return $default(_that.memberId,_that.userName);case _:
 
 
 class _NoticeAuthor implements NoticeAuthor {
-  const _NoticeAuthor({required this.memberId, this.userName});
+  const _NoticeAuthor({required this.memberId, this.userName, this.profileColor = ProfileColor.lightBlue});
   
 
 @override final  int memberId;
 @override final  String? userName;
+@override@JsonKey() final  ProfileColor profileColor;
 
 /// Create a copy of NoticeAuthor
 /// with the given fields replaced by the non-null parameter values.
@@ -224,16 +226,16 @@ _$NoticeAuthorCopyWith<_NoticeAuthor> get copyWith => __$NoticeAuthorCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeAuthor&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NoticeAuthor&&(identical(other.memberId, memberId) || other.memberId == memberId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.profileColor, profileColor) || other.profileColor == profileColor));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memberId,userName);
+int get hashCode => Object.hash(runtimeType,memberId,userName,profileColor);
 
 @override
 String toString() {
-  return 'NoticeAuthor(memberId: $memberId, userName: $userName)';
+  return 'NoticeAuthor(memberId: $memberId, userName: $userName, profileColor: $profileColor)';
 }
 
 
@@ -244,7 +246,7 @@ abstract mixin class _$NoticeAuthorCopyWith<$Res> implements $NoticeAuthorCopyWi
   factory _$NoticeAuthorCopyWith(_NoticeAuthor value, $Res Function(_NoticeAuthor) _then) = __$NoticeAuthorCopyWithImpl;
 @override @useResult
 $Res call({
- int memberId, String? userName
+ int memberId, String? userName, ProfileColor profileColor
 });
 
 
@@ -261,11 +263,12 @@ class __$NoticeAuthorCopyWithImpl<$Res>
 
 /// Create a copy of NoticeAuthor
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? memberId = null,Object? userName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? memberId = null,Object? userName = freezed,Object? profileColor = null,}) {
   return _then(_NoticeAuthor(
 memberId: null == memberId ? _self.memberId : memberId // ignore: cast_nullable_to_non_nullable
 as int,userName: freezed == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,profileColor: null == profileColor ? _self.profileColor : profileColor // ignore: cast_nullable_to_non_nullable
+as ProfileColor,
   ));
 }
 

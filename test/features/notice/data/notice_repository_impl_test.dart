@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/features/notice/data/datasources/notice_remote_data_source_impl.dart';
 import 'package:moamoa/features/notice/data/repositories/notice_repository_impl.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
@@ -100,6 +101,36 @@ void main() {
         result.notices.single.author,
         const NoticeAuthor(memberId: 3, userName: '김모아'),
       );
+    });
+
+    test('작성자의 profileColor 를 프로필 색으로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": "김모아", "profileColor": "DARK"}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author?.profileColor, ProfileColor.dark);
+    });
+
+    test('작성자의 profileColor 가 모르는 값이면 기본 연파랑으로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": "김모아", "profileColor": "PINK"}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author?.profileColor, ProfileColor.lightBlue);
     });
 
     test('작성자 이름이 null 이어도 작성자 ID 는 유지한다', () async {
