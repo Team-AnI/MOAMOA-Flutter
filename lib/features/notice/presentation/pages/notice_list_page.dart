@@ -267,7 +267,7 @@ class _NoticeTile extends StatelessWidget {
   }
 }
 
-/// "1일 전"
+/// "김모아 · 1일 전"
 class _MetaText extends StatelessWidget {
   const _MetaText({required this.notice});
 
@@ -276,7 +276,7 @@ class _MetaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      formatNoticeRelative(notice.createdAt),
+      notice.listMeta,
       style: const TextStyle(
         fontSize: 14,
         height: 1.43,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/utils/moa_dialogs.dart';
 import 'package:moamoa/core/utils/moa_snack_bar.dart';
+import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
 import 'package:moamoa/core/widgets/moa_error_widget.dart';
 
 import '../../domain/entities/notice.dart';
@@ -224,7 +225,7 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-/// 제목 · 작성일 · 본문
+/// 제목 · 작성자 · 작성일 · 본문
 class _NoticeContent extends StatelessWidget {
   const _NoticeContent({required this.notice});
 
@@ -261,14 +262,29 @@ class _NoticeContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            formatNoticeDate(notice.createdAt),
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.43,
-              letterSpacing: -0.1,
-              color: NoticeColors.bodyText,
-            ),
+          // 작성자 프로필 동그라미와 "김모아 · 2026년 9월 12일"
+          Row(
+            children: [
+              if (notice.author case final author?) ...[
+                MoaProfileAvatar(
+                  userName: author.userName,
+                  color: author.profileColor,
+                  size: 28,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  notice.detailMeta,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.43,
+                    letterSpacing: -0.1,
+                    color: NoticeColors.bodyText,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           for (final paragraph in paragraphs) ...[
