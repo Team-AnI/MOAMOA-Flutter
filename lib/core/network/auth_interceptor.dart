@@ -35,8 +35,12 @@ class AuthInterceptor extends QueuedInterceptor {
     RequestInterceptorHandler handler,
   ) async {
     if (_requiresAuth(options)) {
-      final tokens = await _tokenStorage.read();
-      if (tokens != null) _attach(options, tokens.accessToken);
+      try {
+        final tokens = await _tokenStorage.read();
+        if (tokens != null) _attach(options, tokens.accessToken);
+      } on Exception {
+        // 저장소를 읽지 못하면 토큰 없이 보냅니다. 여기서 멈추면 뒤의 요청까지 모두 기다립니다.
+      }
     }
     handler.next(options);
   }
@@ -50,22 +54,26 @@ class AuthInterceptor extends QueuedInterceptor {
     if (err.response?.statusCode != 401 || !_requiresAuth(options)) {
       return handler.next(err);
     }
-    final tokens = await _tokenStorage.read();
-    if (tokens == null) return handler.next(err);
-
-    var current = tokens;
-    // 다른 요청이 먼저 재발급했으면 바뀐 토큰으로 다시 보내기만 합니다.
-    if (options.headers['Authorization'] == _bearer(tokens.accessToken)) {
-      final refreshed = await _refresh(tokens.refreshToken);
-      if (refreshed == null) return handler.next(err);
-      current = refreshed;
-    }
-
+    // 어떤 예외가 나도 handler 를 부릅니다. 부르지 않으면 뒤의 요청까지 모두 멈춥니다.
     try {
+      final tokens = await _tokenStorage.read();
+      if (tokens == null) return handler.next(err);
+
+      var current = tokens;
+      // 다른 요청이 먼저 재발급했으면 바뀐 토큰으로 다시 보내기만 합니다.
+      if (options.headers['Authorization'] == _bearer(tokens.accessToken)) {
+        final refreshed = await _refresh(tokens.refreshToken);
+        if (refreshed == null) return handler.next(err);
+        current = refreshed;
+      }
+
       _attach(options, current.accessToken);
       handler.resolve(await _plainDio.fetch<dynamic>(options));
     } on DioException catch (retryError) {
       handler.next(retryError);
+    } on Exception {
+      // 토큰 저장소 오류 등은 원래 401 오류로 넘깁니다.
+      handler.next(err);
     }
   }
 
@@ -93,8 +101,12 @@ class AuthInterceptor extends QueuedInterceptor {
       return tokens;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        await _tokenStorage.clear();
-        _onSessionExpired();
+        // 토큰을 지우지 못해도 다시 로그인해야 한다는 사실은 알립니다.
+        try {
+          await _tokenStorage.clear();
+        } finally {
+          _onSessionExpired();
+        }
       }
       return null;
     }

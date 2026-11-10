@@ -82,6 +82,32 @@ class _FakeServer implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// [readFailsFrom] 번째 read 부터, 또는 clear 에서 예외를 던지는 토큰 저장소
+class _FailingTokenStorage extends TokenStorage {
+  _FailingTokenStorage({this.readFailsFrom, this.clearFails = false})
+    : super(secureStorage: const FlutterSecureStorage());
+
+  final int? readFailsFrom;
+  final bool clearFails;
+  int _readCount = 0;
+
+  @override
+  Future<AuthTokens?> read() async {
+    _readCount++;
+    final readFailsFrom = this.readFailsFrom;
+    if (readFailsFrom != null && _readCount >= readFailsFrom) {
+      throw Exception('저장소 오류');
+    }
+    return super.read();
+  }
+
+  @override
+  Future<void> clear() async {
+    if (clearFails) throw Exception('저장소 오류');
+    return super.clear();
+  }
+}
+
 void main() {
   group(AuthInterceptor, () {
     late _FakeServer server;
@@ -320,6 +346,61 @@ void main() {
           ),
         ),
       );
+    });
+    group('토큰 저장소 오류', () {
+      Dio dioWith(TokenStorage tokenStorage) {
+        final options = BaseOptions(baseUrl: 'https://api.test');
+        return Dio(options)
+          ..httpClientAdapter = server
+          ..interceptors.add(
+            AuthInterceptor(
+              tokenStorage: tokenStorage,
+              plainDio: Dio(options)..httpClientAdapter = server,
+              onSessionExpired: () => expiredCount++,
+            ),
+          );
+      }
+
+      test('토큰을 읽지 못해도 멈추지 않고 토큰 없이 요청을 보낸다', () async {
+        final dio = dioWith(_FailingTokenStorage(readFailsFrom: 1));
+
+        await expectLater(
+          dio.get<dynamic>('/v1/me'),
+          throwsA(isA<DioException>()),
+        );
+
+        expect(server.requests.single.headers['Authorization'], isNull);
+      });
+
+      test('401 처리 중 토큰을 읽지 못하면 멈추지 않고 원래 401 오류를 넘긴다', () async {
+        server.validAccessToken = 'expired-on-server';
+        final dio = dioWith(_FailingTokenStorage(readFailsFrom: 2));
+
+        await expectLater(
+          dio.get<dynamic>('/v1/me'),
+          throwsA(
+            isA<DioException>().having(
+              (e) => e.response?.statusCode,
+              'statusCode',
+              401,
+            ),
+          ),
+        );
+      });
+
+      test('재발급이 401 인데 토큰을 지우지 못해도 다시 로그인해야 한다고 알린다', () async {
+        server
+          ..validAccessToken = 'expired-on-server'
+          ..refreshStatus = 401;
+        final dio = dioWith(_FailingTokenStorage(clearFails: true));
+
+        await expectLater(
+          dio.get<dynamic>('/v1/me'),
+          throwsA(isA<DioException>()),
+        );
+
+        expect(expiredCount, 1);
+      });
     });
   });
 }
