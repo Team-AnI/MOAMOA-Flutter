@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
-import 'package:moamoa/features/schedule/domain/entities/schedule_detail_request.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
 import 'package:moamoa/features/schedule/domain/usecases/create_schedule.dart';
@@ -8,6 +7,7 @@ import 'package:moamoa/features/schedule/domain/usecases/delete_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedules.dart';
 import 'package:moamoa/features/schedule/domain/usecases/update_schedule.dart';
+import 'package:moamoa/features/schedule/presentation/schedule_id.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_calendar_view_model.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_create_state.dart';
@@ -65,24 +65,11 @@ final scheduleListProvider =
       ScheduleListViewModel,
       List<Schedule>,
       ScheduleListRequest
-    >(
-      (request) => ScheduleListViewModel(
-        meetingId: request.meetingId,
-        startDate: request.startDate,
-        endDate: request.endDate,
-      ),
-    );
+    >((request) => ScheduleListViewModel(request: request));
 
 final scheduleDetailProvider =
-    AsyncNotifierProvider.family<
-      ScheduleDetailViewModel,
-      Schedule,
-      ScheduleDetailRequest
-    >(
-      (request) => ScheduleDetailViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
-      ),
+    AsyncNotifierProvider.family<ScheduleDetailViewModel, Schedule, ScheduleId>(
+      (id) => ScheduleDetailViewModel(id: id),
     );
 
 /// 인자는 일정을 만들 모임의 id 입니다.
@@ -95,25 +82,15 @@ final scheduleCreateProvider = NotifierProvider.autoDispose
 /// 인자는 수정할 일정입니다.
 /// autoDispose: 화면을 닫으면 이전 제출 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleEditProvider = NotifierProvider.autoDispose
-    .family<ScheduleEditViewModel, ScheduleEditState, ScheduleDetailRequest>(
-      (request) => ScheduleEditViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
-      ),
+    .family<ScheduleEditViewModel, ScheduleEditState, ScheduleId>(
+      (id) => ScheduleEditViewModel(id: id),
     );
 
 /// 인자는 취소할 일정입니다.
 /// autoDispose: 화면을 닫으면 이전 요청 결과(성공, 오류)가 남지 않게 초기화합니다.
 final scheduleDeleteProvider = NotifierProvider.autoDispose
-    .family<
-      ScheduleDeleteViewModel,
-      ScheduleDeleteState,
-      ScheduleDetailRequest
-    >(
-      (request) => ScheduleDeleteViewModel(
-        meetingId: request.meetingId,
-        scheduleId: request.scheduleId,
-      ),
+    .family<ScheduleDeleteViewModel, ScheduleDeleteState, ScheduleId>(
+      (id) => ScheduleDeleteViewModel(id: id),
     );
 
 /// 캘린더 탭의 월/선택 날짜. 목록 페이지가 구독을 유지하므로 탭을 오가도 값이 남습니다.

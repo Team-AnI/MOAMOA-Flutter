@@ -2,15 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/features/schedule/domain/usecases/delete_schedule.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_id.dart';
 import 'schedule_delete_state.dart';
 import 'schedule_delete_status.dart';
 
-/// 일정 취소 ViewModel 입니다. [scheduleId] 일정을 취소하고 과정을 [ScheduleDeleteState] 로 알립니다.
+/// 일정 취소 ViewModel 입니다. [id] 일정을 취소하고 과정을 [ScheduleDeleteState] 로 알립니다.
 class ScheduleDeleteViewModel extends Notifier<ScheduleDeleteState> {
-  ScheduleDeleteViewModel({required this.meetingId, required this.scheduleId});
+  ScheduleDeleteViewModel({required this.id});
 
-  final int meetingId;
-  final int scheduleId;
+  final ScheduleId id;
 
   @override
   ScheduleDeleteState build() => const ScheduleDeleteState();
@@ -24,7 +24,10 @@ class ScheduleDeleteViewModel extends Notifier<ScheduleDeleteState> {
     ScheduleDeleteStatus result;
     try {
       await ref.read(deleteScheduleProvider)(
-        DeleteScheduleParams(meetingId: meetingId, scheduleId: scheduleId),
+        DeleteScheduleParams(
+          meetingId: id.meetingId,
+          scheduleId: id.scheduleId,
+        ),
       );
       result = ScheduleDeleteStatus.success;
     } catch (_) {

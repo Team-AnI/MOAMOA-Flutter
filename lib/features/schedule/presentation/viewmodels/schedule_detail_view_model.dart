@@ -3,18 +3,18 @@ import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/usecases/get_schedule.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_id.dart';
 
 /// 일정 한 건의 상세 정보
 class ScheduleDetailViewModel extends AsyncNotifier<Schedule> {
-  ScheduleDetailViewModel({required this.meetingId, required this.scheduleId});
+  ScheduleDetailViewModel({required this.id});
 
-  final int meetingId;
-  final int scheduleId;
+  final ScheduleId id;
 
   @override
   Future<Schedule> build() {
     return ref.read(getScheduleProvider)(
-      GetScheduleParams(meetingId: meetingId, scheduleId: scheduleId),
+      GetScheduleParams(meetingId: id.meetingId, scheduleId: id.scheduleId),
     );
   }
 }
