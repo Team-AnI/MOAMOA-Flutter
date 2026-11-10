@@ -9,6 +9,7 @@ import 'package:moamoa/features/schedule/presentation/providers/schedule_provide
 import 'package:moamoa/features/schedule/presentation/schedule_id.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_state.dart';
 import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_status.dart';
+import 'package:moamoa/features/schedule/presentation/viewmodels/schedule_edit_view_model.dart';
 
 import '../../fakes/fake_schedule_repository.dart';
 
@@ -30,10 +31,15 @@ void main() {
     container.listen(scheduleEditProvider(scheduleId), (_, _) {});
   });
 
+  ScheduleEditViewModel viewModel() =>
+      container.read(scheduleEditProvider(scheduleId).notifier);
+
+  /// 이름과 시작 일시를 바꾼 뒤 제출합니다.
   Future<void> submit({String title = '새 정모'}) {
-    return container
-        .read(scheduleEditProvider(scheduleId).notifier)
-        .submit(title: title, startAt: startAt);
+    return (viewModel()
+          ..changeTitle(title)
+          ..changeStartAt(startAt))
+        .submit();
   }
 
   ScheduleEditState state() => container.read(scheduleEditProvider(scheduleId));
@@ -120,9 +126,11 @@ void main() {
       await isolated.read(scheduleListProvider(args).future);
       repository.updateCompleter = Completer<void>();
 
-      final pending = isolated
-          .read(scheduleEditProvider(scheduleId).notifier)
-          .submit(title: '새 정모', startAt: startAt);
+      final pending =
+          (isolated.read(scheduleEditProvider(scheduleId).notifier)
+                ..changeTitle('새 정모')
+                ..changeStartAt(startAt))
+              .submit();
       await pumpEventQueue();
       subscription.close(); // 요청 중에 화면이 닫힌 상황
       await isolated.pump();
@@ -133,10 +141,11 @@ void main() {
       expect(repository.listCallCount, 2);
     });
 
-    test('넘긴 값만 요청에 담고 넘기지 않은 값은 null 로 저장한다', () async {
-      await container
-          .read(scheduleEditProvider(scheduleId).notifier)
-          .submit(title: '11월 정기 러닝', location: '잠실 공원');
+    test('바꾼 속성만 요청에 담고 바꾸지 않은 속성은 null 로 저장한다', () async {
+      await (viewModel()
+            ..changeTitle('11월 정기 러닝')
+            ..changeLocation('잠실 공원'))
+          .submit();
 
       expect(
         repository.updateCalls.single,
@@ -147,6 +156,29 @@ void main() {
           location: '잠실 공원',
         ),
       );
+    });
+
+    test('바꿨던 이름을 원래대로 되돌리면 이름은 요청에 담지 않는다', () async {
+      await (viewModel()
+            ..changeTitle('11월 정기 러닝')
+            ..changeLocation('잠실 공원')
+            ..changeTitle(null))
+          .submit();
+
+      expect(repository.updateCalls.single.title, isNull);
+      expect(repository.updateCalls.single.location, '잠실 공원');
+    });
+
+    test('저장에 실패한 뒤 다시 제출하면 바꾼 값을 그대로 다시 보낸다', () async {
+      repository.error = Exception('network');
+      await submit(title: '11월 정기 러닝');
+      repository.error = null;
+
+      await viewModel().submit();
+
+      expect(repository.updateCalls, hasLength(2));
+      expect(repository.updateCalls.last.title, '11월 정기 러닝');
+      expect(repository.updateCalls.last.startAt, startAt);
     });
   });
 }

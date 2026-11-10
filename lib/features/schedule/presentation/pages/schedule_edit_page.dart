@@ -43,30 +43,13 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
     }
   }
 
-  /// 바뀐 값으로 일정 수정을 요청합니다. 바뀌지 않은 값은 null 입니다.
-  void _submit({
-    String? title,
-    String? description,
-    DateTime? startAt,
-    DateTime? endAt,
-    String? location,
-  }) {
-    ref
-        .read(scheduleEditProvider(_id).notifier)
-        .submit(
-          title: title,
-          description: description,
-          startAt: startAt,
-          endAt: endAt,
-          location: location,
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     final editProvider = scheduleEditProvider(_id);
     ref.listen(editProvider.select((state) => state.status), _onStatusChanged);
-    final state = ref.watch(editProvider);
+    // 입력할 때마다 바뀐 값이 상태에 담기므로, 화면은 제출 단계만 구독합니다.
+    final status = ref.watch(editProvider.select((state) => state.status));
+    final viewModel = ref.read(editProvider.notifier);
     final schedule = ref.watch(scheduleDetailProvider(_id));
 
     return Scaffold(
@@ -76,9 +59,14 @@ class _ScheduleEditPageState extends ConsumerState<ScheduleEditPage> {
         child: schedule.when(
           data: (s) => ScheduleForm.edit(
             submitLabel: '수정 완료',
-            isSubmitting: state.status == ScheduleEditStatus.submitting,
+            isSubmitting: status == ScheduleEditStatus.submitting,
             initial: s,
-            onSubmit: _submit,
+            onTitleChanged: viewModel.changeTitle,
+            onDescriptionChanged: viewModel.changeDescription,
+            onStartAtChanged: viewModel.changeStartAt,
+            onEndAtChanged: viewModel.changeEndAt,
+            onLocationChanged: viewModel.changeLocation,
+            onSubmit: viewModel.submit,
           ),
           error: (_, _) => Center(
             child: Text(

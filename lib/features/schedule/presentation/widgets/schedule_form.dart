@@ -27,25 +27,35 @@ class ScheduleForm extends StatefulWidget {
     })
     onSubmit,
   }) : _onCreate = onSubmit,
-       _onEdit = null,
+       _onEditSubmit = null,
+       _onTitleChanged = null,
+       _onDescriptionChanged = null,
+       _onStartAtChanged = null,
+       _onEndAtChanged = null,
+       _onLocationChanged = null,
        initial = null;
 
   /// 일정 수정 폼입니다. 바뀐 값이 없으면 버튼이 비활성화됩니다.
-  /// 버튼을 누르면 [onSubmit] 이 바뀐 값만 담아 호출됩니다. 바뀌지 않은 값은 null 입니다.
+  ///
+  /// 입력이 바뀔 때마다 해당 속성의 콜백(예: [onTitleChanged])을 바뀐 값으로 호출합니다.
+  /// 원래 값과 같아지면 null 로 호출합니다. 버튼을 누르면 [onSubmit] 이 호출됩니다.
   const ScheduleForm.edit({
     super.key,
     required this.submitLabel,
     required this.isSubmitting,
     required Schedule this.initial,
-    required void Function({
-      String? title,
-      String? description,
-      DateTime? startAt,
-      DateTime? endAt,
-      String? location,
-    })
-    onSubmit,
-  }) : _onEdit = onSubmit,
+    required ValueChanged<String?> onTitleChanged,
+    required ValueChanged<String?> onDescriptionChanged,
+    required ValueChanged<DateTime?> onStartAtChanged,
+    required ValueChanged<DateTime?> onEndAtChanged,
+    required ValueChanged<String?> onLocationChanged,
+    required VoidCallback onSubmit,
+  }) : _onTitleChanged = onTitleChanged,
+       _onDescriptionChanged = onDescriptionChanged,
+       _onStartAtChanged = onStartAtChanged,
+       _onEndAtChanged = onEndAtChanged,
+       _onLocationChanged = onLocationChanged,
+       _onEditSubmit = onSubmit,
        _onCreate = null,
        heading = null;
 
@@ -61,14 +71,12 @@ class ScheduleForm extends StatefulWidget {
     required String location,
   })?
   _onCreate;
-  final void Function({
-    String? title,
-    String? description,
-    DateTime? startAt,
-    DateTime? endAt,
-    String? location,
-  })?
-  _onEdit;
+  final ValueChanged<String?>? _onTitleChanged;
+  final ValueChanged<String?>? _onDescriptionChanged;
+  final ValueChanged<DateTime?>? _onStartAtChanged;
+  final ValueChanged<DateTime?>? _onEndAtChanged;
+  final ValueChanged<String?>? _onLocationChanged;
+  final VoidCallback? _onEditSubmit;
 
   @override
   State<ScheduleForm> createState() => _ScheduleFormState();
@@ -113,13 +121,22 @@ class _ScheduleFormState extends State<ScheduleForm> {
   @override
   void initState() {
     super.initState();
-    _title.addListener(_onTextChanged);
-    _location.addListener(_onTextChanged);
-    _description.addListener(_onTextChanged);
+    _title.addListener(
+      () => _onTextChanged(widget._onTitleChanged, _changedTitle),
+    );
+    _location.addListener(
+      () => _onTextChanged(widget._onLocationChanged, _changedLocation),
+    );
+    _description.addListener(
+      () => _onTextChanged(widget._onDescriptionChanged, _changedDescription),
+    );
   }
 
-  /// 입력이 바뀌면 제출 버튼 상태를 다시 계산합니다.
-  void _onTextChanged() => setState(() {});
+  /// 입력이 바뀌면 제출 버튼 상태를 다시 계산하고, 수정 폼이면 [onChanged] 로 바뀐 값을 알립니다.
+  void _onTextChanged(ValueChanged<String?>? onChanged, String? changed) {
+    setState(() {});
+    onChanged?.call(changed);
+  }
 
   /// [controller] 의 앞뒤 공백을 지운 값이 [original] 과 다를 때만 돌려줍니다.
   String? _changedText(TextEditingController controller, String? original) {
@@ -173,7 +190,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  /// 현재 입력값으로 제출합니다. 만들기는 모든 입력값을, 수정은 바뀐 값만 넘깁니다.
+  /// 제출합니다. 만들기는 모든 입력값을 넘기고, 수정은 이미 알린 바뀐 값으로 저장하도록 알립니다.
   void _submit() {
     FocusScope.of(context).unfocus();
     widget._onCreate?.call(
@@ -183,25 +200,23 @@ class _ScheduleFormState extends State<ScheduleForm> {
       endAt: _endAt,
       location: _location.text,
     );
-    widget._onEdit?.call(
-      title: _changedTitle,
-      description: _changedDescription,
-      startAt: _changedStartAt,
-      endAt: _changedEndAt,
-      location: _changedLocation,
-    );
+    widget._onEditSubmit?.call();
   }
 
   /// 시작 일시를 고른다. 취소하면 기존 값을 유지합니다
   Future<void> _pickStart() async {
     final picked = await _pickDateTime(_startAt);
-    if (picked != null) setState(() => _startAt = picked);
+    if (picked == null) return;
+    setState(() => _startAt = picked);
+    widget._onStartAtChanged?.call(_changedStartAt);
   }
 
   /// 종료 일시를 고릅니다. 시작 일시가 있으면 그 날짜를 처음 위치로 보여줍니다. 취소하면 기존 값을 유지합니다.
   Future<void> _pickEnd() async {
     final picked = await _pickDateTime(_endAt ?? _startAt);
-    if (picked != null) setState(() => _endAt = picked);
+    if (picked == null) return;
+    setState(() => _endAt = picked);
+    widget._onEndAtChanged?.call(_changedEndAt);
   }
 
   @override
