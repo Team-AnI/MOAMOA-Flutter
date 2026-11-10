@@ -19,6 +19,16 @@ abstract final class MoaColors {
   static const profileGray = Color(0xFFD2D2D7);
   static const profileBlue = Color(0xFFB8D4F2);
 
+  /// 위험 동작의 글자와 연한 배경. 일반 오류 안내(error)와 구분합니다.
+  static const danger = Color(0xFFE30000);
+  static const dangerTint = Color(0xFFFDECEC);
+  static const barrier = Color(0x8F000000);
+  static const onDarkSecondary = Color(0xFFCCCCCC);
+  static const darkFill = Color(0xFF38383A);
+  static const darkRaised = Color(0xFF272729);
+  static const placeholder = Color(0xFFD2D2D7);
+  static const shadow = Color(0x14000000);
+
   /// 디자인에 없는 값. 오류 문구에 임시로 사용합니다.
   static const error = Color(0xFFD92D20);
 }

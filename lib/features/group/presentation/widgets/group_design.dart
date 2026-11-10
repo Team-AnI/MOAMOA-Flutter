@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:moamoa/core/theme/moa_theme.dart';
 
 /// Figma Moa4의 색상과 타이포그래피.
 abstract final class GroupDesign {
-  static const ink = Color(0xff1d1d1f);
-  static const fill = Color(0xfff5f5f7);
-  static const secondary = Color(0xff333333);
-  static const muted = Color(0xff7a7a7a);
-  static const blue = Color(0xff0066cc);
-  static const tint = Color(0xffe5effa);
-  static const danger = Color(0xffe30000);
-  static const dangerTint = Color(0xfffdecec);
-  static const barrier = Color(0x8f000000);
-  static const onDarkSecondary = Color(0xffcccccc);
-  static const darkFill = Color(0xff38383a);
-  static const darkRaised = Color(0xff272729);
-  static const placeholder = Color(0xffd2d2d7);
-  static const shadow = Color(0x14000000);
+  static const ink = MoaColors.textPrimary;
+  static const fill = MoaColors.fill;
+  static const secondary = MoaColors.textSecondary;
+  static const muted = MoaColors.textTertiary;
+  static const blue = MoaColors.accentText;
+  static const tint = MoaColors.accentTint;
+  static const danger = MoaColors.danger;
+  static const dangerTint = MoaColors.dangerTint;
+  static const barrier = MoaColors.barrier;
+  static const onDarkSecondary = MoaColors.onDarkSecondary;
+  static const darkFill = MoaColors.darkFill;
+  static const darkRaised = MoaColors.darkRaised;
+  static const placeholder = MoaColors.placeholder;
+  static const shadow = MoaColors.shadow;
   static const title = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 26,
