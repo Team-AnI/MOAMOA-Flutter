@@ -98,6 +98,7 @@ void main() {
 
       expect(repository.readNoticeIds, [1]);
     });
+
     test('상세를 불러오는 사이 화면을 나가면 처리되지 않은 오류 없이 읽음 처리를 보내지 않는다', () async {
       final uncaught = <Object>[];
       final slow = FakeNoticeRepository(notices: [buildNotice(1)])
@@ -120,6 +121,7 @@ void main() {
       expect(uncaught, isEmpty);
       expect(slow.readNoticeIds, isEmpty);
     });
+
     test('읽음 처리가 공지 예외가 아닌 오류로 실패해도 처리되지 않은 오류를 남기지 않는다', () async {
       final uncaught = <Object>[];
       await runZonedGuarded(() async {
