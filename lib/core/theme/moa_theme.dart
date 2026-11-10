@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// Figma 디자인 토큰(색상)입니다. 화면에서는 색을 직접 쓰지 않고 이 값을 사용합니다.
 /// page: 화면 배경 / fill: 카드·입력칸 배경 / raised: 떠 있는 흰 요소 /
 /// accent: 강조(검정 버튼, 선택) / accentTint, accentText: 강조의 연한 배경과 글자 /
-/// textPrimary·Secondary·Tertiary: 글자 진함 정도 / textInverse: 어두운 배경 위 글자
+/// textPrimary·Secondary·Tertiary: 글자 진함 정도 / textInverse: 어두운 배경 위 글자 /
+/// profileGray·profileBlue: 프로필 색 GRAY·BLUE 의 동그라미 배경
 abstract final class MoaColors {
   static const page = Color(0xFFFFFFFF);
   static const fill = Color(0xFFF5F5F7);
@@ -15,6 +16,8 @@ abstract final class MoaColors {
   static const textSecondary = Color(0xFF333333);
   static const textTertiary = Color(0xFF7A7A7A);
   static const textInverse = Color(0xFFFFFFFF);
+  static const profileGray = Color(0xFFD2D2D7);
+  static const profileBlue = Color(0xFFB8D4F2);
 
   /// 디자인에 없는 값. 오류 문구에 임시로 사용합니다.
   static const error = Color(0xFFD92D20);

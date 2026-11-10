@@ -8,7 +8,15 @@ abstract final class GroupDesign {
   static const muted = Color(0xff7a7a7a);
   static const blue = Color(0xff0066cc);
   static const tint = Color(0xffe5effa);
+  static const danger = Color(0xffe30000);
+  static const dangerTint = Color(0xfffdecec);
+  static const barrier = Color(0x8f000000);
+  static const onDarkSecondary = Color(0xffcccccc);
+  static const darkFill = Color(0xff38383a);
   static const darkRaised = Color(0xff272729);
+  static const placeholder = Color(0xffd2d2d7);
+  static const shadow = Color(0x14000000);
+
   static const title = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 26,

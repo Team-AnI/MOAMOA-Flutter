@@ -86,7 +86,7 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     height: 4,
     decoration: BoxDecoration(
-      color: active ? GroupDesign.ink : const Color(0xffd2d2d7),
+      color: active ? GroupDesign.ink : GroupDesign.placeholder,
       borderRadius: BorderRadius.circular(10),
     ),
   );

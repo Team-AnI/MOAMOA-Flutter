@@ -101,11 +101,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('보관한 모임'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('목록에 다시 표시').first);
+      await tester.tap(find.text('복원').first);
       await tester.pumpAndSettle();
       expect(value.read(groupListPreferencesProvider).archivedIds, [2, 3, 4]);
       expect(value.read(groupProvider).groups.length, 4);
-      await tester.tap(find.text('완료'));
+      await tester.tap(find.byTooltip('뒤로'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('완료'));
       await tester.pumpAndSettle();
