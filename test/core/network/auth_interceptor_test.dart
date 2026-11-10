@@ -163,6 +163,14 @@ void main() {
       );
     });
 
+    test('타입을 지정한 요청도 재발급 뒤 응답 본문을 그대로 받는다', () async {
+      server.validAccessToken = 'expired-on-server';
+
+      final response = await dio.get<Map<String, dynamic>>('/v1/me');
+
+      expect(response.data, {'data': <String, dynamic>{}});
+    });
+
     test('재발급하면 새 토큰을 저장한다', () async {
       server.validAccessToken = 'expired-on-server';
 
