@@ -20,10 +20,24 @@ class GroupMark extends StatelessWidget {
   final Color backgroundColor;
   final double? cornerRadius;
   final TextStyle? textStyle;
+
+  BorderRadius get _borderRadius =>
+      BorderRadius.circular(cornerRadius ?? size * .32);
+
+  String get _initial =>
+      name.trim().isEmpty ? '모' : name.trim().characters.first;
+
+  TextStyle get _effectiveTextStyle =>
+      textStyle ??
+      GroupDesign.heading.copyWith(
+        color: Colors.white,
+        fontSize: size > 80 ? 30 : 18,
+      );
+
   @override
   Widget build(BuildContext context) => photo != null
       ? ClipRRect(
-          borderRadius: BorderRadius.circular(cornerRadius ?? size * .32),
+          borderRadius: _borderRadius,
           child: Image.memory(
             photo!,
             width: size,
@@ -37,16 +51,8 @@ class GroupMark extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(cornerRadius ?? size * .32),
+            borderRadius: _borderRadius,
           ),
-          child: Text(
-            name.trim().isEmpty ? '모' : name.trim().characters.first,
-            style:
-                textStyle ??
-                GroupDesign.heading.copyWith(
-                  color: Colors.white,
-                  fontSize: size > 80 ? 30 : 18,
-                ),
-          ),
+          child: Text(_initial, style: _effectiveTextStyle),
         );
 }
