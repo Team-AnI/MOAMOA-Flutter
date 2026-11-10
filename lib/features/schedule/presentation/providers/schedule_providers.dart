@@ -65,13 +65,7 @@ final scheduleListProvider =
       ScheduleListViewModel,
       List<Schedule>,
       ScheduleListRequest
-    >(
-      (request) => ScheduleListViewModel(
-        meetingId: request.meetingId,
-        startDate: request.startDate,
-        endDate: request.endDate,
-      ),
-    );
+    >((request) => ScheduleListViewModel(request: request));
 
 final scheduleDetailProvider =
     AsyncNotifierProvider.family<ScheduleDetailViewModel, Schedule, ScheduleId>(
