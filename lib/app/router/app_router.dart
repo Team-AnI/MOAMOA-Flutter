@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/features/schedule/presentation/schedule_routes.dart';
 
+import '../../features/auth/presentation/auth_routes.dart';
 import '../../features/group/presentation/group_routes.dart';
 import '../../features/notice/presentation/notice_routes.dart';
 
@@ -13,7 +14,7 @@ import '../../features/notice/presentation/notice_routes.dart';
 /// 여기서는 아래 [_featureRoutes] 에 한 줄만 추가합니다.
 /// (동시 작업 시 충돌을 줄이기 위함)
 final List<RouteBase> _featureRoutes = [
-  // ...authRoutes,
+  ...authRoutes,
   ...groupRoutes,
   ...scheduleRoutes,
   ...noticeRoutes,

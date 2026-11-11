@@ -7,6 +7,8 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
+import '../viewmodels/forgot_password_state.dart';
+import '../viewmodels/forgot_password_view_model.dart';
 
 // Data
 
@@ -31,3 +33,10 @@ final requestPasswordResetProvider = Provider<RequestPasswordReset>(
 final resetPasswordProvider = Provider<ResetPassword>(
   (ref) => ResetPasswordImpl(authRepository: ref.watch(authRepositoryProvider)),
 );
+
+// ViewModel / 화면 상태
+
+final forgotPasswordProvider =
+    NotifierProvider.autoDispose<ForgotPasswordViewModel, ForgotPasswordState>(
+      ForgotPasswordViewModel.new,
+    );
