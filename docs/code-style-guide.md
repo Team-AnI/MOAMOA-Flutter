@@ -367,26 +367,6 @@ final scheduleListProvider =
 final schedules = ref.watch(scheduleListProvider(request));
 ```
 
-- 화면이 조회에 필요한 인자를 넘길 때는 `ScheduleListRequested` 같은 sealed 이벤트 클래스의 필드(페이로드)에 담아 ViewModel 에 보낼 수 있습니다. ViewModel 의 `build()` 는 초기 상태를 바로 돌려주고, 이벤트를 받아 결과를 상태에 반영합니다. (#82·#90 리뷰)
-- family 키는 화면이 어떤 대상을 보여 주는지 구분하는 값을, 이벤트는 그 화면에서 보내는 요청과 필요한 인자를 담습니다.
-
-```dart
-// presentation/viewmodels/schedule_list_event.dart
-sealed class ScheduleListEvent {}
-
-final class ScheduleListRequested extends ScheduleListEvent {
-  ScheduleListRequested({required this.startDate, required this.endDate});
-
-  final DateTime startDate;
-  final DateTime endDate;
-}
-
-// presentation/viewmodels/schedule_list_view_model.dart
-Future<void> onEvent(ScheduleListEvent event) => switch (event) {
-  ScheduleListRequested() => _fetch(event.startDate, event.endDate),
-};
-```
-
 ### 2-3. 예외 처리
 
 > 이슈 #50 은 아직 결정되지 않았습니다. 아래는 공지(notice)에서 쓰는 현재 방식이며, 확정 규칙이 아닙니다.
