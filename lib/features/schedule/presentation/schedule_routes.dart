@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import 'pages/schedule_create_page.dart';
 import 'pages/schedule_detail_page.dart';
+import 'pages/schedule_edit_page.dart';
 import 'pages/schedule_list_page.dart';
 
 int _id(GoRouterState state, String name) =>
@@ -24,6 +25,15 @@ final List<RouteBase> scheduleRoutes = [
           meetingId: _id(state, 'meetingId'),
           scheduleId: _id(state, 'scheduleId'),
         ),
+        routes: [
+          GoRoute(
+            path: 'edit',
+            builder: (_, state) => ScheduleEditPage(
+              meetingId: _id(state, 'meetingId'),
+              scheduleId: _id(state, 'scheduleId'),
+            ),
+          ),
+        ],
       ),
     ],
   ),

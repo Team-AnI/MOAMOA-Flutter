@@ -212,7 +212,7 @@ void main() {
 
     expect(find.byType(MoaAppBar), findsOneWidget);
     expect(find.text('10월 정기 러닝'), findsOneWidget);
-    expect(find.textContaining('19:00 ~ 21:00'), findsOneWidget);
+    expect(find.textContaining('오후 7:00'), findsOneWidget);
     expect(find.text('반포 한강공원'), findsOneWidget);
     expect(find.text('반포 한강공원 집합'), findsOneWidget);
   });
