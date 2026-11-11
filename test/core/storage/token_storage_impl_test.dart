@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/storage/auth_tokens.dart';
-import 'package:moamoa/core/storage/token_storage.dart';
+import 'package:moamoa/core/storage/token_storage_impl.dart';
 
 /// 쓰기만 실패하는 secure storage
 class _WriteFailingSecureStorage extends FlutterSecureStorage {
@@ -24,13 +24,13 @@ class _WriteFailingSecureStorage extends FlutterSecureStorage {
 }
 
 void main() {
-  group(TokenStorage, () {
+  group(TokenStorageImpl, () {
     const tokens = AuthTokens(accessToken: 'access', refreshToken: 'refresh');
-    late TokenStorage storage;
+    late TokenStorageImpl storage;
 
     setUp(() {
       FlutterSecureStorage.setMockInitialValues({});
-      storage = TokenStorage(secureStorage: const FlutterSecureStorage());
+      storage = TokenStorageImpl(secureStorage: const FlutterSecureStorage());
     });
 
     test('저장한 토큰을 그대로 읽는다', () async {
@@ -65,7 +65,7 @@ void main() {
 
     test('새 토큰 저장이 실패하면 이전 토큰 쌍이 그대로 남는다', () async {
       await storage.save(tokens);
-      final failing = TokenStorage(
+      final failing = TokenStorageImpl(
         secureStorage: const _WriteFailingSecureStorage(),
       );
 

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/network/auth_interceptor.dart';
 import 'package:moamoa/core/storage/auth_tokens.dart';
 import 'package:moamoa/core/storage/token_storage.dart';
+import 'package:moamoa/core/storage/token_storage_impl.dart';
 
 /// 서버 대신 응답하는 Dio 어댑터
 ///
@@ -87,7 +88,7 @@ class _FakeServer implements HttpClientAdapter {
 }
 
 /// [readFailsFrom] 번째 read 부터, 또는 재발급 실패로 지울 때 예외를 던지는 토큰 저장소
-class _FailingTokenStorage extends TokenStorage {
+class _FailingTokenStorage extends TokenStorageImpl {
   _FailingTokenStorage({this.readFailsFrom, this.clearFails = false})
     : super(secureStorage: const FlutterSecureStorage());
 
@@ -121,7 +122,7 @@ void main() {
 
     setUp(() async {
       FlutterSecureStorage.setMockInitialValues({});
-      storage = TokenStorage(secureStorage: const FlutterSecureStorage());
+      storage = TokenStorageImpl(secureStorage: const FlutterSecureStorage());
       await storage.save(
         const AuthTokens(accessToken: 'access', refreshToken: 'refresh'),
       );
