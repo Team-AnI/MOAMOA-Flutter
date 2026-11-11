@@ -573,6 +573,18 @@ void main() {
       expect(find.text('10일까지 납부'), findsOneWidget);
     });
 
+    testWidgets('수정 화면을 열어도 읽음 처리는 요청하지 않는다', (tester) async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
+      await pumpPage(
+        tester,
+        repository,
+        const NoticeWritePage(meetingId: 1, noticeId: 1),
+      );
+      await tester.pumpAndSettle();
+
+      expect(repository.readNoticeIds, isEmpty);
+    });
+
     testWidgets('내용을 바꾸지 않으면 수정 완료 버튼을 누를 수 없다', (tester) async {
       await pumpPage(
         tester,
@@ -731,6 +743,62 @@ void main() {
       expect(find.text('회식 정산 안내'), findsOneWidget);
       expect(find.text('${DateTime.now().year}년 9월 12일'), findsOneWidget);
       expect(find.text('10월 회비는 10일까지 내 주세요.'), findsOneWidget);
+    });
+
+    testWidgets('공지를 보여주면 해당 공지의 읽음 처리를 한 번 요청한다', (tester) async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+
+      expect(repository.readNoticeIds, [1]);
+    });
+
+    testWidgets('공지를 불러오지 못하면 읽음 처리를 요청하지 않는다', (tester) async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+        ..error = const NoticeException('잠시 후 다시 시도해주세요.');
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+
+      expect(repository.readNoticeIds, isEmpty);
+    });
+
+    testWidgets('읽음 처리가 실패해도 공지를 그대로 보여준다', (tester) async {
+      final repository = FakeNoticeRepository(
+        notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
+      )..readError = Exception('시간 초과');
+      await pumpPage(tester, repository, page);
+      await tester.pumpAndSettle();
+
+      expect(find.text('10월 회비 안내'), findsOneWidget);
+      expect(find.text('10일까지 납부'), findsOneWidget);
+    });
+
+    testWidgets('수정 후 상세를 다시 불러와도 읽음 처리는 다시 요청하지 않는다', (tester) async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)]);
+      await pumpPage(tester, repository, page, myRole: FakeGroupMyRole.admin());
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(NoticeDetailPage)),
+      );
+
+      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      await tester.pumpAndSettle();
+
+      expect(repository.readNoticeIds, [1]);
+    });
+
+    testWidgets('공지를 불러오는 사이 화면을 나가면 읽음 처리를 요청하지 않는다', (tester) async {
+      final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+        ..detailGate = Completer<void>();
+      await pumpPage(tester, repository, page);
+      await tester.pump();
+
+      // 응답이 오기 전에 화면을 닫습니다.
+      await tester.pumpWidget(const SizedBox());
+      repository.detailGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.readNoticeIds, isEmpty);
     });
 
     testWidgets('수정 후 상세를 다시 불러오는 동안에도 이전 내용을 그대로 보여준다', (tester) async {

@@ -72,6 +72,8 @@ class NoticeDetailPage extends ConsumerWidget {
       (_, next) => _onDeleteStateChanged(context, next),
     );
     final notice = ref.watch(noticeDetailProvider(_args));
+    // 공지를 보여줄 수 있게 되면 읽음으로 기록합니다. 화면을 닫을 때까지 한 번만 보냅니다. (3-6)
+    if (notice.hasValue) ref.watch(noticeReadProvider(_args));
     final isDeleting = ref.watch(noticeDeleteProvider(_args)).isDeleting;
     final access = ref.watch(noticeWriteAccessProvider(meetingId));
     final canWrite = access.canWrite;
