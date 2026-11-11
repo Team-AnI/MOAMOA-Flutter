@@ -63,8 +63,10 @@ class NoticeRemoteDataSourceImpl implements NoticeRemoteDataSource {
 
   @override
   Future<void> markNoticeRead(MarkNoticeReadRequest request) async {
+    final meetingId = request.meetingId;
+    final noticeId = request.noticeId;
     await _dio.put<Map<String, dynamic>>(
-      '/v1/meetings/${request.meetingId}/notices/${request.noticeId}/reads/me',
+      '/v1/meetings/$meetingId/notices/$noticeId/reads/me',
     );
   }
 

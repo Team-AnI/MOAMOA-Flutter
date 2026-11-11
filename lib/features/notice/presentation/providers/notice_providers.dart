@@ -86,13 +86,13 @@ final noticeDetailProvider = AsyncNotifierProvider.autoDispose
 /// 실패해도 상세 화면에 영향이 없도록 오류를 무시합니다. 서버는 여러 번 호출해도 처음 읽은 시각을 유지합니다.
 final noticeReadProvider = FutureProvider.autoDispose
     .family<void, NoticeDetailArgs>((ref, args) async {
+      final markNoticeRead = ref.read(markNoticeReadProvider);
+      final params = MarkNoticeReadParams(
+        meetingId: args.meetingId,
+        noticeId: args.noticeId,
+      );
       try {
-        await ref.read(markNoticeReadProvider)(
-          MarkNoticeReadParams(
-            meetingId: args.meetingId,
-            noticeId: args.noticeId,
-          ),
-        );
+        await markNoticeRead(params);
       } on Exception {
         // 읽음 기록 실패는 사용자에게 알리지 않습니다. 여기서 잡지 않으면 Provider 가 오류 상태로 남아
         // 자동으로 다시 시도하므로, 공지 예외뿐 아니라 모든 Exception 을 잡습니다.
