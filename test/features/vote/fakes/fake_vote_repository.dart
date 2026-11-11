@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:moamoa/features/vote/domain/entities/vote.dart';
 import 'package:moamoa/features/vote/domain/entities/vote_responses.dart';
 import 'package:moamoa/features/vote/domain/repositories/vote_repository.dart';
@@ -12,6 +14,9 @@ class FakeVoteRepository implements VoteRepository {
 
   /// 지정하면 모든 요청이 이 예외를 던집니다.
   Object? error;
+
+  /// 지정하면 투표 만들기가 이 Completer 가 끝날 때까지 기다립니다. (제출 중 상태 확인용)
+  Completer<int>? createCompleter;
 
   final List<Map<String, Object?>> createCalls = [];
   final List<Map<String, Object?>> submitCalls = [];
@@ -31,6 +36,7 @@ class FakeVoteRepository implements VoteRepository {
       'meetingTimes': meetingTimes,
     });
     if (error != null) throw error!;
+    if (createCompleter case final completer?) return completer.future;
     return createdScheduleId;
   }
 

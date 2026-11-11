@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 /// page: 화면 배경 / fill: 카드·입력칸 배경 / raised: 떠 있는 흰 요소 /
 /// accent: 강조(검정 버튼, 선택) / accentTint, accentText: 강조의 연한 배경과 글자 /
 /// textPrimary·Secondary·Tertiary: 글자 진함 정도 / textInverse: 어두운 배경 위 글자 /
-/// profileGray·profileBlue: 프로필 색 GRAY·BLUE 의 동그라미 배경
+/// profileGray·profileBlue: 프로필 색 GRAY·BLUE 의 동그라미 배경 /
+/// grabber: 시트 맨 위 손잡이 / scrim: 시트 뒤 어두운 배경
 abstract final class MoaColors {
   static const page = Color(0xFFFFFFFF);
   static const fill = Color(0xFFF5F5F7);
@@ -18,6 +19,8 @@ abstract final class MoaColors {
   static const textInverse = Color(0xFFFFFFFF);
   static const profileGray = Color(0xFFD2D2D7);
   static const profileBlue = Color(0xFFB8D4F2);
+  static const grabber = Color(0xFFD2D2D7);
+  static const scrim = Color(0x8F000000);
 
   /// 삭제 등 위험 동작의 글자·아이콘 색이며 일반 오류 안내와 구분합니다.
   static const danger = Color(0xFFE30000);

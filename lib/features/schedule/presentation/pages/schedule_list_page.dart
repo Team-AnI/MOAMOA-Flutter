@@ -7,9 +7,11 @@ import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_create_mode.dart';
 import '../schedule_format.dart';
 import '../widgets/schedule_calendar.dart';
 import '../widgets/schedule_card.dart';
+import '../widgets/schedule_create_mode_sheet.dart';
 import '../widgets/schedule_event_tile.dart';
 
 /// 일정 화면들의 라우트 기본 경로입니다. 예: `/meetings/1/schedules`
@@ -45,6 +47,34 @@ class ScheduleListPage extends ConsumerStatefulWidget {
 class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
   bool _calendar = false;
 
+  /// 바로 만들지, 투표로 정할지 고른 뒤 해당 만들기 화면으로 이동합니다. 시트를 닫으면 그대로 둡니다.
+  Future<void> _selectCreateMode() async {
+    final mode = await showModalBottomSheet<ScheduleCreateMode>(
+      context: context,
+      backgroundColor: MoaColors.page,
+      barrierColor: MoaColors.scrim,
+      shape: const RoundedRectangleBorder(),
+      builder: (_) => const ScheduleCreateModeSheet(),
+    );
+    if (mode == null || !mounted) return;
+    switch (mode) {
+      case ScheduleCreateMode.direct:
+        context.push('${_basePath(widget.meetingId)}/new');
+      case ScheduleCreateMode.vote:
+        await _createByVote();
+    }
+  }
+
+  /// 투표 만들기 화면은 만든 일정 id 를 돌려주며 닫힙니다. 만들었을 때만 목록을 다시 불러옵니다.
+  /// 투표 쪽이 일정 Provider 를 알지 않도록 목록 갱신은 이 화면에서 합니다.
+  Future<void> _createByVote() async {
+    final createdScheduleId = await context.push<int>(
+      '/meetings/${widget.meetingId}/schedule-votes/new',
+    );
+    if (createdScheduleId == null || !mounted) return;
+    ref.invalidate(scheduleListProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     // 목록 탭으로 가서 캘린더 탭이 사라져도 보던 달/선택 날짜가 남도록 구독을 유지합니다.
@@ -57,7 +87,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
           children: [
             _Header(
               showAdd: ref.watch(scheduleAdminProvider),
-              onAdd: () => context.push('${_basePath(widget.meetingId)}/new'),
+              onAdd: _selectCreateMode,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
