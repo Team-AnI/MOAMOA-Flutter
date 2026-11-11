@@ -9,6 +9,13 @@ extension ScheduleDateFormatX on DateTime {
 
   /// 예: 9월 20일(일) 23:59
   String get fieldLabel => '$month월 $day일($weekdayKo) $hhmm';
+
+  /// 오전/오후와 12시간제 시각. 예: 오후 7:00, 오전 12:30(자정 30분)
+  String get meridiemTime {
+    final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+    final meridiem = hour < 12 ? '오전' : '오후';
+    return '$meridiem $hour12:${minute.toString().padLeft(2, '0')}';
+  }
 }
 
 /// 예: 2시간, 1시간 30분, 45분
