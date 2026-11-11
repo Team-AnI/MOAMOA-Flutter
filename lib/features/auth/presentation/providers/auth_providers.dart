@@ -9,6 +9,8 @@ import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
 import '../viewmodels/forgot_password_state.dart';
 import '../viewmodels/forgot_password_view_model.dart';
+import '../viewmodels/reset_password_state.dart';
+import '../viewmodels/reset_password_view_model.dart';
 
 // Data
 
@@ -39,4 +41,9 @@ final resetPasswordProvider = Provider<ResetPassword>(
 final forgotPasswordProvider =
     NotifierProvider.autoDispose<ForgotPasswordViewModel, ForgotPasswordState>(
       ForgotPasswordViewModel.new,
+    );
+
+final passwordResetProvider =
+    NotifierProvider.autoDispose<ResetPasswordViewModel, ResetPasswordState>(
+      ResetPasswordViewModel.new,
     );

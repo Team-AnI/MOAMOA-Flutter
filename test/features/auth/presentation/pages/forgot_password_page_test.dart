@@ -90,7 +90,7 @@ void main() {
       expect(find.text('잠시 후 다시 시도해주세요.'), findsOneWidget);
     });
 
-    testWidgets('보내는 중에는 버튼을 누를 수 없다', (tester) async {
+    testWidgets('보내는 중에는 버튼을 비활성화한다', (tester) async {
       repository.gate = Completer<void>();
       await pumpPage(tester);
 
