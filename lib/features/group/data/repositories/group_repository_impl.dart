@@ -22,7 +22,6 @@ class GroupRepositoryImpl implements GroupRepository {
 
   Future<T> _execute<T>(
     Future<T> Function() operation, {
-    bool isJoining = false,
     GroupFailureReason parseFailureReason = GroupFailureReason.unavailable,
   }) async {
     try {
@@ -42,29 +41,26 @@ class GroupRepositoryImpl implements GroupRepository {
                 400 => 'VALIDATION_ERROR',
                 _ => 'UNAVAILABLE',
               },
-        isJoining: isJoining,
       );
     } on FormatException {
       throw GroupFailure(parseFailureReason);
     } on TypeError {
       throw GroupFailure(parseFailureReason);
     } on GroupApiFailure catch (error) {
-      throw _failure(error.code, isJoining: isJoining);
+      throw _failure(error.code);
     }
   }
 
-  GroupFailure _failure(Object? code, {required bool isJoining}) =>
-      GroupFailure(switch (code) {
-        'UNAUTHORIZED' => GroupFailureReason.unauthorized,
-        'FORBIDDEN' => GroupFailureReason.forbidden,
-        'NOT_FOUND' when isJoining => GroupFailureReason.invalidCode,
-        'NOT_FOUND' => GroupFailureReason.notFound,
-        'CONFLICT' when isJoining => GroupFailureReason.alreadyJoined,
-        'VALIDATION_ERROR' ||
-        'INPUT_ERROR' ||
-        'MISSING_REQUIRED_VALUE' => GroupFailureReason.validation,
-        _ => GroupFailureReason.unavailable,
-      });
+  GroupFailure _failure(Object? code) => GroupFailure(switch (code) {
+    'UNAUTHORIZED' => GroupFailureReason.unauthorized,
+    'FORBIDDEN' => GroupFailureReason.forbidden,
+    'NOT_FOUND' => GroupFailureReason.notFound,
+    'CONFLICT' => GroupFailureReason.conflict,
+    'VALIDATION_ERROR' ||
+    'INPUT_ERROR' ||
+    'MISSING_REQUIRED_VALUE' => GroupFailureReason.validation,
+    _ => GroupFailureReason.unavailable,
+  });
 
   @override
   Future<Group> updateGroup({
@@ -79,16 +75,12 @@ class GroupRepositoryImpl implements GroupRepository {
         description: description,
       ),
     );
-    if (model.meetingId != groupId) throw const FormatException('모임 ID 불일치');
     return model.toEntity();
   });
 
   @override
   Future<void> deleteGroup({required int groupId}) => _execute(() async {
-    final returnedId = await _remoteDataSource.deleteGroup(
-      DeleteGroupRequest(meetingId: groupId),
-    );
-    if (returnedId != groupId) throw const FormatException('모임 ID 불일치');
+    await _remoteDataSource.deleteGroup(DeleteGroupRequest(meetingId: groupId));
   });
 
   @override
@@ -98,21 +90,13 @@ class GroupRepositoryImpl implements GroupRepository {
     final models = await _remoteDataSource.fetchMembers(
       GroupMembersRequest(meetingId: groupId),
     );
-    final ids = <int>{};
-    for (final model in models) {
-      if (model.memberId is! int ||
-          model.memberId <= 0 ||
-          !ids.add(model.memberId as int)) {
-        throw const FormatException('잘못되거나 중복된 구성원 ID');
-      }
-    }
     return models.map((model) => model.toEntity()).toList(growable: false);
   }, parseFailureReason: GroupFailureReason.invalidResponse);
 
   @override
   Future<List<CurrentGroup>> getMyGroups() => _execute(() async {
     final models = await _remoteDataSource.fetchMyGroups();
-    return models.map(_currentGroup).toList(growable: false);
+    return models.map((model) => model.toEntity()).toList(growable: false);
   });
 
   @override
@@ -122,37 +106,24 @@ class GroupRepositoryImpl implements GroupRepository {
           name: params.name,
           description: params.description,
         );
-        return _currentGroup(model, descriptionOverride: params.description);
+        return model.toEntity(descriptionOverride: params.description);
       });
 
   @override
   Future<CurrentGroup> joinGroup({required String inviteCode}) =>
       _execute(() async {
         final model = await _remoteDataSource.joinGroup(inviteCode);
-        return _currentGroup(model);
-      }, isJoining: true);
+        return model.toEntity();
+      });
 
   @override
   Future<CurrentGroup> getGroup(int groupId) => _execute(() async {
     final model = await _remoteDataSource.fetchGroup(groupId);
-    return _currentGroup(model);
+    return model.toEntity();
   });
 
   @override
   Future<String> getInviteCode({required int groupId}) => _execute(() async {
-    final code = await _remoteDataSource.fetchInviteCode(groupId);
-    if (code.isEmpty) throw const FormatException('잘못된 초대 코드');
-    return code;
+    return _remoteDataSource.fetchInviteCode(groupId);
   });
-
-  CurrentGroup _currentGroup(
-    MeetingModel model, {
-    String? descriptionOverride,
-  }) {
-    final count = model.memberCount;
-    if (count != null && (count is! int || count < 0)) {
-      throw const FormatException('잘못된 구성원 수');
-    }
-    return model.toEntity(descriptionOverride: descriptionOverride);
-  }
 }

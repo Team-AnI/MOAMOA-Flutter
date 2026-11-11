@@ -86,6 +86,19 @@ void main() {
       expect(container.read(groupMembersProvider(1)), reopened);
       expect(reopened.members.single.userName, '재진입');
     });
+    for (final (label, members) in [
+      ('0인 ID', [_member.copyWith(memberId: 0)]),
+      ('음수 ID', [_member.copyWith(memberId: -1)]),
+      ('중복 ID', [_member, _member]),
+    ]) {
+      test('$label 구성원 목록은 화면 실패 상태로 처리한다', () async {
+        fake.response = (_) async => members;
+        final state = await load();
+        expect(state.failureReason, GroupFailureReason.invalidResponse);
+        expect(state.members, isEmpty);
+        expect(state.canRetry, isFalse);
+      });
+    }
     test('서버 목록과 실제 개수를 표시 상태로 만든다', () async {
       final state = await load();
       expect(state.members, [_member]);

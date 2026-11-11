@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/current_group.dart';
+import '../viewmodels/group_display.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_list_menu.dart';
@@ -59,11 +60,8 @@ class GroupListSection extends StatelessWidget {
                           Text(current.group.name, style: GroupDesign.strong),
                           const SizedBox(height: 4),
                           Text(
-                            current.group.memberCount == null
-                                ? current.canViewInviteCode
-                                      ? '관리자'
-                                      : '구성원'
-                                : '구성원 ${current.group.memberCount}명',
+                            current.group.memberCountLabel ??
+                                (current.canViewInviteCode ? '관리자' : '구성원'),
                             style: GroupDesign.sub,
                           ),
                         ],

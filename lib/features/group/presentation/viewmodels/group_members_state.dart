@@ -17,6 +17,13 @@ abstract class GroupMembersState with _$GroupMembersState {
 }
 
 extension GroupMembersStateX on GroupMembersState {
+  bool get hasInvalidMemberIds {
+    final ids = <int>{};
+    return members.any(
+      (member) => member.memberId <= 0 || !ids.add(member.memberId),
+    );
+  }
+
   String get countLabel => '총 ${members.length}명';
   bool get hasFailed => failureReason != null;
   bool get canRetry => failureReason == GroupFailureReason.unavailable;

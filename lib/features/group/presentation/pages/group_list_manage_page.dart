@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/current_group.dart';
 import '../providers/group_list_preferences_provider.dart';
 import '../viewmodels/group_list_display_state.dart';
+import '../viewmodels/group_display.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
@@ -205,11 +206,8 @@ class _ManageSection extends ConsumerWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          if (current.group.memberCount != null)
-                            Text(
-                              '구성원 ${current.group.memberCount}명',
-                              style: GroupDesign.sub,
-                            ),
+                          if (current.group.memberCountLabel case final label?)
+                            Text(label, style: GroupDesign.sub),
                         ],
                       ),
                     ),

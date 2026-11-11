@@ -9,6 +9,6 @@ abstract class Group with _$Group {
     required int id,
     required String name,
     String? description,
-    int? memberCount,
+    num? memberCount,
   }) = _Group;
 }

@@ -30,7 +30,7 @@ extension MeetingModelX on MeetingModel {
       id: id,
       name: name,
       description: descriptionOverride ?? description,
-      memberCount: memberCount as int?,
+      memberCount: memberCount,
     ),
     membership: GroupMember(groupId: id, role: MemberRole.fromServer(role)),
   );

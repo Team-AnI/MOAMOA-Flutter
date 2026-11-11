@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
 import '../providers/group_providers.dart';
+import '../viewmodels/group_display.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
@@ -128,9 +129,7 @@ class GroupHomePage extends ConsumerWidget {
                                 ),
                                 const Spacer(),
                                 Text(
-                                  current.group.memberCount == null
-                                      ? '구성원'
-                                      : '${current.group.memberCount}명',
+                                  current.group.memberCountText ?? '구성원',
                                   style: GroupDesign.sub.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: current.canViewInviteCode

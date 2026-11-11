@@ -119,6 +119,11 @@ void main() {
         expect(result.last.profileColor, GroupProfileColor.dark);
       });
     }
+    test('식별자 값의 표시 가능 여부를 판단하지 않고 목록을 전달한다', () async {
+      respond([member(0), member(3), member(3)]);
+      final result = await repository.getMembersByGroupId(groupId: 1);
+      expect(result.map((member) => member.memberId), [0, 3, 3]);
+    });
     test('빈 배열은 빈 구성원 목록을 반환한다', () async {
       respond([]);
       expect(await repository.getMembersByGroupId(groupId: 1), isEmpty);
@@ -129,9 +134,7 @@ void main() {
       ('null 구성원', [null]),
       ('역할 누락', [member(3)..remove('role')]),
       ('숫자 역할', [member(3)..['role'] = 7]),
-      ('0인 구성원 ID', [member(0)]),
       ('실수 구성원 ID', [member(3)..['memberId'] = 1.5]),
-      ('중복 구성원 ID', [member(3), member(3)]),
       ('숫자 이름', [member(3)..['userName'] = 7]),
     ]) {
       test('$label 응답이면 응답 형식 사유의 GroupFailure 예외가 발생한다', () async {

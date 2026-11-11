@@ -4,6 +4,7 @@ enum GroupFailureReason {
   unauthorized,
   validation,
   alreadyJoined,
+  conflict,
   forbidden,
   unavailable,
   invalidResponse,

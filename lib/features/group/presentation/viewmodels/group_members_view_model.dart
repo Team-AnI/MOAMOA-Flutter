@@ -33,7 +33,13 @@ class GroupMembersViewModel extends Notifier<GroupMembersState> {
         GetGroupParams(groupId: _groupId),
       );
       if (!ref.mounted || requestId != _requestId) return;
-      state = GroupMembersState(members: members, hasLoaded: true);
+      final loaded = GroupMembersState(members: members, hasLoaded: true);
+      state = loaded.hasInvalidMemberIds
+          ? const GroupMembersState(
+              failureReason: GroupFailureReason.invalidResponse,
+              hasLoaded: true,
+            )
+          : loaded;
     } on GroupFailure catch (error) {
       if (!ref.mounted || requestId != _requestId) return;
       state = GroupMembersState(failureReason: error.reason, hasLoaded: true);
