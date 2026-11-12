@@ -104,10 +104,20 @@ class GroupViewModel extends Notifier<GroupState> {
   }
 
   Future<CurrentGroup?> join(String inviteCode) {
-    return _submit(
-      () =>
-          ref.read(joinGroupProvider)(JoinGroupParams(inviteCode: inviteCode)),
-    );
+    return _submit(() async {
+      try {
+        return await ref.read(joinGroupProvider)(
+          JoinGroupParams(inviteCode: inviteCode),
+        );
+      } on GroupFailure catch (error) {
+        // 서버 오류를 가입 화면의 안내 의미로 해석합니다.
+        throw GroupFailure(switch (error.reason) {
+          GroupFailureReason.notFound => GroupFailureReason.invalidCode,
+          GroupFailureReason.conflict => GroupFailureReason.alreadyJoined,
+          _ => error.reason,
+        });
+      }
+    });
   }
 
   Future<CurrentGroup?> _submit(Future<CurrentGroup> Function() action) async {
@@ -171,6 +181,9 @@ class GroupViewModel extends Notifier<GroupState> {
           description: changedDescription,
         ),
       );
+      if (updated.id != current.group.id) {
+        throw const GroupFailure(GroupFailureReason.invalidResponse);
+      }
       return current.copyWith(
         group: updated.copyWith(memberCount: current.group.memberCount),
       );
@@ -242,12 +255,14 @@ class GroupViewModel extends Notifier<GroupState> {
   String _message(Object error) {
     if (error is GroupFailure) {
       return switch (error.reason) {
+        GroupFailureReason.invalidResponse => '서버 응답을 표시할 수 없습니다.',
         GroupFailureReason.invalidCode => '유효하지 않은 초대 코드입니다.',
         GroupFailureReason.notFound => '모임을 찾을 수 없습니다. 목록을 새로고침해주세요.',
         GroupFailureReason.unauthorized => '로그인이 필요합니다.',
         GroupFailureReason.validation => '입력 내용을 확인해주세요.',
         GroupFailureReason.alreadyJoined => '이미 참여 중인 모임입니다.',
         GroupFailureReason.forbidden => '모임 관리자 권한이 필요합니다.',
+        GroupFailureReason.conflict ||
         GroupFailureReason.unavailable => '요청을 완료하지 못했습니다. 다시 시도해주세요.',
       };
     }

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Group {
 
- int get id; String get name; String? get description; int? get memberCount;
+ int get id; String get name; String? get description; num? get memberCount;
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,7 +46,7 @@ abstract mixin class $GroupCopyWith<$Res>  {
   factory $GroupCopyWith(Group value, $Res Function(Group) _then) = _$GroupCopyWithImpl;
 @useResult
 $Res call({
- int id, String name, String? description, int? memberCount
+ int id, String name, String? description, num? memberCount
 });
 
 
@@ -69,7 +69,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int?,
+as num?,
   ));
 }
 
@@ -154,7 +154,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  int? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  num? memberCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
 return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
@@ -175,7 +175,7 @@ return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  int? memberCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String name,  String? description,  num? memberCount)  $default,) {final _that = this;
 switch (_that) {
 case _Group():
 return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
@@ -195,7 +195,7 @@ return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  String? description,  int? memberCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String name,  String? description,  num? memberCount)?  $default,) {final _that = this;
 switch (_that) {
 case _Group() when $default != null:
 return $default(_that.id,_that.name,_that.description,_that.memberCount);case _:
@@ -216,7 +216,7 @@ class _Group implements Group {
 @override final  int id;
 @override final  String name;
 @override final  String? description;
-@override final  int? memberCount;
+@override final  num? memberCount;
 
 /// Create a copy of Group
 /// with the given fields replaced by the non-null parameter values.
@@ -248,7 +248,7 @@ abstract mixin class _$GroupCopyWith<$Res> implements $GroupCopyWith<$Res> {
   factory _$GroupCopyWith(_Group value, $Res Function(_Group) _then) = __$GroupCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String name, String? description, int? memberCount
+ int id, String name, String? description, num? memberCount
 });
 
 
@@ -271,7 +271,7 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,memberCount: freezed == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
-as int?,
+as num?,
   ));
 }
 

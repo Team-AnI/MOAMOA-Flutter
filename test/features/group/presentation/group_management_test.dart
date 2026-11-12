@@ -227,20 +227,21 @@ void main() {
       );
       expect(adapter.requests.single.data, isNull);
     });
-    for (final deleting in [true, false]) {
-      test('${deleting ? '삭제' : '수정'} 응답 ID가 다르면 실패한다', () async {
-        adapter.response = {
-          'success': true,
-          'data': {'meetingId': 2, 'name': '다른 모임'},
-        };
-        await expectLater(
-          deleting
-              ? repository.deleteGroup(groupId: 1)
-              : repository.updateGroup(groupId: 1, name: '새 이름'),
-          throwsA(isA<GroupFailure>()),
-        );
-      });
-    }
+    test('수정 응답의 ID를 화면 상태에 적용할 수 있도록 그대로 전달한다', () async {
+      adapter.response = {
+        'success': true,
+        'data': {'meetingId': 2, 'name': '다른 모임'},
+      };
+      expect((await repository.updateGroup(groupId: 1, name: '새 이름')).id, 2);
+    });
+    test('삭제 성공 응답의 ID로 추가 실패를 만들지 않는다', () async {
+      adapter.response = {
+        'success': true,
+        'data': {'meetingId': 2},
+      };
+      await repository.deleteGroup(groupId: 1);
+      expect(adapter.requests.single.method, 'DELETE');
+    });
     for (final status in {
       401: GroupFailureReason.unauthorized,
       403: GroupFailureReason.forbidden,
@@ -317,6 +318,19 @@ void main() {
   });
 
   group('GroupViewModel', () {
+    test('수정 응답이 다른 모임이면 기존 목록과 선택 모임을 유지한다', () async {
+      final previous = container.read(groupProvider);
+      fake.pendingUpdate = Completer<Group>()
+        ..complete(const Group(id: 2, name: '다른 모임'));
+      final result = await container
+          .read(groupProvider.notifier)
+          .update(name: '새 이름', description: '소개');
+      final state = container.read(groupProvider);
+      expect(result, isNull);
+      expect(state.groups, previous.groups);
+      expect(state.currentGroup, previous.currentGroup);
+      expect(state.failureReason, GroupFailureReason.invalidResponse);
+    });
     test('20자 이름은 저장할 수 있다', () async {
       await container
           .read(groupProvider.notifier)

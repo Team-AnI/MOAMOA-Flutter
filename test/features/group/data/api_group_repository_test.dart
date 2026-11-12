@@ -53,7 +53,7 @@ void main() {
   });
   tearDown(() => dio.close());
 
-  test('알 수 없는 역할 항목을 제외해도 정상 모임은 조회된다', () async {
+  test('새 역할의 모임도 누락 없이 조회하고 관리자 권한을 제한한다', () async {
     adapter.response = {
       'success': true,
       'data': {
@@ -64,13 +64,15 @@ void main() {
       },
     };
     final groups = await repository.getMyGroups();
-    expect(groups.map((e) => e.group.id), [1]);
+    expect(groups.map((e) => e.group.id), [1, 2]);
+    expect(groups.last.membership.role, MemberRole.unknown);
+    expect(groups.last.canManageGroup, isFalse);
   });
   for (final entry in {
     401: GroupFailureReason.unauthorized,
     403: GroupFailureReason.forbidden,
-    404: GroupFailureReason.invalidCode,
-    409: GroupFailureReason.alreadyJoined,
+    404: GroupFailureReason.notFound,
+    409: GroupFailureReason.conflict,
     502: GroupFailureReason.unavailable,
   }.entries) {
     test('오류 코드 없는 HTTP ${entry.key}도 상태 코드로 분류한다', () async {
@@ -106,7 +108,7 @@ void main() {
     });
   }
 
-  test('목록의 생략된 소개는 null이며 음수 구성원 수는 거부한다', () async {
+  test('목록의 생략된 소개와 구성원 수 원문을 유지한다', () async {
     adapter.response = {
       'success': true,
       'data': {
@@ -124,7 +126,27 @@ void main() {
         ],
       },
     };
-    await expectLater(repository.getMyGroups(), throwsA(isA<GroupFailure>()));
+    expect((await repository.getMyGroups()).single.group.memberCount, -1);
+  });
+
+  test('초대 코드 빈 문자열은 화면이 판단하도록 그대로 전달한다', () async {
+    adapter.response = {
+      'success': true,
+      'data': {'inviteCode': ''},
+    };
+    expect(await repository.getInviteCode(groupId: 1), '');
+  });
+  test('소수 구성원 수도 데이터를 임의로 변경하지 않고 전달한다', () async {
+    adapter.response = {
+      'success': true,
+      'data': {
+        'meetingId': 1,
+        'name': '모임',
+        'myRole': 'MEMBER',
+        'memberCount': 1.5,
+      },
+    };
+    expect((await repository.getGroup(1)).group.memberCount, 1.5);
   });
 
   test('생성은 선택 소개를 생략하고 ADMIN 응답을 사용한다', () async {
@@ -200,8 +222,8 @@ void main() {
   });
 
   for (final entry in {
-    'NOT_FOUND': GroupFailureReason.invalidCode,
-    'CONFLICT': GroupFailureReason.alreadyJoined,
+    'NOT_FOUND': GroupFailureReason.notFound,
+    'CONFLICT': GroupFailureReason.conflict,
     'UNAUTHORIZED': GroupFailureReason.unauthorized,
     'FORBIDDEN': GroupFailureReason.forbidden,
     'VALIDATION_ERROR': GroupFailureReason.validation,
@@ -235,7 +257,13 @@ void main() {
       'success': true,
       'data': {'meetingId': 1, 'name': '러닝', 'myRole': 'OWNER'},
     };
-    await expectLater(repository.getGroup(1), throwsA(isA<GroupFailure>()));
+    final current = await repository.getGroup(1);
+    expect(current.membership.role, MemberRole.unknown);
+    expect(current.canManageGroup, isFalse);
+    expect(current.canWriteNotices, isFalse);
+    expect(current.canCreateSchedules, isFalse);
+    expect(current.canConfirmSchedules, isFalse);
+    expect(current.canViewInviteCode, isFalse);
   });
 
   test('잘못된 envelope는 오류 처리한다', () async {
