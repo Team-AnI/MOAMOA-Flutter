@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
+import 'package:moamoa/features/vote/presentation/vote_routes.dart';
 
 import '../providers/schedule_providers.dart';
 import '../schedule_create_mode.dart';
 import '../schedule_format.dart';
+import '../schedule_id.dart';
 import '../widgets/schedule_calendar.dart';
 import '../widgets/schedule_card.dart';
 import '../widgets/schedule_create_mode_sheet.dart';
@@ -25,6 +27,29 @@ ScheduleListRequest _monthRequest(int meetingId, DateTime month) =>
       startDate: month,
       endDate: DateTime(month.year, month.month + 1, 0),
     );
+
+/// 일정을 엽니다. 투표 중인 일정은 투표 화면으로 가고, 그 밖의 일정은 상세로 갑니다.
+/// 투표 화면에서 확정하고 돌아오면(true) 일정 목록·상세를 다시 불러옵니다.
+/// 투표 쪽이 일정 Provider 를 알지 않도록 갱신은 이 화면에서 합니다.
+Future<void> _openSchedule(
+  BuildContext context,
+  WidgetRef ref,
+  int meetingId,
+  Schedule schedule,
+) async {
+  if (!schedule.isVoting) {
+    context.push('${_basePath(meetingId)}/${schedule.id}');
+    return;
+  }
+  final confirmed = await context.push<bool>(votePath(meetingId, schedule.id));
+  if (confirmed != true || !context.mounted) return;
+  ref.invalidate(scheduleListProvider);
+  ref.invalidate(
+    scheduleDetailProvider(
+      ScheduleId(meetingId: meetingId, scheduleId: schedule.id),
+    ),
+  );
+}
 
 /// 일정 탭 화면. 위에서부터 다음 순서로 구성됩니다.
 ///
@@ -69,7 +94,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
   /// 투표 쪽이 일정 Provider 를 알지 않도록 목록 갱신은 이 화면에서 합니다.
   Future<void> _createByVote() async {
     final createdScheduleId = await context.push<int>(
-      '/meetings/${widget.meetingId}/schedule-votes/new',
+      voteCreatePath(widget.meetingId),
     );
     if (createdScheduleId == null || !mounted) return;
     ref.invalidate(scheduleListProvider);
@@ -111,7 +136,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
 /// 목록 탭: 지난 3개월 ~ 앞으로 1년의 일정을 시작 일시 순으로 카드로 보여줍니다.
 ///
 /// 불러오는 중에는 로딩 표시, 실패하면 "다시 시도" 버튼이 있는 안내, 일정이 없으면 빈 안내를 보여줍니다.
-/// 카드를 누르면 일정 상세 화면으로 이동합니다.
+/// 카드를 누르면 일정 상세 화면(투표 중이면 투표 화면)으로 이동합니다.
 class _ListTab extends ConsumerWidget {
   const _ListTab({required this.meetingId});
 
@@ -139,8 +164,7 @@ class _ListTab extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (_, i) => ScheduleCard(
                 schedule: list[i],
-                onTap: () =>
-                    context.push('${_basePath(meetingId)}/${list[i].id}'),
+                onTap: () => _openSchedule(context, ref, meetingId, list[i]),
               ),
             ),
       error: (_, _) => _Message(
@@ -247,7 +271,7 @@ class _SelectedDaySchedules extends ConsumerWidget {
         for (final s in events)
           ScheduleEventTile(
             schedule: s,
-            onTap: () => context.push('${_basePath(meetingId)}/${s.id}'),
+            onTap: () => _openSchedule(context, ref, meetingId, s),
           ),
       ],
     );
