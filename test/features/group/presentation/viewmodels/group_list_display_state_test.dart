@@ -36,7 +36,7 @@ void main() {
       final archived = state.copyWith(
         preferences: const GroupListPreferences(archivedIds: [5]),
       );
-      expect(ids(archived.archivedMemberGroups), [5]);
+      expect(ids(archived.archivedGroups), [5]);
     });
 
     test('고정 모임을 역할별 기본 목록 앞에 두고 관리 목록은 지정 순서를 유지한다', () {
