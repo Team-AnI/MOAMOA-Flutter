@@ -16,6 +16,7 @@ abstract final class GroupDesign {
   static const darkRaised = Color(0xff272729);
   static const placeholder = Color(0xffd2d2d7);
   static const shadow = Color(0x14000000);
+
   static const title = TextStyle(
     fontFamily: 'Pretendard',
     fontSize: 26,
@@ -46,6 +47,16 @@ abstract final class GroupDesign {
     height: 1.41,
     letterSpacing: -.3,
     color: ink,
+  );
+
+  /// Figma Moa4/tab.
+  static const tab = TextStyle(
+    fontFamily: 'Pretendard',
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    height: 1.27,
+    letterSpacing: 0,
+    color: muted,
   );
   static const caption = TextStyle(
     fontFamily: 'Pretendard',
