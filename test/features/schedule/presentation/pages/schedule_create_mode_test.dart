@@ -55,7 +55,7 @@ void main() {
         retry: (_, _) => null,
         overrides: [
           scheduleRepositoryProvider.overrideWithValue(repository),
-          scheduleAdminProvider.overrideWithValue(true),
+          scheduleAdminProvider.overrideWith((ref, meetingId) => true),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),

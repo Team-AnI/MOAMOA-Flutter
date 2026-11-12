@@ -86,7 +86,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
         child: Column(
           children: [
             _Header(
-              showAdd: ref.watch(scheduleAdminProvider),
+              showAdd: ref.watch(scheduleAdminProvider(widget.meetingId)),
               onAdd: _selectCreateMode,
             ),
             Padding(

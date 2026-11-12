@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
 import 'package:moamoa/features/schedule/domain/repositories/schedule_repository.dart';
@@ -55,10 +57,14 @@ final deleteScheduleProvider = Provider<DeleteSchedule>(
   ),
 );
 
-/// 현재 사용자가 이 모임의 관리자인지 알려줍니다.
-/// 권한 정보가 연동되기 전에는 관리자가 아닌 것으로 보고 일정 만들기 버튼을 숨깁니다.
-/// TODO(#29): 모임 상세 응답의 myRole 로 교체합니다.
-final scheduleAdminProvider = Provider<bool>((ref) => false);
+/// 이 모임에서 내가 일정을 만들고 고칠 수 있는지(관리자인지) 알려줍니다. 인자는 모임 id 입니다.
+/// 역할을 아직 모르거나 불러오지 못했으면 false 로 보고 만들기·수정·취소 버튼을 숨깁니다.
+/// 최종 권한 확인은 서버가 합니다.
+final scheduleAdminProvider = Provider.autoDispose.family<bool, int>(
+  (ref, meetingId) =>
+      ref.watch(groupMyRoleProvider(meetingId)).value?.canCreateSchedules ??
+      false,
+);
 
 final scheduleListProvider =
     AsyncNotifierProvider.family<

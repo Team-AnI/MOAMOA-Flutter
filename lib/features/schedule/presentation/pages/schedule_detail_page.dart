@@ -113,7 +113,9 @@ class _EditButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
+    if (!ref.watch(scheduleAdminProvider(id.meetingId))) {
+      return const SizedBox.shrink();
+    }
     final isCancelling = ref.watch(
       scheduleDeleteProvider(id)
           .select((s) => s.status == ScheduleDeleteStatus.submitting),
@@ -351,7 +353,9 @@ class _CancelButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!ref.watch(scheduleAdminProvider)) return const SizedBox.shrink();
+    if (!ref.watch(scheduleAdminProvider(id.meetingId))) {
+      return const SizedBox.shrink();
+    }
     final isCancelling = ref.watch(
       scheduleDeleteProvider(id)
           .select((s) => s.status == ScheduleDeleteStatus.submitting),
