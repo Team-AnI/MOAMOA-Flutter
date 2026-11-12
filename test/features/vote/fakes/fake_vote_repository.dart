@@ -18,9 +18,18 @@ class FakeVoteRepository implements VoteRepository {
   /// 지정하면 투표 만들기가 이 Completer 가 끝날 때까지 기다립니다. (제출 중 상태 확인용)
   Completer<int>? createCompleter;
 
+  /// 지정하면 일정 확정이 이 Completer 가 끝날 때까지 기다립니다. (확정 중 상태 확인용)
+  Completer<void>? confirmCompleter;
+
+  /// 지정하면 일정 확정만 이 예외를 던집니다. (조회는 성공하는 상황)
+  Object? confirmError;
+
   final List<Map<String, Object?>> createCalls = [];
   final List<Map<String, Object?>> submitCalls = [];
   final List<Map<String, Object?>> confirmCalls = [];
+
+  /// 투표 조회를 요청받은 횟수 (다시 불러오는지 확인용)
+  int getVoteCallCount = 0;
 
   @override
   Future<int> createVote({
@@ -45,6 +54,7 @@ class FakeVoteRepository implements VoteRepository {
     required int meetingId,
     required int scheduleId,
   }) async {
+    getVoteCallCount++;
     if (error != null) throw error!;
     return vote!;
   }
@@ -83,6 +93,7 @@ class FakeVoteRepository implements VoteRepository {
       'scheduleId': scheduleId,
       'meetingTime': meetingTime,
     });
-    if (error != null) throw error!;
+    if ((error ?? confirmError) case final e?) throw e;
+    await confirmCompleter?.future;
   }
 }
