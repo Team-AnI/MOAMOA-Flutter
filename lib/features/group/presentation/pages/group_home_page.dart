@@ -8,7 +8,7 @@ import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
 
-/// 일정·공지·회비 영역은 담당 기능에서 연결합니다.
+/// 선택한 모임의 일정·공지 목록으로 이동하는 모임 홈입니다.
 class GroupHomePage extends ConsumerWidget {
   const GroupHomePage({super.key});
 
@@ -27,7 +27,9 @@ class GroupHomePage extends ConsumerWidget {
               child: Row(
                 children: [
                   _HeaderButton(
-                    icon: 'back',
+                    icon: 'home_back',
+                    size: 36,
+                    iconSize: 18,
                     label: '내 모임 목록',
                     onPressed: () => context.go('/groups'),
                   ),
@@ -36,6 +38,12 @@ class GroupHomePage extends ConsumerWidget {
                     name: current?.group.name ?? '',
                     size: 36,
                     photo: null,
+                    backgroundColor: GroupDesign.darkRaised,
+                    cornerRadius: 12,
+                    textStyle: GroupDesign.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -47,11 +55,11 @@ class GroupHomePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const _HeaderButton(icon: 'bell', label: '알림 · 준비 중'),
+                  const _HeaderButton(icon: 'home_bell', label: '알림 · 준비 중'),
                   if (current?.canManageGroup ?? false) ...[
                     const SizedBox(width: 8),
                     _HeaderButton(
-                      icon: 'gear',
+                      icon: 'home_gear',
                       label: '모임 설정',
                       onPressed: () => context.push('/groups/settings'),
                     ),
@@ -156,7 +164,11 @@ class _HeaderButton extends StatelessWidget {
     required this.icon,
     required this.label,
     this.onPressed,
+    this.size = 40,
+    this.iconSize = 20,
   });
+  final double size;
+  final double iconSize;
   final String icon;
   final String label;
   final VoidCallback? onPressed;
@@ -165,64 +177,114 @@ class _HeaderButton extends StatelessWidget {
   Widget build(BuildContext context) => Tooltip(
     message: label,
     child: SizedBox(
-      width: 40,
-      height: 40,
+      width: size,
+      height: size,
       child: IconButton(
         style: IconButton.styleFrom(
           backgroundColor: GroupDesign.fill,
           disabledBackgroundColor: GroupDesign.fill,
         ),
         onPressed: onPressed,
-        icon: GroupIcon(icon, size: 20),
+        icon: GroupIcon(icon, size: iconSize),
       ),
     ),
   );
 }
 
-class _HomeTabs extends StatelessWidget {
+class _HomeTabs extends ConsumerWidget {
   const _HomeTabs();
+
   @override
-  Widget build(BuildContext context) => Container(
-    height: 64,
-    decoration: const BoxDecoration(
-      border: Border(top: BorderSide(color: GroupDesign.fill)),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 8),
-    child: Row(
-      children: [
-        for (final tab in const [
-          ('home', '홈'),
-          ('home_calendar', '일정'),
-          ('home_megaphone', '공지'),
-          ('wallet', '회비'),
-          ('user', '내 정보'),
-        ])
-          Expanded(
-            child: Tooltip(
-              message: tab.$2 == '홈' ? '홈' : '${tab.$2} · 준비 중',
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GroupIcon(
-                    tab.$1,
-                    size: 24,
-                    color: tab.$2 == '홈' ? GroupDesign.ink : GroupDesign.muted,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    tab.$2,
-                    style: GroupDesign.caption.copyWith(
-                      fontSize: 11,
-                      color: tab.$2 == '홈'
-                          ? GroupDesign.ink
-                          : GroupDesign.muted,
-                    ),
-                  ),
-                ],
-              ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupId = ref.watch(
+      groupProvider.select((state) => state.currentGroup?.group.id),
+    );
+    return Container(
+      height: 64,
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: GroupDesign.fill)),
+      ),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      child: Row(
+        children: [
+          const _HomeTab(icon: 'home', label: '홈', isSelected: true),
+          _HomeTab(
+            icon: 'home_calendar',
+            label: '일정',
+            groupId: groupId,
+            routeSegment: 'schedules',
+          ),
+          _HomeTab(
+            icon: 'home_megaphone',
+            label: '공지',
+            groupId: groupId,
+            routeSegment: 'notices',
+          ),
+          const _HomeTab(icon: 'wallet', label: '회비'),
+          const _HomeTab(icon: 'home_user', label: '내 정보'),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeTab extends StatelessWidget {
+  const _HomeTab({
+    required this.icon,
+    required this.label,
+    this.groupId,
+    this.routeSegment,
+    this.isSelected = false,
+  });
+
+  final String icon;
+  final String label;
+  final int? groupId;
+  final String? routeSegment;
+  final bool isSelected;
+
+  Color get foregroundColor => isSelected ? GroupDesign.ink : GroupDesign.muted;
+
+  bool get canNavigate => groupId != null && routeSegment != null;
+
+  bool get isEnabled => isSelected || canNavigate;
+
+  String get tooltip {
+    if (isSelected) return label;
+    if (routeSegment == null) return '$label · 준비 중';
+    return groupId == null ? '모임을 선택해주세요' : label;
+  }
+
+  VoidCallback? _onTap(BuildContext context) {
+    if (!canNavigate) return null;
+    return () => context.push('/meetings/$groupId/$routeSegment');
+  }
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Semantics(
+      button: true,
+      selected: isSelected,
+      enabled: isEnabled,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: _onTap(context),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GroupIcon(icon, size: 24, color: foregroundColor),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  style: GroupDesign.tab.copyWith(color: foregroundColor),
+                ),
+              ],
             ),
           ),
-      ],
+        ),
+      ),
     ),
   );
 }
