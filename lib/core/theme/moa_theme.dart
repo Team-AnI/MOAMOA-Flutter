@@ -19,14 +19,28 @@ abstract final class MoaColors {
   static const profileGray = Color(0xFFD2D2D7);
   static const profileBlue = Color(0xFFB8D4F2);
 
-  /// 위험 동작의 글자와 연한 배경. 일반 오류 안내(error)와 구분합니다.
+  /// 삭제 등 위험 동작의 글자·아이콘 색이며 일반 오류 안내와 구분합니다.
   static const danger = Color(0xFFE30000);
+
+  /// 위험 동작 버튼·안내에 사용하는 연한 배경입니다.
   static const dangerTint = Color(0xFFFDECEC);
+
+  /// 팝업·바텀시트 뒤 화면을 어둡게 덮는 배경입니다.
   static const barrier = Color(0x8F000000);
+
+  /// 어두운 배경의 보조 글자와 입력칸의 힌트 글자입니다.
   static const onDarkSecondary = Color(0xFFCCCCCC);
+
+  /// 초대 코드 카드의 복사 버튼처럼 어두운 요소의 배경입니다.
   static const darkFill = Color(0xFF38383A);
+
+  /// 모임 진입 선택 카드의 어두운 아이콘 영역 배경입니다.
   static const darkRaised = Color(0xFF272729);
+
+  /// 비활성 진행 표시와 바텀시트 손잡이 같은 보조 표시 색입니다.
   static const placeholder = Color(0xFFD2D2D7);
+
+  /// 사진 선택·추가 요소 아래에 드리우는 옅은 그림자입니다.
   static const shadow = Color(0x14000000);
 
   /// 디자인에 없는 값. 오류 문구에 임시로 사용합니다.

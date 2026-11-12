@@ -41,15 +41,20 @@ void main() {
       expect(GroupDesign.tint, MoaColors.accentTint);
     });
 
-    test('위험 동작과 스크림은 기존 값을 보존하고 오류 안내 색과 구분한다', () {
+    test('위험 동작과 스크림은 기존 색 값을 보존한다', () {
       expect(GroupDesign.danger, MoaColors.danger);
       expect(MoaColors.danger, const Color(0xffe30000));
       expect(GroupDesign.dangerTint, MoaColors.dangerTint);
       expect(MoaColors.dangerTint, const Color(0xfffdecec));
       expect(GroupDesign.barrier, MoaColors.barrier);
       expect(MoaColors.barrier, const Color(0x8f000000));
+    });
+
+    test('오류 안내 색은 위험 동작 색과 다른 값을 쓴다', () {
       expect(MoaColors.error, const Color(0xffd92d20));
       expect(NoticeColors.error, const Color(0xfff04452));
+      expect(MoaColors.error, isNot(MoaColors.danger));
+      expect(NoticeColors.error, isNot(MoaColors.danger));
     });
 
     test('어두운 배경과 보조 요소의 공통 토큰은 모임의 기존 색 값을 보존한다', () {
