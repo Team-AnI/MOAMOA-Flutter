@@ -23,6 +23,22 @@ void main() {
     List<int> ids(List<CurrentGroup> values) =>
         values.map((g) => g.group.id).toList();
 
+    test('알 수 없는 역할의 모임은 참여 목록에 유지하고 더보기에서 역할을 구분한다', () {
+      final current = _group(5, MemberRole.unknown);
+      final state = GroupListDisplayState(
+        source: GroupState(groups: [...groups, current]),
+        preferences: const GroupListPreferences(),
+      );
+      expect(ids(state.memberGroups), [2, 4, 5]);
+      expect(ids(state.manageMemberGroups), [2, 4, 5]);
+      expect(state.menuSubtitle(current), '알 수 없는 역할');
+      expect(current.canManageGroup, isFalse);
+      final archived = state.copyWith(
+        preferences: const GroupListPreferences(archivedIds: [5]),
+      );
+      expect(ids(archived.archivedGroups), [5]);
+    });
+
     test('고정 모임을 역할별 기본 목록 앞에 두고 관리 목록은 지정 순서를 유지한다', () {
       final state = GroupListDisplayState(
         source: GroupState(groups: groups),

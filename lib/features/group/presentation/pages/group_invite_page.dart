@@ -46,9 +46,9 @@ class _GroupInvitePageState extends ConsumerState<GroupInvitePage> {
     final code = await ref.read(groupProvider.notifier).getInviteCode();
     if (!mounted) return;
     setState(() {
-      _code = code;
+      _code = code == null || code.trim().isEmpty ? null : code;
       _loading = false;
-      _error = code == null
+      _error = _code == null
           ? ref.read(groupProvider).errorMessage ?? '초대 코드를 불러오지 못했습니다.'
           : null;
     });

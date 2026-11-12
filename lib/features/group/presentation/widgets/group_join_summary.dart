@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/group.dart';
+import '../viewmodels/group_display.dart';
 import 'group_design.dart';
 import 'group_icon.dart';
 import 'group_mark.dart';
@@ -51,7 +52,7 @@ class GroupJoinSummary extends StatelessWidget {
             ),
             _SummaryRow(
               icon: 'users',
-              title: '구성원 ${group.memberCount ?? 0}명',
+              title: group.memberCountLabel ?? '구성원',
               subtitle: '가입하면 일반 구성원으로 참여해요.',
             ),
             const SizedBox(height: 16),

@@ -63,6 +63,20 @@ void main() {
     );
   });
 
+  test('서버의 새 역할은 알 수 없는 역할로 변환하고 모든 관리자 권한을 제한한다', () {
+    expect(MemberRole.fromServer('ADMIN'), MemberRole.admin);
+    expect(MemberRole.fromServer('MEMBER'), MemberRole.member);
+    for (final value in ['OWNER', 'MODERATOR', '']) {
+      final role = MemberRole.fromServer(value);
+      expect(role, MemberRole.unknown);
+      expect(role.canManageGroup, isFalse);
+      expect(role.canWriteNotices, isFalse);
+      expect(role.canCreateSchedules, isFalse);
+      expect(role.canConfirmSchedules, isFalse);
+      expect(role.canViewInviteCode, isFalse);
+    }
+  });
+
   test('역할이 관리자이면 공지·일정 관리 권한을 허용하고 구성원이면 거부한다', () {
     expect(MemberRole.admin.canWriteNotices, isTrue);
     expect(MemberRole.admin.canCreateSchedules, isTrue);

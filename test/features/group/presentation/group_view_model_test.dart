@@ -133,4 +133,14 @@ void main() {
     );
     expect(container.read(groupProvider).currentGroup, same(group));
   });
+  for (final entry in {
+    GroupFailureReason.notFound: GroupFailureReason.invalidCode,
+    GroupFailureReason.conflict: GroupFailureReason.alreadyJoined,
+  }.entries) {
+    test('가입 화면에서 서버 오류를 안내 상태로 해석한다 ${entry.key}', () async {
+      repository.joinFailure = GroupFailure(entry.key);
+      expect(await container.read(groupProvider.notifier).join('CODE'), isNull);
+      expect(container.read(groupProvider).failureReason, entry.value);
+    });
+  }
 }

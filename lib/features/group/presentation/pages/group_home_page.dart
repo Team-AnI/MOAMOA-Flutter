@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/current_group.dart';
 import '../providers/group_providers.dart';
+import '../viewmodels/group_display.dart';
 import '../widgets/group_design.dart';
 import '../widgets/group_icon.dart';
 import '../widgets/group_mark.dart';
@@ -84,23 +85,25 @@ class GroupHomePage extends ConsumerWidget {
                                 child: Text('구성원', style: GroupDesign.heading),
                               ),
                               Tooltip(
-                                message: '구성원 목록은 추후 연결됩니다.',
+                                message: '구성원 목록',
                                 child: TextButton(
-                                  onPressed: null,
+                                  onPressed: () => context.push(
+                                    '/groups/${current.group.id}/members',
+                                  ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         '전체 보기',
                                         style: GroupDesign.sub.copyWith(
-                                          color: GroupDesign.muted,
+                                          color: GroupDesign.secondary,
                                         ),
                                       ),
                                       const SizedBox(width: 2),
                                       const GroupIcon(
                                         'chevron',
                                         size: 14,
-                                        color: GroupDesign.muted,
+                                        color: GroupDesign.secondary,
                                       ),
                                     ],
                                   ),
@@ -134,9 +137,7 @@ class GroupHomePage extends ConsumerWidget {
                                 ),
                                 const Spacer(),
                                 Text(
-                                  current.group.memberCount == null
-                                      ? '구성원'
-                                      : '${current.group.memberCount}명',
+                                  current.group.memberCountText ?? '구성원',
                                   style: GroupDesign.sub.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: current.canViewInviteCode
