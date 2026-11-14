@@ -9,6 +9,7 @@ import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
+import '../models/mark_notice_read_request.dart';
 import '../models/notice_list_model.dart';
 import '../models/notice_model.dart';
 import '../models/update_notice_request.dart';
@@ -89,6 +90,15 @@ class NoticeRepositoryImpl implements NoticeRepository {
     return _guard(
       () => _noticeRemoteDataSource.deleteNotice(
         DeleteNoticeRequest(meetingId: meetingId, noticeId: noticeId),
+      ),
+    );
+  }
+
+  @override
+  Future<void> markNoticeRead({required int meetingId, required int noticeId}) {
+    return _guard(
+      () => _noticeRemoteDataSource.markNoticeRead(
+        MarkNoticeReadRequest(meetingId: meetingId, noticeId: noticeId),
       ),
     );
   }

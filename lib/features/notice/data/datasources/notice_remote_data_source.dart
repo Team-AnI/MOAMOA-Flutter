@@ -2,6 +2,7 @@ import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
 import '../models/fetch_notice_detail_request.dart';
 import '../models/fetch_notices_request.dart';
+import '../models/mark_notice_read_request.dart';
 import '../models/notice_list_model.dart';
 import '../models/notice_model.dart';
 import '../models/update_notice_request.dart';
@@ -22,4 +23,7 @@ abstract interface class NoticeRemoteDataSource {
 
   /// DELETE /v1/meetings/{meetingId}/notices/{noticeId}
   Future<void> deleteNotice(DeleteNoticeRequest request);
+
+  /// PUT /v1/meetings/{meetingId}/notices/{noticeId}/reads/me
+  Future<void> markNoticeRead(MarkNoticeReadRequest request);
 }

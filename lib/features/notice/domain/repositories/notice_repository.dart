@@ -35,4 +35,7 @@ abstract interface class NoticeRepository {
 
   /// 3-5 공지 삭제
   Future<void> deleteNotice({required int meetingId, required int noticeId});
+
+  /// 3-6 공지 읽음 처리. 여러 번 호출해도 처음 읽은 시각이 유지됩니다.
+  Future<void> markNoticeRead({required int meetingId, required int noticeId});
 }
