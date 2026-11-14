@@ -196,7 +196,13 @@ void main() {
   testWidgets('취소된 정산에서 완납한 구성원에게만 환불 완료 기록을 보여준다', (tester) async {
     final canceled = detail.copyWith(
       status: SettlementStatus.canceled,
-      summary: detail.summary.copyWith(pendingCount: 0, paidCount: 1),
+      summary: detail.summary.copyWith(
+        totalCount: 1,
+        unpaidCount: 0,
+        pendingCount: 0,
+        paidCount: 1,
+        paidAmount: 15000,
+      ),
       payments: const [
         SettlementPayment(
           id: 82,
@@ -207,16 +213,18 @@ void main() {
         ),
       ],
     );
+    final boundary = GlobalKey();
     await open(
       tester,
       const SettlementDetailPage(meetingId: 7, settlementId: 40),
       role: MemberRole.admin,
-      boundary: GlobalKey(),
+      boundary: boundary,
       detailOverride: canceled,
     );
     await tester.scrollUntilVisible(find.text('환불 완료 기록'), 180);
     expect(find.text('환불 완료 기록'), findsOneWidget);
     expect(find.text('정산 취소'), findsNothing);
+    await _capture(tester, boundary, 'settlement-detail-refund');
   });
 }
 
