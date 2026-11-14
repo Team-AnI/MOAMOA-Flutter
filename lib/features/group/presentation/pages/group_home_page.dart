@@ -221,7 +221,12 @@ class _HomeTabs extends ConsumerWidget {
             groupId: groupId,
             routeSegment: 'notices',
           ),
-          const _HomeTab(icon: 'wallet', label: '회비'),
+          _HomeTab(
+            icon: 'wallet',
+            label: '회비',
+            groupId: groupId,
+            routeSegment: 'settlements',
+          ),
           const _HomeTab(icon: 'home_user', label: '내 정보'),
         ],
       ),
