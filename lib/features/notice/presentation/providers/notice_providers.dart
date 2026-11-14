@@ -7,6 +7,7 @@ import '../../data/datasources/notice_remote_data_source.dart';
 import '../../data/datasources/notice_remote_data_source_impl.dart';
 import '../../data/repositories/notice_repository_impl.dart';
 import '../../domain/entities/notice.dart';
+import '../../domain/entities/notice_detail_request.dart';
 import '../../domain/repositories/notice_repository.dart';
 import '../../domain/usecases/create_notice.dart';
 import '../../domain/usecases/delete_notice.dart';
@@ -75,21 +76,21 @@ final noticeListProvider = AsyncNotifierProvider.autoDispose
     );
 
 final noticeDetailProvider = AsyncNotifierProvider.autoDispose
-    .family<NoticeDetailViewModel, Notice, NoticeDetailArgs>(
-      (args) => NoticeDetailViewModel(args: args),
+    .family<NoticeDetailViewModel, Notice, NoticeDetailRequest>(
+      (request) => NoticeDetailViewModel(request: request),
     );
 
-/// 공지를 읽음으로 기록합니다. (3-6, family 인자: 공지 상세 인자)
+/// 공지를 읽음으로 기록합니다. (3-6, family 인자: 공지 상세와 같은 [NoticeDetailRequest])
 ///
 /// 상세 화면이 공지를 보여줄 수 있을 때 구독합니다. 화면이 열려 있는 동안에는 한 번만 보내고,
 /// 화면을 닫으면 정리되어 다음에 열 때 다시 보냅니다.
 /// 실패해도 상세 화면에 영향이 없도록 오류를 무시합니다. 서버는 여러 번 호출해도 처음 읽은 시각을 유지합니다.
 final noticeReadProvider = FutureProvider.autoDispose
-    .family<void, NoticeDetailArgs>((ref, args) async {
+    .family<void, NoticeDetailRequest>((ref, request) async {
       final markNoticeRead = ref.read(markNoticeReadProvider);
       final params = MarkNoticeReadParams(
-        meetingId: args.meetingId,
-        noticeId: args.noticeId,
+        meetingId: request.meetingId,
+        noticeId: request.noticeId,
       );
       try {
         await markNoticeRead(params);
@@ -100,8 +101,8 @@ final noticeReadProvider = FutureProvider.autoDispose
     });
 
 final noticeDeleteProvider = NotifierProvider.autoDispose
-    .family<NoticeDeleteViewModel, NoticeDeleteState, NoticeDetailArgs>(
-      (args) => NoticeDeleteViewModel(args: args),
+    .family<NoticeDeleteViewModel, NoticeDeleteState, NoticeDetailRequest>(
+      (request) => NoticeDeleteViewModel(request: request),
     );
 
 final noticeWriteProvider = AsyncNotifierProvider.autoDispose

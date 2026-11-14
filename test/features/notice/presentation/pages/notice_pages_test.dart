@@ -9,6 +9,7 @@ import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_detail_request.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_detail_page.dart';
@@ -804,7 +805,11 @@ void main() {
         tester.element(find.byType(NoticeDetailPage)),
       );
 
-      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      container.invalidate(
+        noticeDetailProvider(
+          const NoticeDetailRequest(meetingId: 1, noticeId: 1),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(repository.readNoticeIds, [1]);
@@ -886,7 +891,11 @@ void main() {
       );
 
       repository.detailGate = Completer<void>();
-      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      container.invalidate(
+        noticeDetailProvider(
+          const NoticeDetailRequest(meetingId: 1, noticeId: 1),
+        ),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsNothing);
