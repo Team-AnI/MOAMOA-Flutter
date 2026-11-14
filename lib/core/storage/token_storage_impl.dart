@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'auth_tokens.dart';
+import 'jwt.dart';
 import 'token_storage.dart';
 
 /// [TokenStorage] 를 기기의 안전한 저장소(flutter_secure_storage)로 구현합니다.
@@ -23,7 +23,7 @@ class TokenStorageImpl implements TokenStorage {
   Future<void> _pending = Future<void>.value();
 
   @override
-  Future<AuthTokens?> read() async {
+  Future<Jwt?> read() async {
     final saved = await _secureStorage.read(key: _tokensKey);
     if (saved == null) return null;
     try {
@@ -32,14 +32,14 @@ class TokenStorageImpl implements TokenStorage {
       final accessToken = json[_accessTokenField];
       final refreshToken = json[_refreshTokenField];
       if (accessToken is! String || refreshToken is! String) return null;
-      return AuthTokens(accessToken: accessToken, refreshToken: refreshToken);
+      return Jwt(accessToken: accessToken, refreshToken: refreshToken);
     } on FormatException {
       return null;
     }
   }
 
   @override
-  Future<void> save(AuthTokens tokens) => _serialize(() => _write(tokens));
+  Future<void> save(Jwt tokens) => _serialize(() => _write(tokens));
 
   @override
   Future<void> clear() => _serialize(_delete);
@@ -47,7 +47,7 @@ class TokenStorageImpl implements TokenStorage {
   @override
   Future<bool> saveIfUnchanged({
     required String refreshToken,
-    required AuthTokens tokens,
+    required Jwt tokens,
   }) {
     return _serialize(() => _replaceIfUnchanged(refreshToken, tokens));
   }
@@ -58,10 +58,7 @@ class TokenStorageImpl implements TokenStorage {
   }
 
   /// [tokens] 가 null 이면 지웁니다.
-  Future<bool> _replaceIfUnchanged(
-    String refreshToken,
-    AuthTokens? tokens,
-  ) async {
+  Future<bool> _replaceIfUnchanged(String refreshToken, Jwt? tokens) async {
     final current = await read();
     if (current?.refreshToken != refreshToken) return false;
     if (tokens == null) {
@@ -79,7 +76,7 @@ class TokenStorageImpl implements TokenStorage {
     return result;
   }
 
-  Future<void> _write(AuthTokens tokens) {
+  Future<void> _write(Jwt tokens) {
     return _secureStorage.write(
       key: _tokensKey,
       value: jsonEncode({

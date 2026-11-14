@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/core/storage/auth_tokens.dart';
+import 'package:moamoa/core/storage/jwt.dart';
 import 'package:moamoa/core/storage/token_storage_impl.dart';
 
 /// 쓰기만 실패하는 secure storage
@@ -25,7 +25,7 @@ class _WriteFailingSecureStorage extends FlutterSecureStorage {
 
 void main() {
   group(TokenStorageImpl, () {
-    const tokens = AuthTokens(accessToken: 'access', refreshToken: 'refresh');
+    const tokens = Jwt(accessToken: 'access', refreshToken: 'refresh');
     late TokenStorageImpl storage;
 
     setUp(() {
@@ -71,7 +71,7 @@ void main() {
 
       await expectLater(
         failing.save(
-          const AuthTokens(accessToken: 'access-b', refreshToken: 'refresh-b'),
+          const Jwt(accessToken: 'access-b', refreshToken: 'refresh-b'),
         ),
         throwsA(isA<PlatformException>()),
       );
@@ -88,10 +88,7 @@ void main() {
     });
 
     group('saveIfUnchanged', () {
-      const next = AuthTokens(
-        accessToken: 'access-2',
-        refreshToken: 'refresh-2',
-      );
+      const next = Jwt(accessToken: 'access-2', refreshToken: 'refresh-2');
 
       test('저장된 리프레시 토큰이 같으면 새 토큰으로 바꾼다', () async {
         await storage.save(tokens);
@@ -155,10 +152,7 @@ void main() {
 
       final saving = storage.saveIfUnchanged(
         refreshToken: 'refresh',
-        tokens: const AuthTokens(
-          accessToken: 'access-2',
-          refreshToken: 'refresh-2',
-        ),
+        tokens: const Jwt(accessToken: 'access-2', refreshToken: 'refresh-2'),
       );
       final clearing = storage.clear();
       await Future.wait([saving, clearing]);

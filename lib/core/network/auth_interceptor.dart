@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../storage/auth_tokens.dart';
+import '../storage/jwt.dart';
 import '../storage/token_storage.dart';
 
 /// 인증이 필요 없는 요청(로그인·회원가입·토큰 재발급·비밀번호 찾기)에 붙이는 표시
@@ -35,7 +35,7 @@ class AuthInterceptor extends QueuedInterceptor {
   /// 401 을 받은 요청의 토큰이 [_replacedAccessToken] 이고 저장된 토큰이 [_issuedTokens] 이면
   /// 같은 로그인에서 다른 요청이 먼저 재발급한 것이라 바뀐 토큰으로 다시 보냅니다.
   String? _replacedAccessToken;
-  AuthTokens? _issuedTokens;
+  Jwt? _issuedTokens;
 
   @override
   Future<void> onRequest(
@@ -92,7 +92,7 @@ class AuthInterceptor extends QueuedInterceptor {
   ///
   /// 리프레시 토큰이 만료되거나 이미 쓰였으면(401) 토큰을 지우고 다시 로그인하게 합니다.
   /// 재발급하는 사이 로그아웃하거나 다른 계정으로 로그인했으면 결과를 저장하거나 지우지 않습니다.
-  Future<AuthTokens?> _refresh(AuthTokens previous) async {
+  Future<Jwt?> _refresh(Jwt previous) async {
     try {
       // 점검 페이지처럼 JSON 이 아닌 본문이 와도 타입 오류가 나지 않게 dynamic 으로 받습니다.
       final response = await _plainDio.post<dynamic>(
@@ -105,7 +105,7 @@ class AuthInterceptor extends QueuedInterceptor {
       final accessToken = data['accessToken'];
       final newRefreshToken = data['refreshToken'];
       if (accessToken is! String || newRefreshToken is! String) return null;
-      final tokens = AuthTokens(
+      final tokens = Jwt(
         accessToken: accessToken,
         refreshToken: newRefreshToken,
       );
@@ -134,7 +134,7 @@ class AuthInterceptor extends QueuedInterceptor {
   }
 
   /// [sentAuthorization] 로 보낸 뒤 같은 로그인에서 이 인터셉터가 재발급해 [stored] 가 됐는지
-  bool _isRefreshedAfter(Object? sentAuthorization, AuthTokens stored) {
+  bool _isRefreshedAfter(Object? sentAuthorization, Jwt stored) {
     final replacedAccessToken = _replacedAccessToken;
     return replacedAccessToken != null &&
         sentAuthorization == _bearer(replacedAccessToken) &&

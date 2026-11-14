@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/network/auth_interceptor.dart';
-import 'package:moamoa/core/storage/auth_tokens.dart';
+import 'package:moamoa/core/storage/jwt.dart';
 import 'package:moamoa/core/storage/token_storage.dart';
 import 'package:moamoa/core/storage/token_storage_impl.dart';
 
@@ -97,7 +97,7 @@ class _FailingTokenStorage extends TokenStorageImpl {
   int _readCount = 0;
 
   @override
-  Future<AuthTokens?> read() async {
+  Future<Jwt?> read() async {
     _readCount++;
     final readFailsFrom = this.readFailsFrom;
     if (readFailsFrom != null && _readCount >= readFailsFrom) {
@@ -124,7 +124,7 @@ void main() {
       FlutterSecureStorage.setMockInitialValues({});
       storage = TokenStorageImpl(secureStorage: const FlutterSecureStorage());
       await storage.save(
-        const AuthTokens(accessToken: 'access', refreshToken: 'refresh'),
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
       );
       server = _FakeServer();
       expiredCount = 0;
@@ -221,10 +221,7 @@ void main() {
 
       expect(
         await storage.read(),
-        const AuthTokens(
-          accessToken: 'new-access',
-          refreshToken: 'new-refresh',
-        ),
+        const Jwt(accessToken: 'new-access', refreshToken: 'new-refresh'),
       );
     });
 
@@ -332,7 +329,7 @@ void main() {
 
       expect(
         await storage.read(),
-        const AuthTokens(accessToken: 'access', refreshToken: 'refresh'),
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
       );
     });
 
@@ -354,10 +351,7 @@ void main() {
     });
 
     group('로그인 변경', () {
-      const accountB = AuthTokens(
-        accessToken: 'account-b',
-        refreshToken: 'refresh-b',
-      );
+      const accountB = Jwt(accessToken: 'account-b', refreshToken: 'refresh-b');
 
       /// 첫 요청이 서버에 도착할 때까지 기다립니다.
       Future<void> untilFirstRequestArrives() async {
