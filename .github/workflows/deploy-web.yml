@@ -1,0 +1,84 @@
+# 웹 배포: release 브랜치에 vX.Y.Z 태그를 push 하면 Firebase Hosting(live)에 배포합니다.
+# - 순서: 태그 확인 → 포맷 / 정적 분석 / 테스트 → 웹 빌드 → 배포 (하나라도 실패하면 배포하지 않음)
+# - 태그 확인: vX.Y.Z 형식인지, 태그 커밋이 release/ 브랜치에 있는지, pubspec.yaml 버전과 같은지
+# - 설정: 레포 시크릿 FIREBASE_SERVICE_ACCOUNT_MOAMOA_129CD (배포용 서비스 계정 키)
+#         레포 변수 API_BASE_URL (서버 주소, https)
+# - 이전 버전으로 되돌릴 때는 해당 태그의 Actions 실행을 다시 실행(Re-run)합니다.
+name: Deploy Web
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+# 배포가 겹치면 이전 실행은 취소하고 마지막 push 만 배포
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # ci.yml 의 FLUTTER_VERSION 과 함께 갱신
+  FLUTTER_VERSION: "3.47.8"
+
+jobs:
+  deploy:
+    name: Build / Deploy
+    # 포크에는 시크릿이 없으므로 팀 저장소에서만 실행
+    if: github.repository == 'Team-AnI/MOAMOA-Flutter'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # 태그 커밋이 release 브랜치에 있는지 확인하려면 브랜치 이력이 필요
+          fetch-depth: 0
+
+      - name: Check tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::태그는 vX.Y.Z 형식이어야 합니다: $TAG"
+            exit 1
+          fi
+          if [ -z "$(git branch -r --contains HEAD --list 'origin/release/*')" ]; then
+            echo "::error::태그 커밋이 release/ 브랜치에 없습니다: $TAG"
+            exit 1
+          fi
+          version="v$(sed -n 's/^version: \([0-9.]*\).*/\1/p' pubspec.yaml)"
+          if [ "$version" != "$TAG" ]; then
+            echo "::error::pubspec.yaml 버전($version)과 태그($TAG)가 다릅니다"
+            exit 1
+          fi
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build web
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: flutter build web --release --dart-define=API_BASE_URL="$API_BASE_URL"
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MOAMOA_129CD }}
+          projectId: moamoa-129cd
+          channelId: live
