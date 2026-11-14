@@ -24,10 +24,10 @@ class TokenStorageImpl implements TokenStorage {
 
   @override
   Future<Jwt?> read() async {
-    final saved = await _secureStorage.read(key: _tokensKey);
-    if (saved == null) return null;
+    final storedJson = await _secureStorage.read(key: _tokensKey);
+    if (storedJson == null) return null;
     try {
-      final json = jsonDecode(saved);
+      final json = jsonDecode(storedJson);
       if (json is! Map) return null;
       final accessToken = json[_accessTokenField];
       final refreshToken = json[_refreshTokenField];
