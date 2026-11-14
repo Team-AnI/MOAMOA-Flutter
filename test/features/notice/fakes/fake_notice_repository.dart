@@ -1,17 +1,24 @@
 import 'dart:async';
 
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
 import 'package:moamoa/features/notice/domain/repositories/notice_repository.dart';
 
 /// 테스트용 공지 생성 헬퍼
-Notice buildNotice(int id, {String? title, String? content}) {
+Notice buildNotice(
+  int id, {
+  String? title,
+  String? content,
+  NoticeAuthor? author,
+}) {
   return Notice(
     id: id,
     title: title ?? '공지 $id',
     content: content,
     createdAt: DateTime(2026, 10, 1).add(Duration(days: id)),
+    author: author,
   );
 }
 
@@ -120,11 +127,10 @@ class FakeNoticeRepository implements NoticeRepository {
     _throwIfError();
     final index = _indexOf(noticeId);
     final old = notices[index];
-    notices[index] = Notice(
-      id: old.id,
+    // 작성자·작성 시각은 수정해도 그대로입니다.
+    notices[index] = old.copyWith(
       title: title ?? old.title,
       content: content ?? old.content,
-      createdAt: old.createdAt,
     );
   }
 

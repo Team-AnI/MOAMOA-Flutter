@@ -2,8 +2,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/features/notice/data/datasources/notice_remote_data_source_impl.dart';
 import 'package:moamoa/features/notice/data/repositories/notice_repository_impl.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 
 /// 서버 대신 정해 둔 응답을 돌려주는 Dio 어댑터
@@ -64,6 +66,100 @@ void main() {
 
       expect(notice.id, 30);
       expect(notice.content, '10일까지 납부');
+    });
+
+    test('상세 응답의 author 를 작성자로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": "김모아", "profileColor": "LIGHT_BLUE"}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author, const NoticeAuthor(memberId: 3, userName: '김모아'));
+    });
+
+    test('목록 응답의 항목마다 author 를 작성자로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"page": 0, "size": 20, "hasNext": false,
+       "notices": [{"noticeId": 30, "title": "10월 회비 안내",
+                    "createdAt": "2026-10-07T10:00:00+09:00",
+                    "author": {"memberId": 3, "userName": "김모아"}}]}}
+    ''');
+
+      final result = await repository.getNotices(
+        meetingId: 1,
+        page: 0,
+        size: 20,
+      );
+
+      expect(
+        result.notices.single.author,
+        const NoticeAuthor(memberId: 3, userName: '김모아'),
+      );
+    });
+
+    test('작성자의 profileColor 를 프로필 색으로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": "김모아", "profileColor": "DARK"}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author?.profileColor, ProfileColor.dark);
+    });
+
+    test('작성자의 profileColor 가 모르는 값이면 기본 연파랑으로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": "김모아", "profileColor": "PINK"}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author?.profileColor, ProfileColor.lightBlue);
+    });
+
+    test('작성자 이름이 null 이어도 작성자 ID 는 유지한다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00",
+       "author": {"memberId": 3, "userName": null}}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author, const NoticeAuthor(memberId: 3));
+    });
+
+    test('응답에 author 가 없으면 작성자가 없는 공지로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00"}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.author, isNull);
     });
 
     test('응답에 data 가 없으면 크래시 대신 NoticeException 예외가 발생한다', () async {

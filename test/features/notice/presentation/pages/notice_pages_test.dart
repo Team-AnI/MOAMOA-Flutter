@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/core/constants/profile_color.dart';
+import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_detail_page.dart';
@@ -87,6 +90,26 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('10월 회비 안내'), findsOneWidget);
+    });
+
+    testWidgets('공지마다 작성자 이름과 작성 시각을 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 1,
+              title: '10월 회비 안내',
+              createdAt: DateTime.now().subtract(const Duration(days: 1)),
+              author: const NoticeAuthor(memberId: 3, userName: '김모아'),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('김모아 · 1일 전'), findsOneWidget);
     });
 
     testWidgets('오래된 공지는 작성 시각을 개월·년 단위로 보여준다', (tester) async {
@@ -799,6 +822,57 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.readNoticeIds, isEmpty);
+    });
+
+    testWidgets('작성자의 프로필 동그라미와 이름을 작성일과 함께 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 1,
+              title: '회식 정산 안내',
+              content: '내용',
+              createdAt: DateTime(2026, 9, 12),
+              author: const NoticeAuthor(
+                memberId: 3,
+                userName: '김모아',
+                profileColor: ProfileColor.dark,
+              ),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      final avatar = tester.widget<MoaProfileAvatar>(
+        find.byType(MoaProfileAvatar),
+      );
+      expect(avatar.userName, '김모아');
+      expect(avatar.color, ProfileColor.dark);
+      expect(find.text('김모아 · 2026년 9월 12일'), findsOneWidget);
+    });
+
+    testWidgets('작성자를 받지 못한 공지는 프로필 동그라미 없이 작성일만 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [
+            Notice(
+              id: 1,
+              title: '회식 정산 안내',
+              content: '내용',
+              createdAt: DateTime(2026, 9, 12),
+            ),
+          ],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MoaProfileAvatar), findsNothing);
+      expect(find.text('2026년 9월 12일'), findsOneWidget);
     });
 
     testWidgets('수정 후 상세를 다시 불러오는 동안에도 이전 내용을 그대로 보여준다', (tester) async {

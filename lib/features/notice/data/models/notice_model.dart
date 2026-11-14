@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../domain/entities/notice.dart';
+import 'notice_author_model.dart';
 
 part 'notice_model.freezed.dart';
 part 'notice_model.g.dart';
@@ -15,6 +16,7 @@ abstract class NoticeModel with _$NoticeModel {
     /// ISO-8601 (KST, 예: 2026-10-07T10:00:00+09:00)
     required String createdAt,
     String? content,
+    NoticeAuthorModel? author,
   }) = _NoticeModel;
 
   factory NoticeModel.fromJson(Map<String, dynamic> json) =>
@@ -30,5 +32,6 @@ extension NoticeModelX on NoticeModel {
     title: title,
     content: content,
     createdAt: DateTime.parse(createdAt).toLocal(),
+    author: author?.toEntity(),
   );
 }

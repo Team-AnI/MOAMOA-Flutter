@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/notice/domain/entities/notice.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/presentation/notice_format.dart';
 
 void main() {
@@ -76,6 +78,50 @@ void main() {
     test('365일부터 년 단위로 표시해 365일은 1년 전, 800일은 2년 전으로 표시한다', () {
       expect(format(const Duration(days: 365)), '1년 전');
       expect(format(const Duration(days: 800)), '2년 전');
+    });
+  });
+
+  group('NoticeMetaX', () {
+    Notice noticeBy(NoticeAuthor? author, {DateTime? createdAt}) => Notice(
+      id: 1,
+      title: '10월 회비 안내',
+      createdAt: createdAt ?? DateTime(2026, 9, 12),
+      author: author,
+    );
+
+    test('목록에는 작성자 이름과 작성 시각을 가운뎃점으로 이어 보여준다', () {
+      final notice = noticeBy(
+        const NoticeAuthor(memberId: 3, userName: '김모아'),
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      );
+
+      expect(notice.listMeta, '김모아 · 1일 전');
+    });
+
+    test('상세에는 작성자 이름과 작성일을 가운뎃점으로 이어 보여준다', () {
+      final notice = noticeBy(const NoticeAuthor(memberId: 3, userName: '김모아'));
+
+      expect(notice.detailMeta, '김모아 · 2026년 9월 12일');
+    });
+
+    test('작성자 이름이 없으면 이름 미설정으로 보여준다', () {
+      final notice = noticeBy(const NoticeAuthor(memberId: 3));
+
+      expect(notice.detailMeta, '이름 미설정 · 2026년 9월 12일');
+    });
+
+    test('나간 작성자는 서버가 보낸 탈퇴한 사용자를 그대로 보여준다', () {
+      final notice = noticeBy(
+        const NoticeAuthor(memberId: 3, userName: '탈퇴한 사용자'),
+      );
+
+      expect(notice.detailMeta, '탈퇴한 사용자 · 2026년 9월 12일');
+    });
+
+    test('작성자를 받지 못한 공지는 작성 시각만 보여준다', () {
+      final notice = noticeBy(null);
+
+      expect(notice.detailMeta, '2026년 9월 12일');
     });
   });
 }
