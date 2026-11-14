@@ -14,8 +14,13 @@ import '../providers/settlement_providers.dart';
 import '../settlement_format.dart';
 
 class SettlementCreatePage extends ConsumerStatefulWidget {
-  const SettlementCreatePage({super.key, required this.meetingId});
+  const SettlementCreatePage({
+    super.key,
+    required this.meetingId,
+    this.replacesSettlementId,
+  });
   final int meetingId;
+  final int? replacesSettlementId;
 
   @override
   ConsumerState<SettlementCreatePage> createState() =>
@@ -71,6 +76,7 @@ class _SettlementCreatePageState extends ConsumerState<SettlementCreatePage> {
               accountHolder: _holder.text.trim(),
               dueAt: _dueAt!,
               postNotice: _postNotice,
+              replacesSettlementId: widget.replacesSettlementId,
             ),
           );
       if (!mounted) return;
@@ -113,7 +119,12 @@ class _SettlementCreatePageState extends ConsumerState<SettlementCreatePage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  Text('정산 정보 등록', style: MoaText.titleXl),
+                  Text(
+                    widget.replacesSettlementId == null
+                        ? '정산 정보 등록'
+                        : '취소한 정산 다시 만들기',
+                    style: MoaText.titleXl,
+                  ),
                   const SizedBox(height: 26),
                   _field(_title, '정산 이름', '예: 11월 모임 회비'),
                   _field(_amount, '총 정산 금액', '원', number: true, amount: true),

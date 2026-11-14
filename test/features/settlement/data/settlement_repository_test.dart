@@ -227,4 +227,46 @@ void main() {
     );
     expect(adapter.request?.data, {'isActive': false});
   });
+
+  test('정산 수정은 변경한 항목만 보내 납부 기록이 있는 금액을 건드리지 않는다', () async {
+    final (repository, adapter) = _repository(
+      '{"success":true,"data":{"settlementId":40}}',
+    );
+    await repository.updateSettlement(
+      7,
+      40,
+      const SettlementEditInput(title: '수정된 정산', unlinkSchedule: true),
+    );
+    expect(adapter.request?.method, 'PATCH');
+    expect(
+      adapter.request?.path,
+      'https://example.test/v1/meetings/7/settlements/40',
+    );
+    expect(adapter.request?.data, {'title': '수정된 정산', 'scheduleId': null});
+  });
+
+  test('정산 취소는 사유를 보내고 기존 내역은 삭제하지 않는다', () async {
+    final (repository, adapter) = _repository(
+      '{"success":true,"data":{"settlementId":40,"status":"CANCELED"}}',
+    );
+    await repository.cancelSettlement(7, 40, reason: '금액 오류');
+    expect(adapter.request?.method, 'POST');
+    expect(
+      adapter.request?.path,
+      'https://example.test/v1/meetings/7/settlements/40/cancellation',
+    );
+    expect(adapter.request?.data, {'reason': '금액 오류'});
+  });
+
+  test('환불 완료 기록은 송금 정보 없이 대상 납부 ID만 보낸다', () async {
+    final (repository, adapter) = _repository(
+      '{"success":true,"data":{"paymentId":81,"status":"REFUNDED"}}',
+    );
+    await repository.refundPayment(7, 40, 81);
+    expect(
+      adapter.request?.path,
+      'https://example.test/v1/meetings/7/settlements/40/payments/81/refund',
+    );
+    expect(adapter.request?.data, isNull);
+  });
 }

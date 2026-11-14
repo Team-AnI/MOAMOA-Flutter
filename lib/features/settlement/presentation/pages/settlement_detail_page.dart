@@ -249,6 +249,38 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
           ),
         const SizedBox(height: 24),
         if (isAdmin) ...[
+          if (data.status == SettlementStatus.canceled &&
+              data.replacedBySettlementId == null) ...[
+            OutlinedButton(
+              onPressed: () => context.push(
+                '/meetings/${widget.meetingId}/settlements/new?replacesSettlementId=${data.id}',
+              ),
+              child: const Text('새 정산으로 대체'),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (data.status == SettlementStatus.inProgress) ...[
+            OutlinedButton(
+              onPressed: _submitting
+                  ? null
+                  : () => context.push(
+                      '/meetings/${widget.meetingId}/settlements/${widget.settlementId}/edit',
+                    ),
+              child: const Text('정산 수정'),
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (data.status != SettlementStatus.canceled) ...[
+            OutlinedButton(
+              onPressed: _submitting || data.summary.pendingCount > 0
+                  ? null
+                  : () => _cancel(data),
+              child: const Text('정산 취소'),
+            ),
+            if (data.summary.pendingCount > 0)
+              const Text('확인 대기 중인 납부를 먼저 승인하거나 반려해 주세요.'),
+            const SizedBox(height: 20),
+          ],
           Text('확인 대기 ${pending.length}명', style: MoaText.titleM),
           const SizedBox(height: 10),
           for (final payment in pending) _paymentTile(payment, data),
@@ -264,6 +296,14 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
             (item) => item.status == PaymentStatus.paid,
           ))
             _paymentTile(payment, data),
+          if (data.status == SettlementStatus.canceled) ...[
+            const SizedBox(height: 20),
+            Text('환불 완료 ${data.summary.refundedCount}명', style: MoaText.titleM),
+            for (final payment in data.payments.where(
+              (item) => item.status == PaymentStatus.refunded,
+            ))
+              _paymentTile(payment, data),
+          ],
           if (data.status == SettlementStatus.inProgress &&
               data.myPayment?.status == PaymentStatus.unpaid) ...[
             const SizedBox(height: 20),
@@ -353,6 +393,14 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
                 ],
               ),
             ],
+            if (payment.status == PaymentStatus.paid &&
+                data.status == SettlementStatus.canceled) ...[
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: _submitting ? null : () => _refund(payment),
+                child: const Text('환불 완료 기록'),
+              ),
+            ],
           ],
         ),
       ),
@@ -421,6 +469,79 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
               payment.id,
               reason: text.isEmpty ? null : text,
             );
+      });
+    }
+  }
+
+  Future<void> _cancel(SettlementDetail data) async {
+    final reason = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('정산을 취소할까요?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('납부 기록은 남습니다. 이미 받은 금액은 앱 밖에서 돌려준 뒤 환불 완료로 기록해 주세요.'),
+            TextField(
+              controller: reason,
+              maxLength: 255,
+              decoration: const InputDecoration(labelText: '취소 사유 (선택)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('돌아가기'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('정산 취소'),
+          ),
+        ],
+      ),
+    );
+    final text = reason.text.trim();
+    reason.dispose();
+    if (confirmed == true) {
+      await _run(() async {
+        await ref
+            .read(settlementRepositoryProvider)
+            .cancelSettlement(
+              widget.meetingId,
+              data.id,
+              reason: text.isEmpty ? null : text,
+            );
+      });
+    }
+  }
+
+  Future<void> _refund(SettlementPayment payment) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('실제 환불을 마쳤나요?'),
+        content: Text(
+          '${payment.userName ?? '구성원'}님에게 ${won(payment.amount)}을 앱 밖에서 전액 돌려준 뒤 기록해 주세요. 이 버튼은 송금하지 않습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('환불 완료 기록'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _run(() async {
+        await ref
+            .read(settlementRepositoryProvider)
+            .refundPayment(widget.meetingId, widget.settlementId, payment.id);
       });
     }
   }

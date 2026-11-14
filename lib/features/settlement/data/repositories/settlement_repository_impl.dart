@@ -146,6 +146,39 @@ class SettlementRepositoryImpl implements SettlementRepository {
         await _remote.deleteRegularDue(meetingId, regularDuesId);
       });
 
+  @override
+  Future<void> updateSettlement(
+    int meetingId,
+    int settlementId,
+    SettlementEditInput input,
+  ) => _read(() async {
+    await _remote.updateSettlement(meetingId, settlementId, {
+      if (input.title != null) 'title': input.title,
+      if (input.totalAmount != null) 'totalAmount': input.totalAmount,
+      if (input.memberIds != null) 'memberIds': input.memberIds,
+      if (input.bankName != null) 'bankName': input.bankName,
+      if (input.accountNumber != null) 'accountNumber': input.accountNumber,
+      if (input.accountHolder != null) 'accountHolder': input.accountHolder,
+      if (input.dueAt != null) 'dueAt': input.dueAt!.toUtc().toIso8601String(),
+      if (input.unlinkSchedule) 'scheduleId': null,
+    });
+  });
+
+  @override
+  Future<void> cancelSettlement(
+    int meetingId,
+    int settlementId, {
+    String? reason,
+  }) => _read(() async {
+    await _remote.cancelSettlement(meetingId, settlementId, reason: reason);
+  });
+
+  @override
+  Future<void> refundPayment(int meetingId, int settlementId, int paymentId) =>
+      _read(() async {
+        await _remote.refundPayment(meetingId, settlementId, paymentId);
+      });
+
   Map<String, Object?> _regularDueBody(RegularDueInput input) => {
     'title': input.title,
     'amount': input.amount,
