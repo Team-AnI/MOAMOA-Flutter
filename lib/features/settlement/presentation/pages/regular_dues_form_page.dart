@@ -139,18 +139,37 @@ class _FormState extends ConsumerState<_Form> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final input = _input;
+    final original = widget.initial;
+    if (original != null &&
+        !_applyCurrent &&
+        input.title == original.title &&
+        input.amount == original.amount &&
+        input.cycle == original.cycle &&
+        input.cycleDay == original.cycleDay &&
+        input.sendTime == original.sendTime &&
+        input.dueDays == original.dueDays &&
+        input.bankName == original.bankName &&
+        input.accountNumber == original.accountNumber &&
+        input.accountHolder == original.accountHolder &&
+        input.postNotice == original.postNotice &&
+        input.isActive == original.isActive) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('변경된 내용이 없어요.')));
+      return;
+    }
     setState(() => _busy = true);
     try {
       final repository = ref.read(settlementRepositoryProvider);
-      final original = widget.initial;
       bool? applied;
       if (original == null) {
-        await repository.createRegularDue(widget.meetingId, _input);
+        await repository.createRegularDue(widget.meetingId, input);
       } else {
         applied = await repository.updateRegularDue(
           widget.meetingId,
           original.id,
-          _input,
+          input,
+          previous: original,
           applyToCurrentSettlement: _applyCurrent,
         );
       }

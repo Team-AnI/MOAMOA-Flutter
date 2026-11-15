@@ -153,7 +153,7 @@ void main() {
       7,
       9,
       const RegularDueInput(
-        title: '월 회비',
+        title: '수정한 월 회비',
         amount: 10000,
         cycle: DuesCycle.monthly,
         cycleDay: '10',
@@ -164,6 +164,20 @@ void main() {
         accountHolder: '김모아',
         postNotice: false,
       ),
+      previous: const RegularDue(
+        id: 9,
+        title: '월 회비',
+        amount: 10000,
+        cycle: DuesCycle.monthly,
+        cycleDay: '10',
+        sendTime: '09:00',
+        dueDays: 7,
+        bankName: '국민은행',
+        accountNumber: '1234',
+        accountHolder: '김모아',
+        postNotice: false,
+        isActive: true,
+      ),
     );
     expect(applied, isNull);
     expect(adapter.request?.method, 'PATCH');
@@ -173,5 +187,44 @@ void main() {
       ),
       false,
     );
+    expect(adapter.request!.data, {'title': '수정한 월 회비'});
+  });
+
+  test('정기 회비 활성 상태만 바꿀 때 기존 금액·계좌를 다시 보내지 않는다', () async {
+    final (repository, adapter) = _repository(
+      '{"success":true,"data":{"currentSettlementApplied":null}}',
+    );
+    await repository.updateRegularDue(
+      7,
+      9,
+      const RegularDueInput(
+        title: '월 회비',
+        amount: 10000,
+        cycle: DuesCycle.monthly,
+        cycleDay: '10',
+        sendTime: '09:00',
+        dueDays: 7,
+        bankName: '국민은행',
+        accountNumber: '1234',
+        accountHolder: '김모아',
+        postNotice: false,
+        isActive: false,
+      ),
+      previous: const RegularDue(
+        id: 9,
+        title: '월 회비',
+        amount: 10000,
+        cycle: DuesCycle.monthly,
+        cycleDay: '10',
+        sendTime: '09:00',
+        dueDays: 7,
+        bankName: '국민은행',
+        accountNumber: '1234',
+        accountHolder: '김모아',
+        postNotice: false,
+        isActive: true,
+      ),
+    );
+    expect(adapter.request?.data, {'isActive': false});
   });
 }

@@ -111,11 +111,30 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int meetingId,
     int regularDuesId,
     RegularDueInput input, {
+    required RegularDue previous,
     bool applyToCurrentSettlement = false,
   }) => _read(() async {
     final data = await _remote.updateRegularDue(meetingId, regularDuesId, {
-      ..._regularDueBody(input),
-      'isActive': input.isActive,
+      if (input.title != previous.title) 'title': input.title,
+      if (input.amount != previous.amount) 'amount': input.amount,
+      if (input.cycle != previous.cycle)
+        'cycleType': switch (input.cycle) {
+          DuesCycle.weekly => 'WEEKLY',
+          DuesCycle.monthly => 'MONTHLY',
+          DuesCycle.unknown => throw const FormatException('알 수 없는 회비 주기'),
+        },
+      if (input.cycle != previous.cycle || input.cycleDay != previous.cycleDay)
+        'cycleDay': input.cycleDay,
+      if (input.sendTime != previous.sendTime) 'sendTime': input.sendTime,
+      if (input.dueDays != previous.dueDays) 'dueDays': input.dueDays,
+      if (input.bankName != previous.bankName) 'bankName': input.bankName,
+      if (input.accountNumber != previous.accountNumber)
+        'accountNumber': input.accountNumber,
+      if (input.accountHolder != previous.accountHolder)
+        'accountHolder': input.accountHolder,
+      if (input.postNotice != previous.postNotice)
+        'postNotice': input.postNotice,
+      if (input.isActive != previous.isActive) 'isActive': input.isActive,
       if (applyToCurrentSettlement) 'applyToCurrentSettlement': true,
     });
     return data['currentSettlementApplied'] as bool?;

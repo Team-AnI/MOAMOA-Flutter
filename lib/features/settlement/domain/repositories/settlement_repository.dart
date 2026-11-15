@@ -22,6 +22,7 @@ abstract interface class SettlementRepository {
     int meetingId,
     int regularDuesId,
     RegularDueInput input, {
+    required RegularDue previous,
     bool applyToCurrentSettlement = false,
   });
   Future<void> deleteRegularDue(int meetingId, int regularDuesId);
