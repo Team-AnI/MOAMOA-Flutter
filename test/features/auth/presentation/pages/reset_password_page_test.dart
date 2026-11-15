@@ -25,14 +25,7 @@ void main() {
           child: MaterialApp.router(
             routerConfig: GoRouter(
               initialLocation: location,
-              routes: [
-                ...authRoutes,
-                // 로그인 화면은 아직 없어 이동만 확인합니다.
-                GoRoute(
-                  path: '/login',
-                  builder: (context, state) => const Text('로그인 화면'),
-                ),
-              ],
+              routes: authRoutes,
             ),
           ),
         ),
@@ -62,24 +55,22 @@ void main() {
       expect(repository.resets, [(token: 'abc', newPassword: 'moamoa123')]);
     });
 
-    testWidgets('비밀번호를 바꾸면 새 비밀번호로 다시 로그인하라고 안내한다', (tester) async {
+    testWidgets('비밀번호를 바꾸면 앱에서 다시 로그인하라고 안내한다', (tester) async {
       await openLink(tester, '/reset-password?token=abc');
 
       await enterAndSubmit(tester, password: 'moamoa123', confirm: 'moamoa123');
       await tester.pumpAndSettle();
 
-      expect(find.text('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해 주세요.'), findsOneWidget);
+      expect(find.text('비밀번호가 변경되었습니다. 앱에서 다시 로그인해 주세요.'), findsOneWidget);
     });
 
-    testWidgets('비밀번호를 바꾼 뒤 로그인하러 가기를 누르면 로그인 화면으로 간다', (tester) async {
+    testWidgets('비밀번호를 바꾼 뒤에는 이동할 버튼 없이 안내만 보여준다', (tester) async {
       await openLink(tester, '/reset-password?token=abc');
+
       await enterAndSubmit(tester, password: 'moamoa123', confirm: 'moamoa123');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('로그인하러 가기'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('로그인 화면'), findsOneWidget);
+      expect(find.byType(FilledButton), findsNothing);
     });
 
     testWidgets('비밀번호 규칙에 맞지 않으면 규칙을 안내한다', (tester) async {
