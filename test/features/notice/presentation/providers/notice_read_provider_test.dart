@@ -35,6 +35,27 @@ void main() {
       expect(repository.readNoticeIds, [3]);
     });
 
+    test('읽음 처리에 성공하면 공지 목록을 다시 불러온다', () async {
+      container.listen(noticeListProvider(1), (_, _) {});
+      await container.read(noticeListProvider(1).future);
+
+      await container.read(noticeReadProvider(request).future);
+      await container.read(noticeListProvider(1).future);
+
+      expect(repository.getNoticesCallCount, 2);
+    });
+
+    test('읽음 처리에 실패하면 공지 목록을 다시 불러오지 않는다', () async {
+      repository.readError = Exception('시간 초과');
+      container.listen(noticeListProvider(1), (_, _) {});
+      await container.read(noticeListProvider(1).future);
+
+      await container.read(noticeReadProvider(request).future);
+      await container.read(noticeListProvider(1).future);
+
+      expect(repository.getNoticesCallCount, 1);
+    });
+
     test('읽음 처리가 공지 예외로 실패해도 오류 없이 끝난다', () async {
       repository.readError = const NoticeException('모임 구성원이 아닙니다.');
 
