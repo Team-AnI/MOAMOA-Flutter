@@ -67,6 +67,19 @@ void main() {
       ]);
     });
 
+    testWidgets('비밀번호 칸에서 키보드의 완료를 누르면 로그인을 요청한다', (tester) async {
+      await openLogin(tester);
+      await tester.enterText(find.byType(TextField).at(0), 'moa@example.com');
+      await tester.enterText(find.byType(TextField).at(1), 'moamoa123');
+
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(repository.logins, [
+        (email: 'moa@example.com', password: 'moamoa123'),
+      ]);
+    });
+
     testWidgets('이메일 형식이 다르면 형식이 다르다고 안내한다', (tester) async {
       await openLogin(tester);
 
