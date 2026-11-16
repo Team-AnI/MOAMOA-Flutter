@@ -1,7 +1,20 @@
+import 'package:moamoa/core/constants/profile_color.dart';
+
 /// 회원·인증 (API 7)
 ///
 /// 실패하면 ApiException 을 던집니다.
 abstract interface class AuthRepository {
+  /// 7-1 회원가입. 성공하면 받은 토큰을 토큰 저장소에 저장합니다.
+  ///
+  /// 이미 가입했거나 탈퇴 후 7일이 지나지 않은 이메일이면 conflict 오류입니다.
+  Future<void> signUp({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    required bool agreedToTerms,
+  });
+
   /// 7-2 로그인. 성공하면 받은 토큰을 토큰 저장소에 저장합니다.
   ///
   /// 이메일·비밀번호가 틀렸거나 탈퇴한 사용자면 unauthorized 오류입니다. (무엇이 틀렸는지 구분하지 않음)
@@ -17,4 +30,7 @@ abstract interface class AuthRepository {
     required String token,
     required String newPassword,
   });
+
+  /// 7-8 내 프로필 색 변경
+  Future<void> updateProfileColor(ProfileColor color);
 }

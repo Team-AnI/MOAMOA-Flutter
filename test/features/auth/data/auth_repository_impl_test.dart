@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/core/network/auth_interceptor.dart';
@@ -177,9 +178,15 @@ void main() {
       expect(await storage.read(), isNull);
     });
 
-    test('로그인·재설정 메일 요청·새 비밀번호 설정은 인증이 필요 없는 요청으로 보낸다', () async {
+    test('가입·로그인·재설정 메일 요청·새 비밀번호 설정은 인증이 필요 없는 요청으로 보낸다', () async {
       final repository = repositoryWith(200, loginOk);
 
+      await repository.signUp(
+        name: '이서연',
+        email: 'moa@example.com',
+        password: 'moamoa123',
+        agreedToTerms: true,
+      );
       await repository.login(email: 'moa@example.com', password: 'moamoa123');
       await repository.requestPasswordReset(email: 'moa@example.com');
       await repository.resetPassword(token: 'abc', newPassword: 'moamoa123');
@@ -188,8 +195,99 @@ void main() {
         adapter.requests.map(
           (request) => request.extra[AuthInterceptor.requiresAuthKey],
         ),
-        [false, false, false],
+        [false, false, false, false],
       );
+    });
+
+    const signUpOk =
+        '{"success": true, "error": null, "data": {"userId": 1, "name": "이서연", '
+        '"email": "moa@example.com", "accessToken": "access", "refreshToken": "refresh"}}';
+
+    test('가입은 입력값을 담아 POST /v1/users 로 보낸다', () async {
+      final repository = repositoryWith(201, signUpOk);
+
+      await repository.signUp(
+        name: '이서연',
+        email: 'moa@example.com',
+        password: 'moamoa123',
+        phone: '010-1234-5678',
+        agreedToTerms: true,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.path, '/v1/users');
+      expect(request.data, {
+        'name': '이서연',
+        'email': 'moa@example.com',
+        'password': 'moamoa123',
+        'phone': '010-1234-5678',
+        'agreedToTerms': true,
+      });
+    });
+
+    test('휴대폰 번호가 없으면 본문에서 phone 을 뺀다', () async {
+      final repository = repositoryWith(201, signUpOk);
+
+      await repository.signUp(
+        name: '이서연',
+        email: 'moa@example.com',
+        password: 'moamoa123',
+        agreedToTerms: true,
+      );
+
+      expect(
+        (adapter.requests.single.data as Map<String, dynamic>).containsKey(
+          'phone',
+        ),
+        isFalse,
+      );
+    });
+
+    test('가입에 성공하면 받은 토큰을 저장한다', () async {
+      final repository = repositoryWith(201, signUpOk);
+
+      await repository.signUp(
+        name: '이서연',
+        email: 'moa@example.com',
+        password: 'moamoa123',
+        agreedToTerms: true,
+      );
+
+      expect(
+        await storage.read(),
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+    });
+
+    test('이미 가입한 이메일이면 conflict 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(
+        409,
+        '{"success": false, "data": null, "error": {"code": "CONFLICT"}}',
+      );
+
+      await expectLater(
+        repository.signUp(
+          name: '이서연',
+          email: 'moa@example.com',
+          password: 'moamoa123',
+          agreedToTerms: true,
+        ),
+        throwsA(const ApiException(code: ApiErrorCode.conflict)),
+      );
+      expect(await storage.read(), isNull);
+    });
+
+    test('프로필 색 저장은 서버 값으로 PATCH /v1/me 에 로그인한 요청으로 보낸다', () async {
+      final repository = repositoryWith(200, _ok);
+
+      await repository.updateProfileColor(ProfileColor.blue);
+
+      final request = adapter.requests.single;
+      expect(request.method, 'PATCH');
+      expect(request.path, '/v1/me');
+      expect(request.data, {'profileColor': 'BLUE'});
+      expect(request.extra[AuthInterceptor.requiresAuthKey], isNot(false));
     });
 
     test('재설정 메일 요청은 이메일을 담아 POST .../password-reset-requests 로 보낸다', () async {

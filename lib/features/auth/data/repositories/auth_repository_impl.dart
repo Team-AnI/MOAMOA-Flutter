@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/core/errors/dio_exception_mapper.dart';
@@ -10,6 +11,9 @@ import '../models/jwt_model.dart';
 import '../models/login_request.dart';
 import '../models/password_reset_mail_request.dart';
 import '../models/password_reset_request.dart';
+import '../models/profile_color_json.dart';
+import '../models/sign_up_request.dart';
+import '../models/update_me_request.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl({
@@ -20,6 +24,28 @@ class AuthRepositoryImpl implements AuthRepository {
 
   final AuthRemoteDataSource _authRemoteDataSource;
   final TokenStorage _tokenStorage;
+
+  @override
+  Future<void> signUp({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    required bool agreedToTerms,
+  }) async {
+    final tokens = await _guard(
+      () => _authRemoteDataSource.signUp(
+        SignUpRequest(
+          name: name,
+          email: email,
+          password: password,
+          phone: phone,
+          agreedToTerms: agreedToTerms,
+        ),
+      ),
+    );
+    await _tokenStorage.save(tokens.toEntity());
+  }
 
   @override
   Future<void> login({required String email, required String password}) async {
@@ -52,6 +78,15 @@ class AuthRepositoryImpl implements AuthRepository {
     );
     // 새 비밀번호로 다시 로그인하도록, 이 기기에 로그인해 있었으면 토큰을 지웁니다.
     await _tokenStorage.clear();
+  }
+
+  @override
+  Future<void> updateProfileColor(ProfileColor color) {
+    return _guard(
+      () => _authRemoteDataSource.updateMe(
+        UpdateMeRequest(profileColor: color.serverValue),
+      ),
+    );
   }
 
   /// Dio 오류와 응답 해석 실패를 공통 예외 ApiException 으로 바꿉니다.

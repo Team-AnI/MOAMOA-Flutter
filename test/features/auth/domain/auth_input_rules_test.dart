@@ -15,6 +15,12 @@ void main() {
       expect('  '.emailError, '이메일을 입력해주세요.');
     });
 
+    test('256자면 255자까지 입력할 수 있다고 안내한다', () {
+      final email = '${'a' * 244}@example.com';
+
+      expect(email.emailError, '이메일은 255자까지 입력할 수 있어요.');
+    });
+
     test('@ 나 도메인이 없으면 형식이 다르다고 안내한다', () {
       expect('moa.example.com'.emailError, '올바른 이메일 형식이 아니에요.');
       expect('moa@example'.emailError, '올바른 이메일 형식이 아니에요.');
@@ -61,6 +67,37 @@ void main() {
 
     test('비어 있으면 비밀번호를 입력하라고 안내한다', () {
       expect(''.loginPasswordError, '비밀번호를 입력해주세요.');
+    });
+  });
+  group('nameError', () {
+    test('이름이 있으면 null 을 돌려준다', () {
+      expect('이서연'.nameError, isNull);
+    });
+
+    test('공백만 있으면 이름을 입력하라고 안내한다', () {
+      expect('   '.nameError, '이름을 입력해주세요.');
+    });
+
+    test('앞뒤 공백을 빼고 20자면 null 을 돌려준다', () {
+      expect(' ${'가' * 20} '.nameError, isNull);
+    });
+
+    test('21자면 20자까지 입력할 수 있다고 안내한다', () {
+      expect(('가' * 21).nameError, '이름은 20자까지 입력할 수 있어요.');
+    });
+  });
+
+  group('phoneError', () {
+    test('비어 있으면 선택 입력이라 null 을 돌려준다', () {
+      expect(''.phoneError, isNull);
+    });
+
+    test('20자면 null 을 돌려준다', () {
+      expect(('1' * 20).phoneError, isNull);
+    });
+
+    test('21자면 20자까지 입력할 수 있다고 안내한다', () {
+      expect(('1' * 21).phoneError, '휴대폰 번호는 20자까지 입력할 수 있어요.');
     });
   });
 }
