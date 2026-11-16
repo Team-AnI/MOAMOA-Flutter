@@ -17,6 +17,7 @@ void main() {
       '/signup',
       '/forgot-password',
       '/reset-password',
+      '/withdrawn',
     ]) {
       test('로그인하지 않았어도 $path 는 그대로 연다', () {
         expect(AuthSessionStatus.unauthorized.redirectFrom(path), isNull);

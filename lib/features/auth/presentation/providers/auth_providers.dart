@@ -15,6 +15,7 @@ import '../../domain/usecases/reset_password.dart';
 import '../../domain/usecases/sign_up_with_email.dart';
 import '../../domain/usecases/update_my_profile.dart';
 import '../../domain/usecases/update_profile_color.dart';
+import '../../domain/usecases/withdraw.dart';
 import '../viewmodels/forgot_password_state.dart';
 import '../viewmodels/forgot_password_view_model.dart';
 import '../viewmodels/login_state.dart';
@@ -29,6 +30,8 @@ import '../viewmodels/reset_password_state.dart';
 import '../viewmodels/reset_password_view_model.dart';
 import '../viewmodels/sign_up_state.dart';
 import '../viewmodels/sign_up_view_model.dart';
+import '../viewmodels/withdrawal_state.dart';
+import '../viewmodels/withdrawal_view_model.dart';
 
 // Data
 
@@ -83,7 +86,16 @@ final logoutProvider = Provider<Logout>(
   (ref) => LogoutImpl(authRepository: ref.watch(authRepositoryProvider)),
 );
 
+final withdrawProvider = Provider<Withdraw>(
+  (ref) => WithdrawImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
+
 // ViewModel / 화면 상태
+
+final withdrawalProvider =
+    NotifierProvider.autoDispose<WithdrawalViewModel, WithdrawalState>(
+      WithdrawalViewModel.new,
+    );
 
 final myAccountProvider =
     NotifierProvider.autoDispose<MyAccountViewModel, MyAccountState>(

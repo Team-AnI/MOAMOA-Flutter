@@ -16,6 +16,15 @@ extension AuthErrorMessageX on Object {
     _ => authErrorMessage,
   };
 
+  /// 회원 탈퇴 실패 안내. 서버 문구가 없으면 비밀번호 오류(400)·탈퇴할 수 없음(422)을 나눠 안내합니다. (7-9)
+  String get withdrawalErrorMessage => switch (this) {
+    ApiException(code: ApiErrorCode.validation, message: null) =>
+      '비밀번호를 확인해 주세요.',
+    ApiException(code: ApiErrorCode.unprocessableEntity, message: null) =>
+      '혼자 관리자인 모임이나 납부하지 않은 정산이 있으면 탈퇴할 수 없어요.',
+    _ => authErrorMessage,
+  };
+
   /// 회원가입 실패 안내. 서버 문구가 없는 409 면 이미 쓰인 이메일이라고 안내합니다. (7-1)
   String get signUpErrorMessage => switch (this) {
     ApiException(code: ApiErrorCode.conflict, message: null) =>

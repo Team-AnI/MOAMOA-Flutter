@@ -27,6 +27,8 @@ class MyAccountPage extends ConsumerWidget {
   void _goToEdit(BuildContext context, MyAccount account) =>
       context.push('/me/edit', extra: account);
 
+  void _goToWithdrawal(BuildContext context) => context.push('/me/withdrawal');
+
   void _showTerms(BuildContext context, AuthTerms terms) {
     showModalBottomSheet<void>(
       context: context,
@@ -103,6 +105,12 @@ class MyAccountPage extends ConsumerWidget {
                   label: '로그아웃',
                   showArrow: false,
                   onTap: () => _confirmLogout(context, ref),
+                ),
+                AccountMenuItem(
+                  icon: 'user_minus',
+                  label: '회원 탈퇴',
+                  isDanger: true,
+                  onTap: () => _goToWithdrawal(context),
                 ),
               ],
             ),

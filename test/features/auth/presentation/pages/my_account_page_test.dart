@@ -91,6 +91,15 @@ void main() {
       expect(find.text('프로필 편집'), findsOneWidget);
     });
 
+    testWidgets('회원 탈퇴를 누르면 회원 탈퇴 안내 화면으로 간다', (tester) async {
+      await openMyAccount(tester);
+
+      await tester.tap(find.text('회원 탈퇴'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('정말 떠나시나요?'), findsOneWidget);
+    });
+
     testWidgets('로그아웃을 누르면 로그아웃할지 묻는다', (tester) async {
       await openMyAccount(tester);
 

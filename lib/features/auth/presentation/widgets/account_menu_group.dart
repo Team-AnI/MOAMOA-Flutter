@@ -4,6 +4,19 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 
 import 'account_menu_item.dart';
 
+/// 메뉴 한 줄의 색. 되돌릴 수 없는 메뉴(회원 탈퇴)는 빨간색으로 보여줍니다.
+extension _AccountMenuItemStyleX on AccountMenuItem {
+  Color get tileColor => isDanger ? MoaColors.dangerTint : MoaColors.page;
+
+  ColorFilter? get iconColor => isDanger
+      ? const ColorFilter.mode(MoaColors.danger, BlendMode.srcIn)
+      : null;
+
+  TextStyle get labelStyle => isDanger
+      ? MoaText.bodyStrong.copyWith(color: MoaColors.danger)
+      : MoaText.bodyStrong;
+}
+
 /// 내 계정 화면의 메뉴 묶음 (Figma "Group": 회색 카드 안에 줄과 구분선)
 class AccountMenuGroup extends StatelessWidget {
   const AccountMenuGroup({super.key, required this.items});
@@ -42,19 +55,18 @@ class AccountMenuGroup extends StatelessWidget {
                       height: 36,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: MoaColors.page,
+                        color: item.tileColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: SvgPicture.asset(
                         'assets/icons/${item.icon}.svg',
                         width: 18,
                         height: 18,
+                        colorFilter: item.iconColor,
                       ),
                     ),
                     const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(item.label, style: MoaText.bodyStrong),
-                    ),
+                    Expanded(child: Text(item.label, style: item.labelStyle)),
                     if (item.showArrow)
                       SvgPicture.asset(
                         'assets/icons/caret_right.svg',
