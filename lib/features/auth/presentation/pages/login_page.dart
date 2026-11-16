@@ -69,6 +69,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
   }
 
+  /// 회원가입에서 뒤로 가면 로그인 화면으로 돌아오도록 쌓아서 엽니다.
+  void _goToSignUp() => context.push('/signup');
+
   /// 비밀번호 찾기에서 뒤로 가면 로그인 화면으로 돌아오도록 쌓아서 엽니다.
   void _goToForgotPassword() => context.push('/forgot-password');
 
@@ -118,6 +121,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         label: '로그인',
         isLoading: isSubmitting,
         onPressed: _submit,
+        footer: _SignUpLink(onPressed: _goToSignUp),
       ),
     );
   }
@@ -240,6 +244,38 @@ class _ForgotPasswordLink extends StatelessWidget {
           style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
         ),
       ),
+    );
+  }
+}
+
+/// 로그인 버튼 아래 "계정이 없으신가요? 회원가입" 링크
+class _SignUpLink extends StatelessWidget {
+  const _SignUpLink({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          '계정이 없으신가요?',
+          style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
+        ),
+        TextButton(
+          onPressed: onPressed,
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            minimumSize: const Size(0, 32),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            '회원가입',
+            style: MoaText.subStrong.copyWith(color: MoaColors.accentText),
+          ),
+        ),
+      ],
     );
   }
 }

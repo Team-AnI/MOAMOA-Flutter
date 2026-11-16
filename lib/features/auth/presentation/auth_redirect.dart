@@ -5,7 +5,12 @@ extension AuthRedirectX on AuthSessionStatus {
   /// 로그인하지 않아도 볼 수 있는 화면
   ///
   /// 비밀번호 재설정은 메일 링크로 웹에서 열리므로 로그인 여부와 관계없이 엽니다.
-  static const publicPaths = {'/login', '/forgot-password', '/reset-password'};
+  static const publicPaths = {
+    '/login',
+    '/signup',
+    '/forgot-password',
+    '/reset-password',
+  };
 
   /// 재발급까지 실패해 다시 로그인해야 하는지
   bool get needsReLogin => this == AuthSessionStatus.expired;

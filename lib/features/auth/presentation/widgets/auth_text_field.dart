@@ -10,6 +10,7 @@ class AuthTextField extends StatelessWidget {
     required this.label,
     required this.controller,
     this.hintText,
+    this.helperText,
     this.errorText,
     this.obscureText = false,
     this.keyboardType,
@@ -20,6 +21,9 @@ class AuthTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final String? hintText;
+
+  /// 오류가 없을 때 입력칸 아래에 보여주는 안내 (예: 비밀번호 규칙)
+  final String? helperText;
 
   /// 값이 있으면 입력칸 아래에 안내를 보여주고 테두리를 오류 색으로 바꿉니다.
   final String? errorText;
@@ -60,6 +64,10 @@ class AuthTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: MoaText.body.copyWith(color: MoaColors.textTertiary),
+            helperText: helperText,
+            helperStyle: MoaText.caption.copyWith(
+              color: MoaColors.textSecondary,
+            ),
             errorText: errorText,
             errorStyle: MoaText.caption.copyWith(color: MoaColors.error),
             filled: true,

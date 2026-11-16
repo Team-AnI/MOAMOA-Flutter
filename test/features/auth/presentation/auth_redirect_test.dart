@@ -12,11 +12,23 @@ void main() {
       expect(AuthSessionStatus.expired.redirectFrom('/'), '/login');
     });
 
-    for (final path in ['/login', '/forgot-password', '/reset-password']) {
+    for (final path in [
+      '/login',
+      '/signup',
+      '/forgot-password',
+      '/reset-password',
+    ]) {
       test('로그인하지 않았어도 $path 는 그대로 연다', () {
         expect(AuthSessionStatus.unauthorized.redirectFrom(path), isNull);
       });
     }
+
+    test('로그인하지 않았으면 가입 직후 프로필 설정 화면을 로그인 화면으로 보낸다', () {
+      expect(
+        AuthSessionStatus.unauthorized.redirectFrom('/signup/profile'),
+        '/login',
+      );
+    });
 
     test('로그인한 상태에서 로그인 화면을 열면 첫 화면으로 보낸다', () {
       expect(AuthSessionStatus.authenticated.redirectFrom('/login'), '/');

@@ -21,6 +21,10 @@ void main() {
       WidgetTester tester, {
       AuthSessionStatus initialStatus = AuthSessionStatus.unauthorized,
     }) async {
+      // 아래 버튼 바에 회원가입 링크가 있어 폰 크기(393x852)로 띄웁니다.
+      tester.view.physicalSize = const Size(393, 852);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -165,6 +169,15 @@ void main() {
 
       expect(find.text('비밀번호를 잊으셨나요?'), findsOneWidget);
       expect(find.text('재설정 링크 보내기'), findsOneWidget);
+    });
+
+    testWidgets('회원가입을 누르면 회원가입 화면으로 간다', (tester) async {
+      await openLogin(tester);
+
+      await tester.tap(find.text('회원가입'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('이름과 이메일만 있으면 시작할 수 있어요.'), findsOneWidget);
     });
 
     testWidgets('비밀번호 찾기에서 뒤로 가면 로그인 화면으로 돌아온다', (tester) async {

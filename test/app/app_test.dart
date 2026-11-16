@@ -59,6 +59,28 @@ void main() {
       expect(find.text('MOAMOA'), findsOneWidget);
     });
 
+    testWidgets('로그인 화면에서 가입한 뒤 프로필 설정을 미루면 첫 화면으로 이동한다', (tester) async {
+      tester.view.physicalSize = const Size(393, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpApp(tester, AuthSessionStatus.unauthorized);
+
+      await tester.tap(find.text('회원가입'));
+      await tester.pumpAndSettle();
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(0), '이서연');
+      await tester.enterText(fields.at(1), 'moa@example.com');
+      await tester.enterText(fields.at(3), 'moamoa123');
+      await tester.enterText(fields.at(4), 'moamoa123');
+      await tester.tap(find.text('이용약관과 개인정보 처리방침에 동의해요'));
+      await tester.tap(find.text('다음'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('나중에 할게요'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('MOAMOA'), findsOneWidget);
+    });
+
     testWidgets('사용하는 중에 재발급까지 실패하면 로그인 화면으로 이동해 만료를 안내한다', (tester) async {
       await pumpApp(tester, AuthSessionStatus.authenticated);
 

@@ -9,12 +9,18 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_with_email.dart';
 import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
+import '../../domain/usecases/sign_up_with_email.dart';
+import '../../domain/usecases/update_profile_color.dart';
 import '../viewmodels/forgot_password_state.dart';
 import '../viewmodels/forgot_password_view_model.dart';
 import '../viewmodels/login_state.dart';
 import '../viewmodels/login_view_model.dart';
+import '../viewmodels/profile_setup_state.dart';
+import '../viewmodels/profile_setup_view_model.dart';
 import '../viewmodels/reset_password_state.dart';
 import '../viewmodels/reset_password_view_model.dart';
+import '../viewmodels/sign_up_state.dart';
+import '../viewmodels/sign_up_view_model.dart';
 
 // Data
 
@@ -30,6 +36,16 @@ final authRepositoryProvider = Provider<AuthRepository>(
 );
 
 // UseCase
+
+final signUpWithEmailProvider = Provider<SignUpWithEmail>(
+  (ref) =>
+      SignUpWithEmailImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
+
+final updateProfileColorProvider = Provider<UpdateProfileColor>(
+  (ref) =>
+      UpdateProfileColorImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
 
 final loginWithEmailProvider = Provider<LoginWithEmail>(
   (ref) =>
@@ -47,6 +63,16 @@ final resetPasswordProvider = Provider<ResetPassword>(
 );
 
 // ViewModel / 화면 상태
+
+final signUpProvider =
+    NotifierProvider.autoDispose<SignUpViewModel, SignUpState>(
+      SignUpViewModel.new,
+    );
+
+final profileSetupProvider =
+    NotifierProvider.autoDispose<ProfileSetupViewModel, ProfileSetupState>(
+      ProfileSetupViewModel.new,
+    );
 
 final loginProvider = NotifierProvider.autoDispose<LoginViewModel, LoginState>(
   LoginViewModel.new,
