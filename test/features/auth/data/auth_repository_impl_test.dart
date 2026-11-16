@@ -281,7 +281,7 @@ void main() {
     test('프로필 색 저장은 서버 값으로 PATCH /v1/me 에 로그인한 요청으로 보낸다', () async {
       final repository = repositoryWith(200, _ok);
 
-      await repository.updateProfileColor(ProfileColor.blue);
+      await repository.updateProfileColor(color: ProfileColor.blue);
 
       final request = adapter.requests.single;
       expect(request.method, 'PATCH');

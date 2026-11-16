@@ -81,7 +81,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> updateProfileColor(ProfileColor color) {
+  Future<void> updateProfileColor({required ProfileColor color}) {
     return _guard(
       () => _authRemoteDataSource.updateMe(
         UpdateMeRequest(profileColor: color.serverValue),

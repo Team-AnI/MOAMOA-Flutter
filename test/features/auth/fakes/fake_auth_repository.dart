@@ -52,7 +52,7 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> updateProfileColor(ProfileColor color) async {
+  Future<void> updateProfileColor({required ProfileColor color}) async {
     profileColors.add(color);
     await gate?.future;
     if (error != null) throw error!;

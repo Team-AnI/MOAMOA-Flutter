@@ -32,5 +32,5 @@ abstract interface class AuthRepository {
   });
 
   /// 7-8 내 프로필 색 변경
-  Future<void> updateProfileColor(ProfileColor color);
+  Future<void> updateProfileColor({required ProfileColor color});
 }

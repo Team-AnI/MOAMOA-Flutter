@@ -25,6 +25,6 @@ final class UpdateProfileColorImpl implements UpdateProfileColor {
 
   @override
   Future<void> call(UpdateProfileColorParams params) {
-    return _authRepository.updateProfileColor(params.color);
+    return _authRepository.updateProfileColor(color: params.color);
   }
 }
