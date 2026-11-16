@@ -25,7 +25,7 @@ void main() {
 
     test('로그인하지 않았으면 가입 직후 프로필 설정 화면을 로그인 화면으로 보낸다', () {
       expect(
-        AuthSessionStatus.unauthorized.redirectFrom('/signup/profile'),
+        AuthSessionStatus.unauthorized.redirectFrom('/profile-setup'),
         '/login',
       );
     });

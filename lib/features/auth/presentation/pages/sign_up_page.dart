@@ -120,7 +120,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   /// 가입 직후 프로필 설정으로 갑니다. 이미 가입했으므로 회원가입 화면으로는 돌아가지 않습니다.
   void _goToProfileSetup() =>
-      context.go('/signup/profile', extra: _nameController.text.trim());
+      context.go('/profile-setup', extra: _nameController.text.trim());
 
   void _onStateChanged(SignUpState next) {
     switch (next.status) {

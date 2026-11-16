@@ -93,6 +93,19 @@ void main() {
       expect(find.text('이'), findsWidgets);
     });
 
+    testWidgets('가입 뒤 프로필 설정에서 뒤로 가도 회원가입 화면으로 돌아가지 않는다', (tester) async {
+      await openSignUp(tester);
+      await fill(tester);
+      await agree(tester);
+      await submit(tester);
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('프로필을 정해요'), findsOneWidget);
+    });
+
     testWidgets('약관에 동의하지 않은 채 다음을 누르면 동의하라고 안내한다', (tester) async {
       await openSignUp(tester);
       await fill(tester);
