@@ -13,6 +13,8 @@ class AuthTextField extends StatelessWidget {
     this.helperText,
     this.errorText,
     this.obscureText = false,
+    this.readOnly = false,
+    this.maxLength,
     this.keyboardType,
     this.onChanged,
     this.onSubmitted,
@@ -30,6 +32,12 @@ class AuthTextField extends StatelessWidget {
 
   /// 비밀번호처럼 입력한 글자를 가립니다.
   final bool obscureText;
+
+  /// 보기만 하는 칸 (예: 바꿀 수 없는 이메일)
+  final bool readOnly;
+
+  /// 값이 있으면 그 글자 수까지만 입력받고 입력칸 아래에 글자 수를 보여줍니다.
+  final int? maxLength;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
@@ -57,6 +65,8 @@ class AuthTextField extends StatelessWidget {
         TextField(
           controller: controller,
           obscureText: obscureText,
+          readOnly: readOnly,
+          maxLength: maxLength,
           keyboardType: keyboardType,
           onChanged: onChanged,
           onSubmitted: onSubmitted,

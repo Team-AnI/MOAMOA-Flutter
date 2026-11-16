@@ -15,7 +15,7 @@ extension ProfileColorLabelX on ProfileColor {
 
 /// 기본 프로필 색 4개 중 하나를 고르는 카드 (Figma "Color Card")
 ///
-/// 가입 직후 프로필 설정에서 씁니다. 내 정보 수정에서도 함께 쓰도록 화면 밖 위젯으로 둡니다.
+/// 가입 직후 프로필 설정과 프로필 편집에서 함께 씁니다.
 class ProfileColorCard extends StatelessWidget {
   const ProfileColorCard({
     super.key,

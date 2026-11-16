@@ -30,6 +30,10 @@ void main() {
       );
     });
 
+    test('로그인하지 않았으면 내 계정 화면을 로그인 화면으로 보낸다', () {
+      expect(AuthSessionStatus.unauthorized.redirectFrom('/me'), '/login');
+    });
+
     test('로그인한 상태에서 로그인 화면을 열면 첫 화면으로 보낸다', () {
       expect(AuthSessionStatus.authenticated.redirectFrom('/login'), '/');
     });

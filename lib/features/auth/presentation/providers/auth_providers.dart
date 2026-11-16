@@ -5,16 +5,24 @@ import 'package:moamoa/core/storage/token_storage.dart';
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/datasources/auth_remote_data_source_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/entities/my_account.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/get_my_account.dart';
 import '../../domain/usecases/login_with_email.dart';
+import '../../domain/usecases/logout.dart';
 import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
 import '../../domain/usecases/sign_up_with_email.dart';
+import '../../domain/usecases/update_my_profile.dart';
 import '../../domain/usecases/update_profile_color.dart';
 import '../viewmodels/forgot_password_state.dart';
 import '../viewmodels/forgot_password_view_model.dart';
 import '../viewmodels/login_state.dart';
 import '../viewmodels/login_view_model.dart';
+import '../viewmodels/my_account_state.dart';
+import '../viewmodels/my_account_view_model.dart';
+import '../viewmodels/profile_edit_state.dart';
+import '../viewmodels/profile_edit_view_model.dart';
 import '../viewmodels/profile_setup_state.dart';
 import '../viewmodels/profile_setup_view_model.dart';
 import '../viewmodels/reset_password_state.dart';
@@ -62,7 +70,31 @@ final resetPasswordProvider = Provider<ResetPassword>(
   (ref) => ResetPasswordImpl(authRepository: ref.watch(authRepositoryProvider)),
 );
 
+final getMyAccountProvider = Provider<GetMyAccount>(
+  (ref) => GetMyAccountImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
+
+final updateMyProfileProvider = Provider<UpdateMyProfile>(
+  (ref) =>
+      UpdateMyProfileImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
+
+final logoutProvider = Provider<Logout>(
+  (ref) => LogoutImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
+
 // ViewModel / 화면 상태
+
+final myAccountProvider =
+    NotifierProvider.autoDispose<MyAccountViewModel, MyAccountState>(
+      MyAccountViewModel.new,
+    );
+
+/// 키는 편집을 시작할 때의 내 정보입니다.
+final profileEditProvider = NotifierProvider.autoDispose
+    .family<ProfileEditViewModel, ProfileEditState, MyAccount>(
+      (account) => ProfileEditViewModel(account: account),
+    );
 
 final signUpProvider =
     NotifierProvider.autoDispose<SignUpViewModel, SignUpState>(
