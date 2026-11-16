@@ -67,7 +67,6 @@ class _WithdrawalPageState extends ConsumerState<WithdrawalPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen(withdrawalProvider, (_, next) => _onStateChanged(next));
-    ref.watch(withdrawalProvider);
 
     return Scaffold(
       backgroundColor: MoaColors.page,
