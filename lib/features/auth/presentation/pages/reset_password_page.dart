@@ -69,6 +69,8 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   /// 비밀번호 찾기 화면의 뒤로 버튼으로 이 안내에 돌아올 수 있게 쌓아서 엽니다.
   void _goToForgotPassword() => context.push('/forgot-password');
 
+  void _goToLogin() => context.go('/login');
+
   /// 링크 만료는 화면으로 안내하고, 그 밖의 실패는 스낵바로 안내합니다.
   void _onStateChanged(ResetPasswordState next) {
     if (next.status == ResetPasswordStatus.failure && !next.isLinkExpired) {
@@ -100,7 +102,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
       );
     }
     if (state.status == ResetPasswordStatus.success) {
-      return const _ResetDoneView();
+      return _ResetDoneView(onLoginPressed: _goToLogin);
     }
 
     return Scaffold(
@@ -182,24 +184,28 @@ class _NewPasswordFields extends StatelessWidget {
   }
 }
 
-/// 비밀번호를 바꾼 뒤 보여주는 안내
-///
-/// 로그인 화면이 생기면 로그인 작업에서 로그인 화면으로 가는 버튼을 붙입니다.
+/// 비밀번호를 바꾼 뒤 보여주는 안내와 로그인 버튼
 class _ResetDoneView extends StatelessWidget {
-  const _ResetDoneView();
+  const _ResetDoneView({required this.onLoginPressed});
+
+  final VoidCallback onLoginPressed;
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: MoaColors.page,
-      body: SafeArea(
+      body: const SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(20, 60, 20, 24),
           child: AuthPageTitle(
             title: '비밀번호를 바꿨어요',
-            description: '비밀번호가 변경되었습니다. 앱에서 다시 로그인해 주세요.',
+            description: '비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해 주세요.',
           ),
         ),
+      ),
+      bottomNavigationBar: AuthSubmitBar(
+        label: '로그인하러 가기',
+        onPressed: onLoginPressed,
       ),
     );
   }
