@@ -57,7 +57,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
   bool _submitting = false;
 
   Future<void> _run(Future<void> Function() action) async {
-    if (_submitting) return;
+    if (!mounted || _submitting) return;
     setState(() => _submitting = true);
     try {
       await action();
@@ -300,7 +300,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
                 ],
               ),
             );
-            if (confirmed == true) {
+            if (confirmed == true && mounted) {
               await _run(() async {
                 await ref
                     .read(settlementRepositoryProvider)
@@ -377,7 +377,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
         ],
       ),
     );
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await _run(() async {
         await ref
             .read(settlementRepositoryProvider)
@@ -411,7 +411,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
     );
     final text = reason.text.trim();
     reason.dispose();
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await _run(() async {
         await ref
             .read(settlementRepositoryProvider)
