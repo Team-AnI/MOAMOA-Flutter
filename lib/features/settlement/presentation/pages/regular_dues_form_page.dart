@@ -26,6 +26,17 @@ class RegularDuesFormPage extends ConsumerWidget {
     if (role.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    if (role.hasError) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('정기 회비')),
+        body: Center(
+          child: TextButton(
+            onPressed: () => ref.invalidate(groupMyRoleProvider(meetingId)),
+            child: const Text('권한 정보를 불러오지 못했어요. 다시 시도'),
+          ),
+        ),
+      );
+    }
     if (role.asData?.value.canManageGroup != true) {
       return Scaffold(
         appBar: AppBar(title: const Text('정기 회비')),
@@ -223,7 +234,7 @@ class _FormState extends ConsumerState<_Form> {
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
     try {
       await ref
@@ -338,6 +349,7 @@ class _FormState extends ConsumerState<_Form> {
                     context: context,
                     initialTime: _sendTime,
                   );
+                  if (!mounted) return;
                   if (value != null) setState(() => _sendTime = value);
                 },
               ),

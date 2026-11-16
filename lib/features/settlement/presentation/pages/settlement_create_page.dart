@@ -110,7 +110,15 @@ class _SettlementCreatePageState extends ConsumerState<SettlementCreatePage> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: !canManage
+      body: role.hasError
+          ? Center(
+              child: TextButton(
+                onPressed: () =>
+                    ref.invalidate(groupMyRoleProvider(widget.meetingId)),
+                child: const Text('권한 정보를 불러오지 못했어요. 다시 시도'),
+              ),
+            )
+          : !canManage
           ? Center(
               child: Text(role.isLoading ? '권한 확인 중…' : '관리자만 정산을 등록할 수 있어요.'),
             )
@@ -193,6 +201,7 @@ class _SettlementCreatePageState extends ConsumerState<SettlementCreatePage> {
                         lastDate: now.add(const Duration(days: 365)),
                         initialDate: _dueAt ?? now,
                       );
+                      if (!mounted) return;
                       if (date != null) {
                         setState(
                           () => _dueAt = DateTime(
