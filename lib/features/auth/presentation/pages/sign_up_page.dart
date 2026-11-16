@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/utils/moa_snack_bar.dart';
@@ -12,6 +11,7 @@ import '../auth_terms.dart';
 import '../providers/auth_providers.dart';
 import '../viewmodels/sign_up_state.dart';
 import '../viewmodels/sign_up_status.dart';
+import '../widgets/auth_check_row.dart';
 import '../widgets/auth_page_title.dart';
 import '../widgets/auth_step_bar.dart';
 import '../widgets/auth_submit_bar.dart';
@@ -290,46 +290,16 @@ class _TermsAgreement extends StatelessWidget {
   final VoidCallback onToggle;
   final ValueChanged<AuthTerms> onShowTerms;
 
-  /// 동의하면 진하게, 아니면 연한 회색으로 체크 동그라미를 칠합니다.
-  Color get _checkColor => agreed ? MoaColors.accent : MoaColors.placeholder;
-
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 동의 체크
-        Semantics(
+        AuthCheckRow(
           checked: agreed,
-          child: InkWell(
-            onTap: onToggle,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Row(
-                children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: _checkColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: SvgPicture.asset(
-                      'assets/icons/check_bold.svg',
-                      width: 13,
-                      height: 13,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text('이용약관과 개인정보 처리방침에 동의해요', style: MoaText.sub),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          label: '이용약관과 개인정보 처리방침에 동의해요',
+          onToggle: onToggle,
         ),
         // 전문 보기 링크. 좁은 화면(320)에서는 넘치지 않게 다음 줄로 내립니다.
         Padding(
