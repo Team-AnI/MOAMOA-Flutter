@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moamoa/core/network/dio_provider.dart';
+import 'package:moamoa/core/storage/token_storage.dart';
 
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../data/datasources/auth_remote_data_source_impl.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/login_with_email.dart';
 import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
 import '../viewmodels/forgot_password_state.dart';
@@ -21,10 +23,16 @@ final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(
     authRemoteDataSource: ref.watch(authRemoteDataSourceProvider),
+    tokenStorage: ref.watch(tokenStorageProvider),
   ),
 );
 
 // UseCase
+
+final loginWithEmailProvider = Provider<LoginWithEmail>(
+  (ref) =>
+      LoginWithEmailImpl(authRepository: ref.watch(authRepositoryProvider)),
+);
 
 final requestPasswordResetProvider = Provider<RequestPasswordReset>(
   (ref) => RequestPasswordResetImpl(

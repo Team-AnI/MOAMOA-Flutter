@@ -16,6 +16,16 @@ class FakeAuthRepository implements AuthRepository {
   /// 값이 있으면 응답을 complete 될 때까지 붙잡아 둡니다.
   Completer<void>? gate;
 
+  /// 로그인을 요청한 이메일·비밀번호 (호출 순서대로)
+  final List<({String email, String password})> logins = [];
+
+  @override
+  Future<void> login({required String email, required String password}) async {
+    logins.add((email: email, password: password));
+    await gate?.future;
+    if (error != null) throw error!;
+  }
+
   @override
   Future<void> requestPasswordReset({required String email}) async {
     requestedEmails.add(email);

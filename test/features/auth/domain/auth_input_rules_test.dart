@@ -53,4 +53,14 @@ void main() {
       expect('모아moa1234'.passwordError, '영문, 숫자, 기호만 사용할 수 있어요.');
     });
   });
+
+  group('loginPasswordError', () {
+    test('비밀번호를 입력했으면 가입 규칙과 관계없이 null 을 돌려준다', () {
+      expect('1234'.loginPasswordError, isNull);
+    });
+
+    test('비어 있으면 비밀번호를 입력하라고 안내한다', () {
+      expect(''.loginPasswordError, '비밀번호를 입력해주세요.');
+    });
+  });
 }

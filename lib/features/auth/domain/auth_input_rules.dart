@@ -18,6 +18,11 @@ extension AuthInputRulesX on String {
     return null;
   }
 
+  /// 로그인 비밀번호가 비었으면 안내 문구, 아니면 null 입니다.
+  ///
+  /// 로그인은 가입 때 규칙과 관계없이 입력했는지만 봅니다. 맞는지는 서버가 판단합니다.
+  String? get loginPasswordError => isEmpty ? '비밀번호를 입력해주세요.' : null;
+
   /// 비밀번호가 규칙(영문과 숫자 포함 8~72자, 영문·숫자·기호만)에 맞지 않으면 안내 문구, 맞으면 null 입니다.
   String? get passwordError {
     if (isEmpty) return '비밀번호를 입력해주세요.';
