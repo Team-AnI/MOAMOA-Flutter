@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,6 +107,22 @@ void main() {
 
       expect(find.text('정말 탈퇴할까요?'), findsOneWidget);
       expect(find.text('비밀번호를 확인해 주세요.'), findsNothing);
+    });
+
+    testWidgets('탈퇴 요청 중에는 바깥을 눌러도 팝업을 닫지 않는다', (tester) async {
+      repository.gate = Completer<void>();
+      await openWithdrawal(tester);
+      await checkAndOpenDialog(tester);
+      await tester.enterText(find.byType(TextField), 'moamoa123');
+      await tester.tap(find.text('탈퇴하기'));
+      await tester.pump();
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.text('정말 탈퇴할까요?'), findsOneWidget);
+      repository.gate!.complete();
+      await tester.pumpAndSettle();
     });
 
     testWidgets('탈퇴할 수 없으면 팝업을 닫고 이유를 안내한다', (tester) async {
