@@ -205,9 +205,14 @@ class _WithdrawalConfirmDialogState
   /// 비밀번호를 비운 채 누르면 보여줄 안내
   String? _emptyError;
 
+  /// 이 팝업에서 탈퇴하기를 눌렀는지. 전에 연 팝업의 비밀번호 오류를 다시 보여주지 않습니다.
+  bool _submitted = false;
+
   String? _passwordError(WithdrawalState state) =>
       _emptyError ??
-      (state.isWrongPassword ? state.error!.withdrawalErrorMessage : null);
+      (_submitted && state.isWrongPassword
+          ? state.error!.withdrawalErrorMessage
+          : null);
 
   @override
   void dispose() {
@@ -219,7 +224,10 @@ class _WithdrawalConfirmDialogState
 
   void _submit() {
     final error = _passwordController.text.loginPasswordError;
-    setState(() => _emptyError = error);
+    setState(() {
+      _emptyError = error;
+      _submitted = true;
+    });
     if (error != null) return;
     ref
         .read(withdrawalProvider.notifier)

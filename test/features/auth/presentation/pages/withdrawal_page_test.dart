@@ -92,6 +92,21 @@ void main() {
       expect(find.text('비밀번호를 확인해 주세요.'), findsOneWidget);
     });
 
+    testWidgets('비밀번호가 틀린 뒤 팝업을 닫았다 다시 열면 안내 없이 연다', (tester) async {
+      repository.error = const ApiException(code: ApiErrorCode.validation);
+      await openWithdrawal(tester);
+      await checkAndOpenDialog(tester);
+      await submitPassword(tester, 'wrong123');
+
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, '회원 탈퇴'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('정말 탈퇴할까요?'), findsOneWidget);
+      expect(find.text('비밀번호를 확인해 주세요.'), findsNothing);
+    });
+
     testWidgets('탈퇴할 수 없으면 팝업을 닫고 이유를 안내한다', (tester) async {
       repository.error = const ApiException(
         code: ApiErrorCode.unprocessableEntity,
