@@ -38,6 +38,12 @@ abstract interface class AuthRepository {
   /// 서버 요청이 실패해도 오류를 던지지 않습니다. 이 기기의 토큰을 지우지 못했을 때만 오류를 던집니다.
   Future<void> logout();
 
+  /// 7-9 회원 탈퇴. 성공하면 기기의 토큰을 지웁니다.
+  ///
+  /// 비밀번호가 틀리면 validation 오류(400), 혼자 관리자인 모임이나 미납 정산이 있으면
+  /// unprocessableEntity 오류(422)이고, 이때는 토큰을 지우지 않습니다.
+  Future<void> withdraw({required String password});
+
   /// 7-7 내 정보 조회
   Future<MyAccount> getMyAccount();
 

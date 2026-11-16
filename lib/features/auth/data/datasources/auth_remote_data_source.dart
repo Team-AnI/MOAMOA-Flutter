@@ -7,6 +7,7 @@ import '../models/password_reset_request.dart';
 import '../models/sign_up_request.dart';
 import '../models/update_me_request.dart';
 import '../models/update_my_profile_request.dart';
+import '../models/withdrawal_request.dart';
 
 abstract interface class AuthRemoteDataSource {
   /// POST /v1/users
@@ -31,6 +32,9 @@ abstract interface class AuthRemoteDataSource {
 
   /// PATCH /v1/me (가입 직후 프로필 색만)
   Future<void> updateMe(UpdateMeRequest request);
+
+  /// POST /v1/me/withdrawal
+  Future<void> withdraw(WithdrawalRequest request);
 
   /// PATCH /v1/me (프로필 편집: 이름·휴대폰·프로필 색)
   Future<MyAccountModel> updateMyProfile(UpdateMyProfileRequest request);

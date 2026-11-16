@@ -45,6 +45,16 @@ class FakeAuthRepository implements AuthRepository {
   final List<({String name, String? phone, ProfileColor color})>
   profileUpdates = [];
 
+  /// 탈퇴를 요청한 비밀번호 (호출 순서대로)
+  final List<String> withdrawals = [];
+
+  @override
+  Future<void> withdraw({required String password}) async {
+    withdrawals.add(password);
+    await gate?.future;
+    if (error != null) throw error!;
+  }
+
   /// 로그아웃을 요청한 횟수
   int logouts = 0;
 

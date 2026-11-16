@@ -18,6 +18,7 @@ import '../models/profile_color_json.dart';
 import '../models/sign_up_request.dart';
 import '../models/update_me_request.dart';
 import '../models/update_my_profile_request.dart';
+import '../models/withdrawal_request.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl({
@@ -119,6 +120,15 @@ class AuthRepositoryImpl implements AuthRepository {
     } on Exception {
       // 토큰을 읽지 못해도 이 기기의 토큰은 지웁니다.
     }
+  }
+
+  @override
+  Future<void> withdraw({required String password}) async {
+    await _guard(
+      () =>
+          _authRemoteDataSource.withdraw(WithdrawalRequest(password: password)),
+    );
+    await _tokenStorage.clear();
   }
 
   @override

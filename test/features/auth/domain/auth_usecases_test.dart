@@ -7,6 +7,7 @@ import 'package:moamoa/features/auth/domain/usecases/reset_password.dart';
 import 'package:moamoa/features/auth/domain/usecases/sign_up_with_email.dart';
 import 'package:moamoa/features/auth/domain/usecases/update_my_profile.dart';
 import 'package:moamoa/features/auth/domain/usecases/update_profile_color.dart';
+import 'package:moamoa/features/auth/domain/usecases/withdraw.dart';
 import 'package:moamoa/features/auth/domain/usecases/login_with_email.dart';
 
 import '../fakes/fake_auth_repository.dart';
@@ -270,6 +271,31 @@ void main() {
         ),
       );
       expect(repository.profileUpdates, isEmpty);
+    });
+  });
+  group(Withdraw, () {
+    test('비밀번호는 그대로 탈퇴를 요청한다', () async {
+      final withdraw = WithdrawImpl(authRepository: repository);
+
+      await withdraw(const WithdrawParams(password: 'moamoa123'));
+
+      expect(repository.withdrawals, ['moamoa123']);
+    });
+
+    test('비밀번호가 비었으면 validation 예외가 발생한다', () async {
+      final withdraw = WithdrawImpl(authRepository: repository);
+
+      await expectLater(
+        withdraw(const WithdrawParams(password: '')),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
+      );
+      expect(repository.withdrawals, isEmpty);
     });
   });
 }

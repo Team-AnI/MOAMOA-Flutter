@@ -509,6 +509,58 @@ void main() {
       expect(adapter.requests, isEmpty);
     });
 
+    test('탈퇴는 비밀번호를 담아 POST /v1/me/withdrawal 로 로그인한 요청으로 보낸다', () async {
+      final repository = repositoryWith(200, _ok);
+
+      await repository.withdraw(password: 'moamoa123');
+
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.path, '/v1/me/withdrawal');
+      expect(request.data, {'password': 'moamoa123'});
+      expect(request.extra[AuthInterceptor.requiresAuthKey], isNot(false));
+    });
+
+    test('탈퇴하면 저장된 토큰을 지운다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      final repository = repositoryWith(200, _ok);
+
+      await repository.withdraw(password: 'moamoa123');
+
+      expect(await storage.read(), isNull);
+    });
+
+    test('탈퇴할 수 없으면 unprocessableEntity 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(
+        422,
+        '{"success": false, "data": null, "error": {"code": "UNPROCESSABLE_ENTITY"}}',
+      );
+
+      await expectLater(
+        repository.withdraw(password: 'moamoa123'),
+        throwsA(const ApiException(code: ApiErrorCode.unprocessableEntity)),
+      );
+    });
+
+    test('탈퇴에 실패하면 저장된 토큰을 지우지 않는다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      final repository = repositoryWith(
+        400,
+        '{"success": false, "data": null, "error": {"code": "VALIDATION_ERROR"}}',
+      );
+
+      await expectLater(
+        repository.withdraw(password: 'wrong123'),
+        throwsA(isA<ApiException>()),
+      );
+
+      expect(await storage.read(), isNotNull);
+    });
+
     test('재설정 메일 요청은 이메일을 담아 POST .../password-reset-requests 로 보낸다', () async {
       final repository = repositoryWith(200, _ok);
 
