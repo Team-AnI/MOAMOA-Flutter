@@ -30,16 +30,28 @@ class SettlementEditPage extends ConsumerWidget {
       settlementDetailProvider((meetingId, settlementId)),
     );
     final members = ref.watch(groupMembersProvider(meetingId));
-    if (role.isLoading ||
-        detail.isLoading ||
-        (members.isLoading && !members.hasLoaded)) {
+    if (role.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (role.hasError) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('정산 수정')),
+        body: Center(
+          child: TextButton(
+            onPressed: () => ref.invalidate(groupMyRoleProvider(meetingId)),
+            child: const Text('권한 정보를 불러오지 못했어요. 다시 시도'),
+          ),
+        ),
+      );
     }
     if (role.asData?.value.canManageGroup != true) {
       return Scaffold(
         appBar: AppBar(title: const Text('정산 수정')),
         body: const Center(child: Text('관리자만 정산을 수정할 수 있어요.')),
       );
+    }
+    if (detail.isLoading || (members.isLoading && !members.hasLoaded)) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     final value = detail.asData?.value;
     if (value == null || members.hasFailed || members.hasInvalidMemberIds) {
@@ -258,6 +270,7 @@ class _EditFormState extends ConsumerState<_EditForm> {
                   firstDate: DateTime(2020),
                   lastDate: now.add(const Duration(days: 3650)),
                 );
+                if (!mounted) return;
                 if (value != null) {
                   setState(
                     () => _dueAt = DateTime(

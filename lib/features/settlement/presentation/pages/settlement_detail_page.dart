@@ -504,7 +504,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
     );
     final text = reason.text.trim();
     reason.dispose();
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await _run(() async {
         await ref
             .read(settlementRepositoryProvider)
@@ -537,7 +537,7 @@ class _SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
         ],
       ),
     );
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       await _run(() async {
         await ref
             .read(settlementRepositoryProvider)
