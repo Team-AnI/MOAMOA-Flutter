@@ -222,6 +222,7 @@ class _SignUpFields extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // 가입 정보 (이름·이메일·휴대폰)
         AuthTextField(
           label: '이름',
           controller: nameController,
@@ -248,6 +249,7 @@ class _SignUpFields extends StatelessWidget {
           onChanged: onChanged,
         ),
         const SizedBox(height: 16),
+        // 비밀번호와 확인
         AuthTextField(
           label: '비밀번호',
           controller: passwordController,
