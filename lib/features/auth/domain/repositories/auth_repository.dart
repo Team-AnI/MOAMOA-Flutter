@@ -1,5 +1,7 @@
 import 'package:moamoa/core/constants/profile_color.dart';
 
+import '../entities/my_account.dart';
+
 /// 회원·인증 (API 7)
 ///
 /// 실패하면 ApiException 을 던집니다.
@@ -31,6 +33,21 @@ abstract interface class AuthRepository {
     required String newPassword,
   });
 
-  /// 7-8 내 프로필 색 변경
+  /// 7-4 로그아웃. 서버에 이 기기의 리프레시 토큰을 지우라고 요청한 뒤, 성공·실패와 관계없이 기기의 토큰을 지웁니다.
+  ///
+  /// 요청에 실패하면 토큰을 지운 다음 ApiException 을 던집니다.
+  Future<void> logout();
+
+  /// 7-7 내 정보 조회
+  Future<MyAccount> getMyAccount();
+
+  /// 7-8 프로필 편집. [phone] 이 null 이면 저장된 휴대폰 번호를 지웁니다.
+  Future<MyAccount> updateMyProfile({
+    required String name,
+    required String? phone,
+    required ProfileColor color,
+  });
+
+  /// 7-8 내 프로필 색 변경 (가입 직후)
   Future<void> updateProfileColor({required ProfileColor color});
 }

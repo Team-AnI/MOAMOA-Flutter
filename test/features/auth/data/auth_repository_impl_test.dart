@@ -13,6 +13,7 @@ import 'package:moamoa/core/storage/token_storage.dart';
 import 'package:moamoa/core/storage/token_storage_impl.dart';
 import 'package:moamoa/features/auth/data/datasources/auth_remote_data_source_impl.dart';
 import 'package:moamoa/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:moamoa/features/auth/domain/entities/my_account.dart';
 
 /// 서버 대신 정해 둔 응답을 돌려주고, 보낸 요청을 담는 Dio 어댑터
 class _StubAdapter implements HttpClientAdapter {
@@ -288,6 +289,93 @@ void main() {
       expect(request.path, '/v1/me');
       expect(request.data, {'profileColor': 'BLUE'});
       expect(request.extra[AuthInterceptor.requiresAuthKey], isNot(false));
+    });
+
+    const meOk =
+        '{"success": true, "error": null, "data": {"userId": 1, "name": "이서연", '
+        '"email": "moa@example.com", "phone": null, "profileColor": "DARK"}}';
+
+    test('내 정보는 GET /v1/me 응답을 내 정보로 바꿔 돌려준다', () async {
+      final repository = repositoryWith(200, meOk);
+
+      final account = await repository.getMyAccount();
+
+      expect(adapter.requests.single.path, '/v1/me');
+      expect(
+        account,
+        const MyAccount(
+          name: '이서연',
+          email: 'moa@example.com',
+          profileColor: ProfileColor.dark,
+        ),
+      );
+    });
+
+    test('프로필 편집은 휴대폰을 비웠으면 null 로 담아 PATCH /v1/me 로 보낸다', () async {
+      final repository = repositoryWith(200, meOk);
+
+      await repository.updateMyProfile(
+        name: '이서연',
+        phone: null,
+        color: ProfileColor.dark,
+      );
+
+      final request = adapter.requests.single;
+      expect(request.method, 'PATCH');
+      expect(request.path, '/v1/me');
+      expect(request.data, {
+        'name': '이서연',
+        'phone': null,
+        'profileColor': 'DARK',
+      });
+    });
+
+    test('로그아웃은 저장된 리프레시 토큰을 담아 로그인한 요청으로 보낸다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      final repository = repositoryWith(200, _ok);
+
+      await repository.logout();
+
+      final request = adapter.requests.single;
+      expect(request.method, 'POST');
+      expect(request.path, '/v1/auth/logout');
+      expect(request.data, {'refreshToken': 'refresh'});
+      expect(request.extra[AuthInterceptor.requiresAuthKey], isNot(false));
+    });
+
+    test('로그아웃하면 저장된 토큰을 지운다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      final repository = repositoryWith(200, _ok);
+
+      await repository.logout();
+
+      expect(await storage.read(), isNull);
+    });
+
+    test('로그아웃 요청이 실패해도 저장된 토큰을 지운다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      final repository = repositoryWith(
+        500,
+        '{"success": false, "data": null, "error": {"code": "INTERNAL"}}',
+      );
+
+      await expectLater(repository.logout(), throwsA(isA<ApiException>()));
+
+      expect(await storage.read(), isNull);
+    });
+
+    test('저장된 토큰이 없으면 로그아웃을 요청하지 않는다', () async {
+      final repository = repositoryWith(200, _ok);
+
+      await repository.logout();
+
+      expect(adapter.requests, isEmpty);
     });
 
     test('재설정 메일 요청은 이메일을 담아 POST .../password-reset-requests 로 보낸다', () async {

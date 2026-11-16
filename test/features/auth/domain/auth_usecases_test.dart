@@ -5,6 +5,7 @@ import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/auth/domain/usecases/request_password_reset.dart';
 import 'package:moamoa/features/auth/domain/usecases/reset_password.dart';
 import 'package:moamoa/features/auth/domain/usecases/sign_up_with_email.dart';
+import 'package:moamoa/features/auth/domain/usecases/update_my_profile.dart';
 import 'package:moamoa/features/auth/domain/usecases/update_profile_color.dart';
 import 'package:moamoa/features/auth/domain/usecases/login_with_email.dart';
 
@@ -216,6 +217,59 @@ void main() {
       );
 
       expect(repository.profileColors, [ProfileColor.blue]);
+    });
+  });
+  group(UpdateMyProfile, () {
+    test('이름·휴대폰은 앞뒤 공백을 빼고 프로필 편집을 요청한다', () async {
+      final updateMyProfile = UpdateMyProfileImpl(authRepository: repository);
+
+      await updateMyProfile(
+        const UpdateMyProfileParams(
+          name: ' 이서연 ',
+          phone: ' 010-1234-5678 ',
+          color: ProfileColor.gray,
+        ),
+      );
+
+      expect(repository.profileUpdates, [
+        (name: '이서연', phone: '010-1234-5678', color: ProfileColor.gray),
+      ]);
+    });
+
+    test('휴대폰을 비웠으면 휴대폰 번호를 지우도록 null 로 요청한다', () async {
+      final updateMyProfile = UpdateMyProfileImpl(authRepository: repository);
+
+      await updateMyProfile(
+        const UpdateMyProfileParams(
+          name: '이서연',
+          phone: ' ',
+          color: ProfileColor.gray,
+        ),
+      );
+
+      expect(repository.profileUpdates.single.phone, isNull);
+    });
+
+    test('이름이 비었으면 validation 예외가 발생한다', () async {
+      final updateMyProfile = UpdateMyProfileImpl(authRepository: repository);
+
+      await expectLater(
+        updateMyProfile(
+          const UpdateMyProfileParams(
+            name: ' ',
+            phone: '',
+            color: ProfileColor.gray,
+          ),
+        ),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
+      );
+      expect(repository.profileUpdates, isEmpty);
     });
   });
 }

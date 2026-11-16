@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:moamoa/core/constants/profile_color.dart';
+import 'package:moamoa/features/auth/domain/entities/my_account.dart';
 import 'package:moamoa/features/auth/domain/repositories/auth_repository.dart';
 
 /// 서버 대신 요청을 기록하는 테스트용 저장소
@@ -28,6 +29,57 @@ class FakeAuthRepository implements AuthRepository {
     })
   >
   signUps = [];
+
+  /// 내 정보. 프로필 편집에 성공하면 바뀐 값으로 바뀝니다.
+  MyAccount account = const MyAccount(
+    name: '이서연',
+    email: 'moa@example.com',
+    phone: '010-1234-5678',
+    profileColor: ProfileColor.lightBlue,
+  );
+
+  /// 내 정보를 조회한 횟수
+  int accountReads = 0;
+
+  /// 프로필 편집 요청 (호출 순서대로)
+  final List<({String name, String? phone, ProfileColor color})>
+  profileUpdates = [];
+
+  /// 로그아웃을 요청한 횟수
+  int logouts = 0;
+
+  @override
+  Future<MyAccount> getMyAccount() async {
+    accountReads++;
+    await gate?.future;
+    if (error != null) throw error!;
+    return account;
+  }
+
+  @override
+  Future<MyAccount> updateMyProfile({
+    required String name,
+    required String? phone,
+    required ProfileColor color,
+  }) async {
+    profileUpdates.add((name: name, phone: phone, color: color));
+    await gate?.future;
+    if (error != null) throw error!;
+    account = MyAccount(
+      name: name,
+      email: account.email,
+      phone: phone,
+      profileColor: color,
+    );
+    return account;
+  }
+
+  @override
+  Future<void> logout() async {
+    logouts++;
+    await gate?.future;
+    if (error != null) throw error!;
+  }
 
   /// 저장을 요청한 프로필 색 (호출 순서대로)
   final List<ProfileColor> profileColors = [];
