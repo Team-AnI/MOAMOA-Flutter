@@ -90,7 +90,7 @@ void main() {
       ]);
     });
 
-    test('이메일 형식이 다르면 로그인을 요청하지 않고 validation 예외가 발생한다', () async {
+    test('이메일 형식이 다르면 validation 예외가 발생한다', () async {
       final loginWithEmail = LoginWithEmailImpl(authRepository: repository);
 
       await expectLater(
@@ -108,7 +108,7 @@ void main() {
       expect(repository.logins, isEmpty);
     });
 
-    test('비밀번호가 비었으면 로그인을 요청하지 않고 validation 예외가 발생한다', () async {
+    test('비밀번호가 비었으면 validation 예외가 발생한다', () async {
       final loginWithEmail = LoginWithEmailImpl(authRepository: repository);
 
       await expectLater(
