@@ -81,6 +81,18 @@ void main() {
       ]);
     });
 
+    testWidgets('비밀번호 확인 칸에서 키보드의 완료를 누르면 가입을 요청한다', (tester) async {
+      await openSignUp(tester);
+      await fill(tester);
+      await agree(tester);
+      await tester.showKeyboard(find.byType(TextField).at(4));
+
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(repository.signUps, hasLength(1));
+    });
+
     testWidgets('가입하면 프로필 설정 화면으로 이동해 입력한 이름 첫 글자를 보여준다', (tester) async {
       await openSignUp(tester);
       await fill(tester);

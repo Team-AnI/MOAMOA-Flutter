@@ -165,6 +165,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
               passwordError: _passwordError,
               confirmError: _confirmError,
               onChanged: _onChanged,
+              onSubmitted: _submit,
             ),
             const SizedBox(height: 20),
             _TermsAgreement(
@@ -199,6 +200,7 @@ class _SignUpFields extends StatelessWidget {
     required this.passwordError,
     required this.confirmError,
     required this.onChanged,
+    required this.onSubmitted,
   });
 
   final TextEditingController nameController;
@@ -212,6 +214,9 @@ class _SignUpFields extends StatelessWidget {
   final String? passwordError;
   final String? confirmError;
   final ValueChanged<String> onChanged;
+
+  /// 비밀번호 확인 칸에서 키보드의 완료를 눌렀을 때
+  final VoidCallback onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -260,6 +265,7 @@ class _SignUpFields extends StatelessWidget {
           hintText: '비밀번호를 한 번 더 입력하세요',
           errorText: confirmError,
           onChanged: onChanged,
+          onSubmitted: (_) => onSubmitted(),
         ),
       ],
     );
