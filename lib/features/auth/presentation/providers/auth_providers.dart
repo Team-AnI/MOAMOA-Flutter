@@ -11,6 +11,8 @@ import '../../domain/usecases/request_password_reset.dart';
 import '../../domain/usecases/reset_password.dart';
 import '../viewmodels/forgot_password_state.dart';
 import '../viewmodels/forgot_password_view_model.dart';
+import '../viewmodels/login_state.dart';
+import '../viewmodels/login_view_model.dart';
 import '../viewmodels/reset_password_state.dart';
 import '../viewmodels/reset_password_view_model.dart';
 
@@ -45,6 +47,10 @@ final resetPasswordProvider = Provider<ResetPassword>(
 );
 
 // ViewModel / 화면 상태
+
+final loginProvider = NotifierProvider.autoDispose<LoginViewModel, LoginState>(
+  LoginViewModel.new,
+);
 
 final forgotPasswordProvider =
     NotifierProvider.autoDispose<ForgotPasswordViewModel, ForgotPasswordState>(

@@ -15,12 +15,20 @@ enum AuthSessionStatus {
   expired,
 }
 
-/// 로그인 상태를 담습니다. 처음에는 [AuthSessionStatus.unauthorized] 입니다.
+/// 앱을 켰을 때의 로그인 상태. 기본은 [AuthSessionStatus.unauthorized] 입니다.
 ///
-/// 로그인 화면으로 보내는 처리는 로그인 기능에서 이 상태를 보고 합니다.
+/// 앱 시작 때(`bootstrap()`) 저장된 토큰이 있으면 [AuthSessionStatus.authenticated] 로 덮어씁니다.
+/// 토큰이 만료됐으면 첫 요청에서 재발급하고, 재발급도 실패하면 [AuthSessionStatus.expired] 가 됩니다.
+final initialAuthStatusProvider = Provider<AuthSessionStatus>(
+  (ref) => AuthSessionStatus.unauthorized,
+);
+
+/// 로그인 상태를 담습니다. 처음에는 [initialAuthStatusProvider] 값입니다.
+///
+/// 앱 라우터가 이 상태를 보고 로그인하지 않았으면 로그인 화면으로 보냅니다.
 class AuthSession extends Notifier<AuthSessionStatus> {
   @override
-  AuthSessionStatus build() => AuthSessionStatus.unauthorized;
+  AuthSessionStatus build() => ref.read(initialAuthStatusProvider);
 
   /// 로그인·회원가입으로 토큰을 받으면 호출합니다.
   void authenticate() => state = AuthSessionStatus.authenticated;

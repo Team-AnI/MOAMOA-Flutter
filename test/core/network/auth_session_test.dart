@@ -10,6 +10,21 @@ void main() {
 
     AuthSession session() => container.read(authSessionProvider.notifier);
 
+    test('앱 시작 때 정한 상태가 있으면 그 상태로 시작한다', () {
+      final started = ProviderContainer.test(
+        overrides: [
+          initialAuthStatusProvider.overrideWithValue(
+            AuthSessionStatus.authenticated,
+          ),
+        ],
+      );
+
+      expect(
+        started.read(authSessionProvider),
+        AuthSessionStatus.authenticated,
+      );
+    });
+
     test('처음에는 로그인하지 않은 상태로 시작한다', () {
       expect(
         container.read(authSessionProvider),

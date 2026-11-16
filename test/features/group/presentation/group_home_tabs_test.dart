@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/app/router/app_router.dart';
 import 'package:moamoa/app/theme/app_theme.dart';
+import 'package:moamoa/core/network/auth_session.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/presentation/pages/group_home_page.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
@@ -86,6 +87,10 @@ void main() {
     container = ProviderContainer(
       retry: (_, _) => null,
       overrides: [
+        // 로그인한 상태로 시작합니다. 로그인하지 않으면 앱 라우터가 로그인 화면으로 보냅니다.
+        initialAuthStatusProvider.overrideWithValue(
+          AuthSessionStatus.authenticated,
+        ),
         groupRepositoryProvider.overrideWithValue(groups),
         if (!scheduleFailure)
           scheduleRepositoryProvider.overrideWithValue(schedules),
