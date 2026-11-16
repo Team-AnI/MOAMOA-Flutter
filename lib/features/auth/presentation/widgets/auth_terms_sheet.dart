@@ -4,6 +4,8 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 import '../auth_terms.dart';
 
 /// 이용약관·개인정보 처리방침 전문을 보여주는 아래 시트
+///
+/// 회원가입 화면과 내 계정 화면(Figma "내 계정"의 이용약관·개인정보 처리방침)에서 함께 쓰려고 widgets 에 둡니다.
 class AuthTermsSheet extends StatelessWidget {
   const AuthTermsSheet({super.key, required this.terms});
 
