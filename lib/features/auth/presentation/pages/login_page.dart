@@ -90,82 +90,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 88, 20, 24),
           children: [
-            // 앱 아이콘
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 64,
-                height: 64,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: MoaColors.accent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: SvgPicture.asset(
-                  'assets/icons/users_three_fill.svg',
-                  width: 34,
-                  height: 34,
-                ),
-              ),
-            ),
+            const _AppIcon(),
             const SizedBox(height: 24),
             const AuthPageTitle(
               title: '흩어진 모임 운영을 한 곳에서',
               description: '일정, 공지, 회비를 모임원과 함께 관리해요.',
             ),
-            // 재발급까지 실패해 다시 로그인해야 할 때의 안내
             if (needsReLogin) ...[
               const SizedBox(height: 20),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: MoaColors.fill,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    '로그인이 만료되었어요. 다시 로그인해 주세요.',
-                    style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-                  ),
-                ),
-              ),
+              const _ReLoginNotice(),
             ],
             const SizedBox(height: 36),
-            AuthTextField(
-              label: '이메일',
-              controller: _emailController,
-              hintText: 'you@example.com',
-              keyboardType: TextInputType.emailAddress,
-              errorText: _emailError,
+            _LoginFields(
+              emailController: _emailController,
+              passwordController: _passwordController,
+              emailError: _emailError,
+              passwordError: _passwordError,
               onChanged: _onChanged,
+              onSubmitted: _submit,
             ),
             const SizedBox(height: 14),
-            AuthTextField(
-              label: '비밀번호',
-              controller: _passwordController,
-              obscureText: true,
-              hintText: '비밀번호를 입력하세요',
-              errorText: _passwordError,
-              onChanged: _onChanged,
-              onSubmitted: (_) => _submit(),
-            ),
-            const SizedBox(height: 14),
-            // 비밀번호 찾기 링크 (오른쪽 정렬)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _goToForgotPassword,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  '비밀번호를 잊으셨나요?',
-                  style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-                ),
-              ),
-            ),
+            _ForgotPasswordLink(onPressed: _goToForgotPassword),
           ],
         ),
       ),
@@ -173,6 +118,127 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         label: '로그인',
         isLoading: isSubmitting,
         onPressed: _submit,
+      ),
+    );
+  }
+}
+
+/// 로그인 화면 위쪽의 앱 아이콘
+class _AppIcon extends StatelessWidget {
+  const _AppIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 64,
+        height: 64,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: MoaColors.accent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SvgPicture.asset(
+          'assets/icons/users_three_fill.svg',
+          width: 34,
+          height: 34,
+        ),
+      ),
+    );
+  }
+}
+
+/// 재발급까지 실패해 다시 로그인해야 할 때의 안내
+class _ReLoginNotice extends StatelessWidget {
+  const _ReLoginNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: MoaColors.fill,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          '로그인이 만료되었어요. 다시 로그인해 주세요.',
+          style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
+        ),
+      ),
+    );
+  }
+}
+
+/// 이메일과 비밀번호 입력칸
+class _LoginFields extends StatelessWidget {
+  const _LoginFields({
+    required this.emailController,
+    required this.passwordController,
+    required this.emailError,
+    required this.passwordError,
+    required this.onChanged,
+    required this.onSubmitted,
+  });
+
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final String? emailError;
+  final String? passwordError;
+  final ValueChanged<String> onChanged;
+
+  /// 비밀번호 칸에서 키보드의 완료를 눌렀을 때
+  final VoidCallback onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        AuthTextField(
+          label: '이메일',
+          controller: emailController,
+          hintText: 'you@example.com',
+          keyboardType: TextInputType.emailAddress,
+          errorText: emailError,
+          onChanged: onChanged,
+        ),
+        const SizedBox(height: 14),
+        AuthTextField(
+          label: '비밀번호',
+          controller: passwordController,
+          obscureText: true,
+          hintText: '비밀번호를 입력하세요',
+          errorText: passwordError,
+          onChanged: onChanged,
+          onSubmitted: (_) => onSubmitted(),
+        ),
+      ],
+    );
+  }
+}
+
+/// 오른쪽 정렬된 "비밀번호를 잊으셨나요?" 링크
+class _ForgotPasswordLink extends StatelessWidget {
+  const _ForgotPasswordLink({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          '비밀번호를 잊으셨나요?',
+          style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
+        ),
       ),
     );
   }
