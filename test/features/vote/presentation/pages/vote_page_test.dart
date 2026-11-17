@@ -13,6 +13,7 @@ import 'package:moamoa/features/vote/domain/entities/vote_candidate.dart';
 import 'package:moamoa/features/vote/domain/entities/vote_status.dart';
 import 'package:moamoa/features/vote/presentation/pages/vote_page.dart';
 import 'package:moamoa/features/vote/presentation/providers/vote_providers.dart';
+import 'package:moamoa/features/vote/presentation/widgets/vote_confirm_sheet.dart';
 import 'package:moamoa/features/vote/presentation/vote_format.dart';
 
 import '../../fakes/fake_vote_repository.dart';
@@ -336,6 +337,30 @@ void main() {
         tester.getTopLeft(find.text('어느 시간으로 확정할까요?')).dy,
         greaterThanOrEqualTo(59),
       );
+    });
+
+    // 리뷰(gemini): 후보가 하나도 없어도 화면이 깨지지 않아야 합니다.
+    testWidgets('후보가 하나도 없어도 투표 화면이 오류 없이 열린다', (tester) async {
+      repository.vote = sampleVote().copyWith(candidates: []);
+
+      await pumpPage(tester, role: MemberRole.member);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('10월 정기 모임'), findsOneWidget);
+    });
+
+    testWidgets('후보가 없으면 확정 시트의 확정 버튼은 눌리지 않는다', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: VoteConfirmSheet(candidates: [])),
+        ),
+      );
+
+      final confirm = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, '이 시간으로 확정'),
+      );
+      expect(confirm.onPressed, isNull);
+      expect(tester.takeException(), isNull);
     });
 
     // 후보가 많을 때(Figma "후보가 많을 때"): 날짜 5개 × 시각 10줄

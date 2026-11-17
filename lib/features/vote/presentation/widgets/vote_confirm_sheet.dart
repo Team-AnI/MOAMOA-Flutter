@@ -29,8 +29,11 @@ class _VoteConfirmSheetState extends State<VoteConfirmSheet> {
 
   void _select(int index) => setState(() => _selected = index);
 
-  void _confirm() =>
-      Navigator.pop(context, widget.candidates[_selected].meetingTime);
+  /// 후보가 없으면 확정할 수 없습니다. (투표 화면은 후보가 없으면 이 시트를 열지 않지만, 시트 혼자서도 안전하게 둡니다.)
+  void _confirm() {
+    if (widget.candidates.isEmpty) return;
+    Navigator.pop(context, widget.candidates[_selected].meetingTime);
+  }
 
   /// 예: 7명 가능. 맨 위(가장 많이 겹친 시간)에는 "가장 많음"을 붙입니다.
   String _availableLabelOf(int index) {
@@ -149,7 +152,10 @@ class _VoteConfirmSheetState extends State<VoteConfirmSheet> {
             child: Column(
               spacing: 10,
               children: [
-                VotePrimaryButton(label: '이 시간으로 확정', onPressed: _confirm),
+                VotePrimaryButton(
+                  label: '이 시간으로 확정',
+                  onPressed: widget.candidates.isEmpty ? null : _confirm,
+                ),
                 Text(
                   '확정하면 다른 시간으로 바꿀 수 없어요.',
                   style: MoaText.caption.copyWith(
