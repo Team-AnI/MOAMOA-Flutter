@@ -13,16 +13,24 @@ class VotePrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.enabled = true,
+    this.secondary = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool enabled;
 
-  Color get _background => enabled ? MoaColors.accent : MoaColors.fill;
+  /// 보조 버튼입니다. 회색 바탕에 검은 글자로, 같은 줄의 주 버튼 옆에 둡니다. (Figma 관리자 "내 시간 저장")
+  final bool secondary;
 
-  Color get _foreground =>
-      enabled ? MoaColors.textInverse : VoteColors.textDisabled;
+  Color get _background =>
+      secondary || !enabled ? MoaColors.fill : MoaColors.accent;
+
+  Color get _foreground => secondary
+      ? MoaColors.textPrimary
+      : enabled
+      ? MoaColors.textInverse
+      : VoteColors.textDisabled;
 
   @override
   Widget build(BuildContext context) {

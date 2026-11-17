@@ -43,10 +43,10 @@ extension VoteDisplayX on Vote {
     _ => (MoaColors.fill, MoaColors.textSecondary),
   };
 
-  /// 제목 아래 안내 문구입니다. 없으면 null 입니다. (Figma 투표 중·마감됨·확정됨·취소됨)
-  String? subtitleFor({required bool isAdmin}) => switch (status) {
+  /// 제목 아래 안내 문구입니다. (Figma 투표 중·마감됨·확정됨·취소됨)
+  String subtitleFor({required bool isAdmin}) => switch (status) {
     VoteStatus.voting when votingOpen =>
-      isTableScrollable ? '날짜는 옆으로, 시간은 위아래로 넘겨 보세요.' : null,
+      isTableScrollable ? '날짜는 옆으로, 시간은 위아래로 넘겨 보세요.' : '가능한 시간을 모두 눌러 주세요.',
     VoteStatus.voting => isAdmin ? '투표가 끝났어요. 일정을 확정해 주세요.' : '투표가 끝났어요.',
     VoteStatus.confirmed => '투표로 정한 일정이에요.',
     VoteStatus.canceled => '관리자가 투표를 취소했어요.',
@@ -81,14 +81,6 @@ extension VoteDisplayX on Vote {
   Set<DateTime> get mineTimes => {
     for (final candidate in candidates)
       if (candidate.selectedByMe) candidate.meetingTime,
-  };
-
-  /// 선택할 수 없을 때 보여줄 안내입니다. 선택할 수 있으면 null 입니다.
-  String? get closedNotice => switch (status) {
-    VoteStatus.voting when !votingOpen => '투표가 마감되어 더 이상 고를 수 없어요',
-    VoteStatus.voting => null,
-    VoteStatus.confirmed => '확정된 일정이라 더 이상 고를 수 없어요',
-    VoteStatus.canceled => '취소된 투표예요',
   };
 
   /// 응답하지 않은 인원

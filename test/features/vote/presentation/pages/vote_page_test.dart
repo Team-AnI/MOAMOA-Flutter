@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
+import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/schedule/presentation/schedule_format.dart';
@@ -406,10 +407,10 @@ void main() {
       await tester.tap(find.text('내 시간 저장'));
       await tester.pumpAndSettle();
 
-      expect(find.text('가능한 시간이 없나요?'), findsOneWidget);
+      expect(find.text('가능한 시간이 없다고 보낼까요?'), findsOneWidget);
       expect(repository.submitCalls, isEmpty);
 
-      await tester.tap(find.text('네, 없어요'));
+      await tester.tap(find.text('보내기'));
       await tester.pumpAndSettle();
 
       expect(repository.submitCalls.single['meetingTimes'], isEmpty);
@@ -428,19 +429,25 @@ void main() {
       expect(repository.submitCalls, isEmpty);
     });
 
-    testWidgets('마감된 투표는 칸을 눌러도 고를 수 없고 저장 버튼 없이 안내만 보여준다', (tester) async {
+    testWidgets('마감된 투표는 구성원에게 안내와 누를 수 없는 저장 버튼을 보여주고 칸을 눌러도 고를 수 없다', (
+      tester,
+    ) async {
       repository.vote = sampleVote(votingOpen: false);
 
       await pumpPage(tester, role: MemberRole.member);
       await tester.tap(find.text('7'));
       await tester.pumpAndSettle();
 
-      expect(find.text('투표가 마감되어 더 이상 고를 수 없어요'), findsOneWidget);
-      expect(find.text('내 시간 저장'), findsNothing);
+      expect(find.text('투표가 끝났어요.'), findsOneWidget);
+      expect(find.text('투표가 마감됐어요. 관리자가 일정을 확정하면 알려 드릴게요.'), findsOneWidget);
+      final save = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, '내 시간 저장'),
+      );
+      expect(save.onPressed, isNull);
       expect(repository.submitCalls, isEmpty);
     });
 
-    testWidgets('확정된 투표는 고를 수 없다는 안내를 보여준다', (tester) async {
+    testWidgets('확정된 투표는 저장 버튼 없이 "일정 보기" 만 보여준다', (tester) async {
       repository.vote = sampleVote(
         status: VoteStatus.confirmed,
         votingOpen: false,
@@ -448,8 +455,40 @@ void main() {
 
       await pumpPage(tester, role: MemberRole.member);
 
-      expect(find.text('확정된 일정이라 더 이상 고를 수 없어요'), findsOneWidget);
+      expect(find.text('투표로 정한 일정이에요.'), findsOneWidget);
+      expect(find.text('일정 보기'), findsOneWidget);
       expect(find.text('내 시간 저장'), findsNothing);
+    });
+
+    testWidgets('투표 중에는 고르라는 안내를 보여준다', (tester) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      expect(find.text('가능한 시간을 모두 눌러 주세요.'), findsOneWidget);
+    });
+
+    testWidgets('마감된 투표는 관리자에게 확정 버튼만 보여주고 저장 버튼은 없다', (tester) async {
+      repository.vote = sampleVote(votingOpen: false);
+
+      await pumpPage(tester);
+
+      expect(find.text('일정 확정하기'), findsOneWidget);
+      expect(find.text('내 시간 저장'), findsNothing);
+      expect(find.text('투표가 마감됐어요. 관리자가 일정을 확정하면 알려 드릴게요.'), findsNothing);
+    });
+
+    testWidgets('관리자의 저장 버튼은 회색, 확정 버튼은 검정이고 구성원의 저장 버튼은 검정이다', (tester) async {
+      Color? background(String label) => tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, label))
+          .style
+          ?.backgroundColor
+          ?.resolve({});
+
+      await pumpPage(tester);
+      expect(background('내 시간 저장'), MoaColors.fill);
+      expect(background('일정 확정하기'), MoaColors.accent);
+
+      await pumpPage(tester, role: MemberRole.member);
+      expect(background('내 시간 저장'), MoaColors.accent);
     });
 
     testWidgets('제출에 실패하면 서버 문구로 안내하고 화면에 남는다', (tester) async {

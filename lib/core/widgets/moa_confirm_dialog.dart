@@ -40,11 +40,16 @@ class MoaConfirmDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: MoaText.titleM),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-                  ),
+                  // 설명이 없으면 제목만 보여줍니다.
+                  if (message.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      style: MoaText.sub.copyWith(
+                        color: MoaColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

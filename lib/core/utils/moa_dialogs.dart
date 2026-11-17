@@ -5,7 +5,7 @@ import 'package:moamoa/core/widgets/moa_confirm_dialog.dart';
 Future<bool?> showMoaConfirmDialog(
   BuildContext context, {
   required String title,
-  required String message,
+  String message = '',
   required String confirmLabel,
   String cancelLabel = '취소',
 }) {

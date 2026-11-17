@@ -115,8 +115,8 @@ void main() {
       expect(open.statusPillColors, isNot(closed.statusPillColors));
     });
 
-    test('제목 아래 안내 문구는 상태마다 다르고, 투표 중에는 없다', () {
-      expect(open.subtitleFor(isAdmin: false), isNull);
+    test('제목 아래 안내 문구는 상태마다 다르고, 투표 중에는 고르라고 안내한다', () {
+      expect(open.subtitleFor(isAdmin: false), '가능한 시간을 모두 눌러 주세요.');
       expect(closed.subtitleFor(isAdmin: false), '투표가 끝났어요.');
       expect(closed.subtitleFor(isAdmin: true), '투표가 끝났어요. 일정을 확정해 주세요.');
       expect(confirmed.subtitleFor(isAdmin: false), '투표로 정한 일정이에요.');
@@ -162,7 +162,7 @@ void main() {
         fourDates.subtitleFor(isAdmin: false),
         '날짜는 옆으로, 시간은 위아래로 넘겨 보세요.',
       );
-      expect(threeByThree.subtitleFor(isAdmin: false), isNull);
+      expect(threeByThree.subtitleFor(isAdmin: false), '가능한 시간을 모두 눌러 주세요.');
     });
 
     test('공유 문구는 투표 이름과 상태를 담는다', () {

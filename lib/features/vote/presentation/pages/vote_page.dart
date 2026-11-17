@@ -73,9 +73,8 @@ class _VotePageState extends ConsumerState<VotePage> {
     if (selected.isEmpty) {
       final confirmed = await showMoaConfirmDialog(
         context,
-        title: '가능한 시간이 없나요?',
-        message: '고른 시간이 없어요. 가능한 시간이 없다고 알릴까요?',
-        confirmLabel: '네, 없어요',
+        title: '가능한 시간이 없다고 보낼까요?',
+        confirmLabel: '보내기',
       );
       if (confirmed != true || !mounted) return;
     }
@@ -157,8 +156,6 @@ class _VotePageState extends ConsumerState<VotePage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _Heading(vote: vote, isAdmin: isAdmin),
-                        if (vote.closedNotice case final notice?)
-                          _Notice(text: notice),
                         _CandidateTable(
                           vote: vote,
                           isAdmin: isAdmin,
@@ -260,11 +257,10 @@ class _Heading extends StatelessWidget {
             ),
           ),
           Text(vote.title, style: MoaText.titleXl),
-          if (subtitle != null)
-            Text(
-              subtitle,
-              style: MoaText.body.copyWith(color: MoaColors.textSecondary),
-            ),
+          Text(
+            subtitle,
+            style: MoaText.body.copyWith(color: MoaColors.textSecondary),
+          ),
         ],
       ),
     );
@@ -758,6 +754,23 @@ class _ActionBar extends ConsumerWidget {
         ),
       );
     }
+    // 마감된 투표: 구성원은 안내와 누를 수 없는 저장 버튼을 봅니다. (Figma 마감됨 구성원)
+    if (vote.status == VoteStatus.voting && !vote.votingOpen && !isAdmin) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          spacing: 10,
+          children: [
+            Text(
+              '투표가 마감됐어요. 관리자가 일정을 확정하면 알려 드릴게요.',
+              textAlign: TextAlign.center,
+              style: MoaText.caption.copyWith(color: MoaColors.textSecondary),
+            ),
+            const VotePrimaryButton(label: '내 시간 저장', onPressed: null),
+          ],
+        ),
+      );
+    }
     final saving = ref.watch(
       voteSubmitProvider(id)
           .select((s) => s.status == VoteSubmitStatus.submitting),
@@ -775,6 +788,8 @@ class _ActionBar extends ConsumerWidget {
             Expanded(
               child: VotePrimaryButton(
                 label: '내 시간 저장',
+                // 관리자는 확정이 주 버튼이라 저장은 회색으로 둡니다. (Figma 관리자)
+                secondary: canConfirm,
                 onPressed: busy ? null : onSave,
               ),
             ),
@@ -786,24 +801,6 @@ class _ActionBar extends ConsumerWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-/// 투표를 고를 수 없을 때(마감·확정·취소) 제목 아래에 보이는 안내 문구입니다.
-class _Notice extends StatelessWidget {
-  const _Notice({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        text,
-        style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
       ),
     );
   }
