@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -361,6 +363,140 @@ void main() {
       );
       expect(confirm.onPressed, isNull);
       expect(tester.takeException(), isNull);
+    });
+
+    // 내 응답 제출 (API 5-3). 구성원으로 보면 칸 숫자(2·5·0·7)가 응답 현황 숫자와 겹치지 않는다.
+    // 처음 고른 칸은 서버에 저장된 내 선택인 10/13 19:00(가능 5명) 입니다.
+    testWidgets('칸을 눌러 더 고르고 저장하면 고른 시간을 이른 순서로 제출한다', (tester) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.text('7')); // 10/14 19:00
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pumpAndSettle();
+
+      expect(repository.submitCalls.single['meetingTimes'], [
+        DateTime(2099, 10, 13, 19),
+        DateTime(2099, 10, 14, 19),
+      ]);
+      expect(find.text('내 시간을 저장했어요'), findsOneWidget);
+    });
+
+    testWidgets('고른 칸을 다시 누르면 선택이 풀려 제출에서 빠진다', (tester) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.text('7')); // 선택
+      await tester.tap(find.text('5')); // 처음 골라 둔 칸 해제
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pumpAndSettle();
+
+      expect(repository.submitCalls.single['meetingTimes'], [
+        DateTime(2099, 10, 14, 19),
+      ]);
+    });
+
+    testWidgets('하나도 고르지 않고 저장하면 가능한 시간이 없는지 묻고, 확인하면 빈 목록으로 제출한다', (
+      tester,
+    ) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.text('5')); // 골라 둔 칸 해제
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('가능한 시간이 없나요?'), findsOneWidget);
+      expect(repository.submitCalls, isEmpty);
+
+      await tester.tap(find.text('네, 없어요'));
+      await tester.pumpAndSettle();
+
+      expect(repository.submitCalls.single['meetingTimes'], isEmpty);
+    });
+
+    testWidgets('가능한 시간이 없는지 묻는 팝업에서 취소하면 제출하지 않는다', (tester) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+
+      expect(repository.submitCalls, isEmpty);
+    });
+
+    testWidgets('마감된 투표는 칸을 눌러도 고를 수 없고 저장 버튼 없이 안내만 보여준다', (tester) async {
+      repository.vote = sampleVote(votingOpen: false);
+
+      await pumpPage(tester, role: MemberRole.member);
+      await tester.tap(find.text('7'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('투표가 마감되어 더 이상 고를 수 없어요'), findsOneWidget);
+      expect(find.text('내 시간 저장'), findsNothing);
+      expect(repository.submitCalls, isEmpty);
+    });
+
+    testWidgets('확정된 투표는 고를 수 없다는 안내를 보여준다', (tester) async {
+      repository.vote = sampleVote(
+        status: VoteStatus.confirmed,
+        votingOpen: false,
+      );
+
+      await pumpPage(tester, role: MemberRole.member);
+
+      expect(find.text('확정된 일정이라 더 이상 고를 수 없어요'), findsOneWidget);
+      expect(find.text('내 시간 저장'), findsNothing);
+    });
+
+    testWidgets('제출에 실패하면 서버 문구로 안내하고 화면에 남는다', (tester) async {
+      repository.submitError = const ApiException(
+        code: ApiErrorCode.unprocessableEntity,
+        message: '투표가 마감되었습니다.',
+      );
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.text('7'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('투표가 마감되었습니다.'), findsOneWidget);
+      expect(find.byType(VotePage), findsOneWidget);
+      // 고른 칸은 그대로라 다시 시도할 수 있다.
+      expect(find.text('내 시간 저장'), findsOneWidget);
+    });
+
+    testWidgets('관리자에게는 내 시간 저장과 일정 확정하기가 함께 보인다', (tester) async {
+      await pumpPage(tester);
+
+      expect(find.text('내 시간 저장'), findsOneWidget);
+      expect(find.text('일정 확정하기'), findsOneWidget);
+    });
+
+    testWidgets('제출 중에는 저장·확정 버튼이 눌리지 않는다', (tester) async {
+      final completer = Completer<void>();
+      repository.submitCompleter = completer;
+      await pumpPage(tester);
+
+      await tester.tap(find.text('내 시간 저장'));
+      await tester.pump();
+
+      bool disabled(String label) =>
+          tester
+              .widget<FilledButton>(find.widgetWithText(FilledButton, label))
+              .onPressed ==
+          null;
+      expect(disabled('내 시간 저장'), isTrue);
+      expect(disabled('일정 확정하기'), isTrue);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(disabled('내 시간 저장'), isFalse);
     });
 
     // 후보가 많을 때(Figma "후보가 많을 때"): 날짜 5개 × 시각 10줄

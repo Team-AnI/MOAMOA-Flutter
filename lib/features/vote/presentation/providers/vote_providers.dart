@@ -18,6 +18,8 @@ import '../viewmodels/vote_confirm_state.dart';
 import '../viewmodels/vote_confirm_view_model.dart';
 import '../viewmodels/vote_create_state.dart';
 import '../viewmodels/vote_create_view_model.dart';
+import '../viewmodels/vote_submit_state.dart';
+import '../viewmodels/vote_submit_view_model.dart';
 import '../vote_id.dart';
 
 // DataSource → Repository
@@ -102,4 +104,11 @@ final voteAdminProvider = Provider.autoDispose.family<bool, int>(
 final voteConfirmProvider = NotifierProvider.autoDispose
     .family<VoteConfirmViewModel, VoteConfirmState, VoteId>(
       (id) => VoteConfirmViewModel(id: id),
+    );
+
+/// 인자는 내 응답을 제출할 투표입니다.
+/// autoDispose: 화면을 닫으면 이전 요청 결과(성공, 오류)가 남지 않게 초기화합니다.
+final voteSubmitProvider = NotifierProvider.autoDispose
+    .family<VoteSubmitViewModel, VoteSubmitState, VoteId>(
+      (id) => VoteSubmitViewModel(id: id),
     );

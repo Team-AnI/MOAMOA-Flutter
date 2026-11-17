@@ -24,6 +24,12 @@ class FakeVoteRepository implements VoteRepository {
   /// 지정하면 일정 확정만 이 예외를 던집니다. (조회는 성공하는 상황)
   Object? confirmError;
 
+  /// 지정하면 내 투표 제출이 이 Completer 가 끝날 때까지 기다립니다. (제출 중 상태 확인용)
+  Completer<void>? submitCompleter;
+
+  /// 지정하면 내 투표 제출만 이 예외를 던집니다. (조회는 성공하는 상황)
+  Object? submitError;
+
   final List<Map<String, Object?>> createCalls = [];
   final List<Map<String, Object?>> submitCalls = [];
   final List<Map<String, Object?>> confirmCalls = [];
@@ -70,7 +76,8 @@ class FakeVoteRepository implements VoteRepository {
       'scheduleId': scheduleId,
       'meetingTimes': meetingTimes,
     });
-    if (error != null) throw error!;
+    if ((error ?? submitError) case final e?) throw e;
+    await submitCompleter?.future;
   }
 
   @override

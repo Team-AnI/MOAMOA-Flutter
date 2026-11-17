@@ -77,6 +77,20 @@ extension VoteDisplayX on Vote {
   /// 관리자가 확정할 수 있는지. 마감 전에도 확정할 수 있고, 확정·취소된 뒤에는 바꿀 수 없습니다. (API 5-5)
   bool get canConfirm => status == VoteStatus.voting && candidates.isNotEmpty;
 
+  /// 서버에 저장된 내 선택(내가 고른 후보 시간)
+  Set<DateTime> get mineTimes => {
+    for (final candidate in candidates)
+      if (candidate.selectedByMe) candidate.meetingTime,
+  };
+
+  /// 선택할 수 없을 때 보여줄 안내입니다. 선택할 수 있으면 null 입니다.
+  String? get closedNotice => switch (status) {
+    VoteStatus.voting when !votingOpen => '투표가 마감되어 더 이상 고를 수 없어요',
+    VoteStatus.voting => null,
+    VoteStatus.confirmed => '확정된 일정이라 더 이상 고를 수 없어요',
+    VoteStatus.canceled => '취소된 투표예요',
+  };
+
   /// 응답하지 않은 인원
   int get unrespondedCount => memberCount - respondedCount;
 
@@ -130,11 +144,9 @@ extension on VoteCandidate {
       Duration(hours: _local.hour, minutes: _local.minute);
 }
 
-/// 표 칸의 "내 선택" 테두리입니다.
-extension VoteCandidateDisplayX on VoteCandidate {
-  Border? get mineBorder =>
-      selectedByMe ? Border.all(color: MoaColors.textPrimary, width: 2) : null;
-}
+/// 표 칸의 "내 선택" 테두리입니다. 고르지 않은 칸은 null 입니다.
+Border? voteSelectionBorder({required bool selected}) =>
+    selected ? Border.all(color: MoaColors.textPrimary, width: 2) : null;
 
 extension VoteResponsesDisplayX on VoteResponses {
   /// 예: 미응답 최민아, 이름 미설정. 모두 응답했으면 null 입니다.
