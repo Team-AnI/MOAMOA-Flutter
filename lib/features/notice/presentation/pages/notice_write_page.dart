@@ -6,6 +6,7 @@ import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_error_widget.dart';
 
 import '../../domain/entities/notice.dart';
+import '../../domain/entities/notice_detail_request.dart';
 import '../notice_error.dart';
 import '../providers/notice_providers.dart';
 import '../widgets/notice_colors.dart';
@@ -67,9 +68,12 @@ class NoticeWritePage extends ConsumerWidget {
     final noticeId = this.noticeId;
     if (noticeId == null) return _NoticeForm(meetingId: meetingId);
 
-    final args = (meetingId: meetingId, noticeId: noticeId);
+    final request = NoticeDetailRequest(
+      meetingId: meetingId,
+      noticeId: noticeId,
+    );
     return ref
-        .watch(noticeDetailProvider(args))
+        .watch(noticeDetailProvider(request))
         .when(
           data: (notice) =>
               _NoticeForm(meetingId: meetingId, initialNotice: notice),
@@ -82,7 +86,7 @@ class NoticeWritePage extends ConsumerWidget {
                 )
               : MoaErrorWidget(
                   message: noticeErrorMessage(error),
-                  onAction: () => ref.invalidate(noticeDetailProvider(args)),
+                  onAction: () => ref.invalidate(noticeDetailProvider(request)),
                 ),
         );
   }

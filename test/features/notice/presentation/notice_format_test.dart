@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_read_member.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/presentation/notice_format.dart';
 
 void main() {
@@ -122,6 +124,114 @@ void main() {
       final notice = noticeBy(null);
 
       expect(notice.detailMeta, '2026년 9월 12일');
+    });
+  });
+
+  group('NoticeReadCountX', () {
+    Notice notice({int? readCount, int? totalCount}) => Notice(
+      id: 1,
+      title: '공지',
+      createdAt: DateTime(2026, 10, 1),
+      readCount: readCount,
+      totalCount: totalCount,
+    );
+
+    test('읽은 수와 전체 수를 읽음 6/8 로 표시한다', () {
+      expect(notice(readCount: 6, totalCount: 8).readCountLabel, '읽음 6/8');
+    });
+
+    test('읽은 수를 받지 못했으면 표시하지 않는다', () {
+      expect(notice().readCountLabel, isNull);
+    });
+
+    test('전체 수만 받지 못했어도 표시하지 않는다', () {
+      expect(notice(readCount: 6).readCountLabel, isNull);
+    });
+
+    test('읽은 수와 전체 수가 같으면 모두 읽은 것으로 본다', () {
+      expect(notice(readCount: 8, totalCount: 8).isReadByAll, isTrue);
+    });
+
+    test('읽은 수가 전체 수보다 적으면 모두 읽지 않은 것으로 본다', () {
+      expect(notice(readCount: 6, totalCount: 8).isReadByAll, isFalse);
+    });
+
+    test('읽은 수를 받지 못했으면 모두 읽지 않은 것으로 본다', () {
+      expect(notice().isReadByAll, isFalse);
+    });
+  });
+
+  group('NoticeReadsDisplayX', () {
+    NoticeReadMember member(int id, [String? name]) =>
+        NoticeReadMember(memberId: id, userName: name);
+
+    NoticeReads reads({
+      int readers = 0,
+      List<NoticeReadMember> unread = const [],
+    }) => NoticeReads(
+      readCount: readers,
+      totalCount: readers + unread.length,
+      readMembers: [for (var i = 0; i < readers; i++) member(i, '구성원$i')],
+      unreadMembers: unread,
+    );
+
+    test('읽은 수와 전체 수를 6/8 로 표시한다', () {
+      final value = reads(readers: 6, unread: [member(10), member(11)]);
+
+      expect(value.countLabel, '6/8');
+    });
+
+    test('안 읽은 구성원이 두 명이면 두 이름을 모두 보여준다', () {
+      final value = reads(
+        readers: 1,
+        unread: [member(10, '박지훈'), member(11, '최민아')],
+      );
+
+      expect(value.unreadLabel, '박지훈, 최민아 님이 아직 안 읽었어요.');
+    });
+
+    test('안 읽은 구성원이 세 명 이상이면 두 이름 뒤에 나머지 수를 붙인다', () {
+      final value = reads(
+        unread: [
+          member(10, '박지훈'),
+          member(11, '최민아'),
+          member(12, '이서연'),
+          member(13, '정하은'),
+        ],
+      );
+
+      expect(value.unreadLabel, '박지훈, 최민아 님 외 2명이 아직 안 읽었어요.');
+    });
+
+    test('이름이 없는 안 읽은 구성원은 이름 미설정으로 보여준다', () {
+      final value = reads(unread: [member(10)]);
+
+      expect(value.unreadLabel, '이름 미설정 님이 아직 안 읽었어요.');
+    });
+
+    test('모두 읽었으면 모두 읽었다고 안내한다', () {
+      expect(reads(readers: 3).unreadLabel, '모두 읽었어요.');
+    });
+
+    test('읽은 구성원이 6명이면 +N 없이 6명을 모두 동그라미로 보여준다', () {
+      final value = reads(readers: 6);
+
+      expect(value.stackMembers, hasLength(6));
+      expect(value.hiddenReaderLabel, isNull);
+    });
+
+    test('읽은 구성원이 7명이면 6명을 넘는 1명을 +1 로 줄여 보여준다', () {
+      final value = reads(readers: 7);
+
+      expect(value.stackMembers.map((member) => member.memberId), [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+      ]);
+      expect(value.hiddenReaderLabel, '+1');
     });
   });
 }

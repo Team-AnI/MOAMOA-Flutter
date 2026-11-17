@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_error_widget.dart';
 
@@ -91,6 +92,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
                             .read(noticeListProvider(widget.meetingId).notifier)
                             .refresh(),
                         onTapNotice: _goDetail,
+                        showReadCount: canWrite,
                       ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => MoaErrorWidget(
@@ -166,12 +168,16 @@ class _NoticeListBody extends StatelessWidget {
     required this.controller,
     required this.onRefresh,
     required this.onTapNotice,
+    required this.showReadCount,
   });
 
   final NoticeListState state;
   final ScrollController controller;
   final Future<void> Function() onRefresh;
   final ValueChanged<Notice> onTapNotice;
+
+  /// 항목마다 읽음 현황을 보여줄지 (관리자만)
+  final bool showReadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +195,7 @@ class _NoticeListBody extends StatelessWidget {
               notice: notices[i],
               isFirst: i == 0,
               isLast: i == notices.length - 1,
+              showReadCount: showReadCount,
               onTap: () => onTapNotice(notices[i]),
             ),
           if (state.isLoadingMore)
@@ -209,13 +216,20 @@ class _NoticeTile extends StatelessWidget {
     required this.notice,
     required this.isFirst,
     required this.isLast,
+    required this.showReadCount,
     required this.onTap,
   });
 
   final Notice notice;
   final bool isFirst;
   final bool isLast;
+  final bool showReadCount;
   final VoidCallback onTap;
+
+  /// 모두 읽었으면 회색, 아직 안 읽은 사람이 있으면 굵은 파란색
+  TextStyle get _readCountStyle => notice.isReadByAll
+      ? MoaText.sub.copyWith(color: MoaColors.textTertiary)
+      : MoaText.subStrong.copyWith(color: MoaColors.accentText);
 
   @override
   Widget build(BuildContext context) {
@@ -240,23 +254,34 @@ class _NoticeTile extends StatelessWidget {
                     ? null
                     : const Border(top: BorderSide(color: Colors.white)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    notice.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.47,
-                      letterSpacing: -0.2,
-                      fontWeight: FontWeight.w600,
-                      color: NoticeColors.text,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          notice.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.47,
+                            letterSpacing: -0.2,
+                            fontWeight: FontWeight.w600,
+                            color: NoticeColors.text,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _MetaText(notice: notice),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  _MetaText(notice: notice),
+                  // 읽음 현황 (예: 읽음 6/8)
+                  if (showReadCount && notice.readCountLabel != null) ...[
+                    const SizedBox(width: 12),
+                    Text(notice.readCountLabel!, style: _readCountStyle),
+                  ],
                 ],
               ),
             ),

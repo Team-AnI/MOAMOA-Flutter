@@ -38,6 +38,19 @@ class _StubAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// 명세 3-7 의 응답 예시
+const _readsBody = '''
+{"success": true, "error": null,
+ "data": {"noticeId": 30, "readCount": 2, "totalCount": 3,
+          "readMembers": [
+            {"memberId": 3, "userName": "김모아", "profileColor": "LIGHT_BLUE",
+             "readAt": "2026-10-07T10:00:00+09:00"},
+            {"memberId": 5, "userName": "이모아", "profileColor": "BLUE",
+             "readAt": "2026-10-07T10:05:00+09:00"}],
+          "unreadMembers": [
+            {"memberId": 7, "userName": "박모아", "profileColor": "GRAY"}]}}
+''';
+
 NoticeRepositoryImpl _repositoryWith(
   int statusCode,
   String body, {
@@ -214,6 +227,159 @@ void main() {
         repository.markNoticeRead(meetingId: 1, noticeId: 30),
         throwsA(
           isA<NoticeException>().having((e) => e.code, 'code', 'NOT_FOUND'),
+        ),
+      );
+    });
+
+    test('목록 응답의 읽은 수와 전체 구성원 수를 공지에 담는다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "error": null,
+       "data": {"notices": [{"noticeId": 30, "title": "10월 회비 안내",
+                             "readCount": 6, "totalCount": 8,
+                             "createdAt": "2026-10-07T10:00:00+09:00"}],
+                "page": 0, "size": 20, "hasNext": false}}
+    ''');
+
+      final result = await repository.getNotices(
+        meetingId: 1,
+        page: 0,
+        size: 20,
+      );
+
+      expect(result.notices.single.readCount, 6);
+      expect(result.notices.single.totalCount, 8);
+    });
+
+    test('상세 응답에는 읽은 수가 없으므로 비워 둔다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "error": null,
+       "data": {"noticeId": 30, "title": "10월 회비 안내",
+                "content": "10일까지 납부", "createdAt": "2026-10-07T10:00:00+09:00"}}
+    ''');
+
+      final notice = await repository.getNoticeDetail(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(notice.readCount, isNull);
+      expect(notice.totalCount, isNull);
+    });
+
+    test('읽음 현황은 GET .../reads 로 요청한다', () async {
+      final requests = <RequestOptions>[];
+      final repository = _repositoryWith(200, _readsBody, requests: requests);
+
+      await repository.getNoticeReadsByNoticeId(meetingId: 1, noticeId: 30);
+
+      expect(requests.single.method, 'GET');
+      expect(requests.single.path, '/v1/meetings/1/notices/30/reads');
+    });
+
+    test('읽음 현황의 읽은 수와 전체 구성원 수를 담는다', () async {
+      final repository = _repositoryWith(200, _readsBody);
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.readCount, 2);
+      expect(reads.totalCount, 3);
+    });
+
+    test('읽은 구성원은 서버가 보낸 순서대로 읽은 시각과 함께 담는다', () async {
+      final repository = _repositoryWith(200, _readsBody);
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.readMembers.map((member) => member.userName), [
+        '김모아',
+        '이모아',
+      ]);
+      expect(
+        reads.readMembers.first.readAt,
+        DateTime.parse('2026-10-07T10:00:00+09:00').toLocal(),
+      );
+    });
+
+    test('읽음 현황 구성원의 profileColor 를 프로필 색으로 바꾼다', () async {
+      final repository = _repositoryWith(200, _readsBody);
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.readMembers.map((member) => member.profileColor), [
+        ProfileColor.lightBlue,
+        ProfileColor.blue,
+      ]);
+      expect(reads.unreadMembers.single.profileColor, ProfileColor.gray);
+    });
+
+    test('읽음 현황 구성원의 profileColor 가 없거나 모르는 값이면 기본 연파랑으로 바꾼다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "error": null,
+       "data": {"noticeId": 30, "readCount": 1, "totalCount": 2,
+                "readMembers": [{"memberId": 3, "userName": "김모아",
+                                 "readAt": "2026-10-07T10:00:00+09:00"}],
+                "unreadMembers": [{"memberId": 7, "userName": "박모아",
+                                   "profileColor": "PINK"}]}}
+      ''');
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.readMembers.single.profileColor, ProfileColor.lightBlue);
+      expect(reads.unreadMembers.single.profileColor, ProfileColor.lightBlue);
+    });
+
+    test('읽지 않은 구성원은 읽은 시각 없이 담는다', () async {
+      final repository = _repositoryWith(200, _readsBody);
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.unreadMembers.single.memberId, 7);
+      expect(reads.unreadMembers.single.userName, '박모아');
+      expect(reads.unreadMembers.single.readAt, isNull);
+    });
+
+    test('이름이 없는 구성원도 읽음 현황에 담는다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "error": null,
+       "data": {"noticeId": 30, "readCount": 0, "totalCount": 1,
+                "readMembers": [],
+                "unreadMembers": [{"memberId": 9, "userName": null}]}}
+    ''');
+
+      final reads = await repository.getNoticeReadsByNoticeId(
+        meetingId: 1,
+        noticeId: 30,
+      );
+
+      expect(reads.unreadMembers.single.memberId, 9);
+      expect(reads.unreadMembers.single.userName, isNull);
+    });
+
+    test('읽음 현황 실패 응답이면 서버의 코드를 담은 NoticeException 예외가 발생한다', () async {
+      final repository = _repositoryWith(403, '''
+      {"success": false, "data": null,
+       "error": {"code": "FORBIDDEN", "message": "모임 구성원이 아닙니다."}}
+    ''');
+
+      await expectLater(
+        repository.getNoticeReadsByNoticeId(meetingId: 1, noticeId: 30),
+        throwsA(
+          isA<NoticeException>().having((e) => e.code, 'code', 'FORBIDDEN'),
         ),
       );
     });

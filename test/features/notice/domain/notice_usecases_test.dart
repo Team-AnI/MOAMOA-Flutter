@@ -1,8 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_read_member.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/domain/usecases/create_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/delete_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notice_detail.dart';
+import 'package:moamoa/features/notice/domain/usecases/get_notice_reads.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notices.dart';
 import 'package:moamoa/features/notice/domain/usecases/mark_notice_read.dart';
 import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
@@ -233,6 +236,41 @@ void main() {
       );
 
       expect(repository.readNoticeIds, [1]);
+    });
+  });
+
+  group(GetNoticeReads, () {
+    late FakeNoticeRepository repository;
+    late GetNoticeReads getNoticeReads;
+
+    setUp(() {
+      repository = FakeNoticeRepository(
+        notices: [buildNotice(1), buildNotice(2)],
+      );
+      getNoticeReads = GetNoticeReadsImpl(noticeRepository: repository);
+    });
+
+    test('지정한 공지의 읽음 현황을 조회한다', () async {
+      repository.readsByNoticeId[1] = const NoticeReads(
+        readCount: 1,
+        totalCount: 2,
+        readMembers: [NoticeReadMember(memberId: 3, userName: '김모아')],
+        unreadMembers: [NoticeReadMember(memberId: 5, userName: '이모아')],
+      );
+
+      final reads = await getNoticeReads(
+        const GetNoticeReadsParams(meetingId: 1, noticeId: 1),
+      );
+
+      expect(reads.readMembers.single.userName, '김모아');
+      expect(reads.unreadMembers.single.userName, '이모아');
+    });
+
+    test('없는 공지의 읽음 현황을 조회하면 NoticeException 예외가 발생한다', () async {
+      await expectLater(
+        getNoticeReads(const GetNoticeReadsParams(meetingId: 1, noticeId: 99)),
+        throwsA(isA<NoticeException>()),
+      );
     });
   });
 }

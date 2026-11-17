@@ -4,6 +4,7 @@ import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/domain/repositories/notice_repository.dart';
 
 /// 테스트용 공지 생성 헬퍼
@@ -12,6 +13,8 @@ Notice buildNotice(
   String? title,
   String? content,
   NoticeAuthor? author,
+  int? readCount,
+  int? totalCount,
 }) {
   return Notice(
     id: id,
@@ -19,6 +22,8 @@ Notice buildNotice(
     content: content,
     createdAt: DateTime(2026, 10, 1).add(Duration(days: id)),
     author: author,
+    readCount: readCount,
+    totalCount: totalCount,
   );
 }
 
@@ -53,6 +58,18 @@ class FakeNoticeRepository implements NoticeRepository {
 
   /// 값이 있으면 markNoticeRead 만 이 예외를 던집니다. (상세 조회는 성공하고 읽음만 실패하는 상황)
   Exception? readError;
+
+  /// getNoticeReadsByNoticeId 가 돌려줄 공지별 읽음 현황. 없으면 아무도 읽지 않은 현황을 돌려줍니다.
+  final Map<int, NoticeReads> readsByNoticeId = {};
+
+  /// 값이 있으면 getNoticeReadsByNoticeId 만 이 예외를 던집니다. (상세는 보이고 읽음 현황만 실패하는 상황)
+  Exception? readsError;
+
+  /// 값이 있으면 getNoticeReadsByNoticeId 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? readsGate;
+
+  /// getNoticeReadsByNoticeId 를 요청한 때마다, 그 순간까지 읽음 처리를 요청한 공지 ID
+  final List<List<int>> readNoticeIdsAtReadsRequest = [];
 
   int _nextId = 1000;
 
@@ -151,5 +168,24 @@ class FakeNoticeRepository implements NoticeRepository {
   }) async {
     readNoticeIds.add(noticeId);
     if (readError != null) throw readError!;
+  }
+
+  @override
+  Future<NoticeReads> getNoticeReadsByNoticeId({
+    required int meetingId,
+    required int noticeId,
+  }) async {
+    _throwIfError();
+    readNoticeIdsAtReadsRequest.add([...readNoticeIds]);
+    await readsGate?.future;
+    if (readsError != null) throw readsError!;
+    _indexOf(noticeId);
+    return readsByNoticeId[noticeId] ??
+        const NoticeReads(
+          readCount: 0,
+          totalCount: 0,
+          readMembers: [],
+          unreadMembers: [],
+        );
   }
 }

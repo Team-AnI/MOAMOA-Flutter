@@ -173,6 +173,36 @@ void main() {
       expect(state.notices, hasLength(20));
     });
 
+    test('updateReadCount 는 그 공지의 읽은 수만 바꾸고 순서는 그대로 둔다', () async {
+      await openList();
+
+      container
+          .read(noticeListProvider(meetingId).notifier)
+          .updateReadCount(noticeId: 2, readCount: 3, totalCount: 5);
+
+      final notices = container
+          .read(noticeListProvider(meetingId))
+          .requireValue
+          .notices;
+      expect(notices.map((notice) => notice.id).take(3), [1, 2, 3]);
+      expect(notices[1].readCount, 3);
+      expect(notices[1].totalCount, 5);
+      expect(notices[0].readCount, isNull);
+    });
+
+    test('updateReadCount 는 목록에 없는 공지면 목록을 바꾸지 않는다', () async {
+      final before = await openList();
+
+      container
+          .read(noticeListProvider(meetingId).notifier)
+          .updateReadCount(noticeId: 999, readCount: 3, totalCount: 5);
+
+      expect(
+        container.read(noticeListProvider(meetingId)).requireValue,
+        before,
+      );
+    });
+
     test('조회에 실패하면 에러 상태가 된다', () async {
       repository.error = const NoticeException('모임 구성원이 아닙니다.');
 

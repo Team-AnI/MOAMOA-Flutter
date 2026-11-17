@@ -1,5 +1,6 @@
 import '../entities/notice.dart';
 import '../entities/notice_list_result.dart';
+import '../entities/notice_reads.dart';
 
 /// 공지 Repository
 ///
@@ -38,4 +39,10 @@ abstract interface class NoticeRepository {
 
   /// 3-6 공지 읽음 처리. 여러 번 호출해도 처음 읽은 시각이 유지됩니다.
   Future<void> markNoticeRead({required int meetingId, required int noticeId});
+
+  /// 3-7 공지 읽음 현황. 읽은 구성원과 읽지 않은 구성원을 함께 돌려줍니다.
+  Future<NoticeReads> getNoticeReadsByNoticeId({
+    required int meetingId,
+    required int noticeId,
+  });
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/notice_detail_request.dart';
 import '../../domain/usecases/create_notice.dart';
 import '../../domain/usecases/update_notice.dart';
 import '../providers/notice_providers.dart';
@@ -72,7 +73,9 @@ class NoticeWriteViewModel extends AsyncNotifier<void> {
     ref.invalidate(noticeListProvider(_meetingId));
     if (noticeId != null) {
       ref.invalidate(
-        noticeDetailProvider((meetingId: _meetingId, noticeId: noticeId)),
+        noticeDetailProvider(
+          NoticeDetailRequest(meetingId: _meetingId, noticeId: noticeId),
+        ),
       );
     }
     return true;

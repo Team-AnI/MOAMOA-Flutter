@@ -17,6 +17,12 @@ abstract class NoticeModel with _$NoticeModel {
     required String createdAt,
     String? content,
     NoticeAuthorModel? author,
+
+    /// 목록(3-2)에만 있습니다. 공지를 읽은 현재 구성원 수
+    int? readCount,
+
+    /// 목록(3-2)에만 있습니다. 현재 모임 구성원 수
+    int? totalCount,
   }) = _NoticeModel;
 
   factory NoticeModel.fromJson(Map<String, dynamic> json) =>
@@ -33,5 +39,7 @@ extension NoticeModelX on NoticeModel {
     content: content,
     createdAt: DateTime.parse(createdAt).toLocal(),
     author: author?.toEntity(),
+    readCount: readCount,
+    totalCount: totalCount,
   );
 }

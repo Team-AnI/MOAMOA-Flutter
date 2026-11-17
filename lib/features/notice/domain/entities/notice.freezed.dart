@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Notice {
 
- int get id; String get title; DateTime get createdAt; String? get content; NoticeAuthor? get author;
+ int get id; String get title; DateTime get createdAt; String? get content; NoticeAuthor? get author;/// 공지를 읽은 현재 구성원 수
+ int? get readCount;/// 현재 모임 구성원 수 (나간 구성원 제외, 나중에 가입한 구성원 포함)
+ int? get totalCount;
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +28,16 @@ $NoticeCopyWith<Notice> get copyWith => _$NoticeCopyWithImpl<Notice>(this as Not
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author)&&(identical(other.readCount, readCount) || other.readCount == readCount)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author);
+int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author,readCount,totalCount);
 
 @override
 String toString() {
-  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author)';
+  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author, readCount: $readCount, totalCount: $totalCount)';
 }
 
 
@@ -46,7 +48,7 @@ abstract mixin class $NoticeCopyWith<$Res>  {
   factory $NoticeCopyWith(Notice value, $Res Function(Notice) _then) = _$NoticeCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, DateTime createdAt, String? content, NoticeAuthor? author
+ int id, String title, DateTime createdAt, String? content, NoticeAuthor? author, int? readCount, int? totalCount
 });
 
 
@@ -63,14 +65,16 @@ class _$NoticeCopyWithImpl<$Res>
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,Object? readCount = freezed,Object? totalCount = freezed,}) {
   return _then(Notice(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String?,author: freezed == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
-as NoticeAuthor?,
+as NoticeAuthor?,readCount: freezed == readCount ? _self.readCount : readCount // ignore: cast_nullable_to_non_nullable
+as int?,totalCount: freezed == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 /// Create a copy of Notice
@@ -167,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author,  int? readCount,  int? totalCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Notice() when $default != null:
-return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author,_that.readCount,_that.totalCount);case _:
   return orElse();
 
 }
@@ -188,10 +192,10 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author)
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author,  int? readCount,  int? totalCount)  $default,) {final _that = this;
 switch (_that) {
 case _Notice():
-return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author,_that.readCount,_that.totalCount);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -208,10 +212,10 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author)
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  DateTime createdAt,  String? content,  NoticeAuthor? author,  int? readCount,  int? totalCount)?  $default,) {final _that = this;
 switch (_that) {
 case _Notice() when $default != null:
-return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author);case _:
+return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author,_that.readCount,_that.totalCount);case _:
   return null;
 
 }
@@ -223,7 +227,7 @@ return $default(_that.id,_that.title,_that.createdAt,_that.content,_that.author)
 
 
 class _Notice implements Notice {
-  const _Notice({required this.id, required this.title, required this.createdAt, this.content, this.author});
+  const _Notice({required this.id, required this.title, required this.createdAt, this.content, this.author, this.readCount, this.totalCount});
   
 
 @override final  int id;
@@ -231,6 +235,10 @@ class _Notice implements Notice {
 @override final  DateTime createdAt;
 @override final  String? content;
 @override final  NoticeAuthor? author;
+/// 공지를 읽은 현재 구성원 수
+@override final  int? readCount;
+/// 현재 모임 구성원 수 (나간 구성원 제외, 나중에 가입한 구성원 포함)
+@override final  int? totalCount;
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
@@ -242,16 +250,16 @@ _$NoticeCopyWith<_Notice> get copyWith => __$NoticeCopyWithImpl<_Notice>(this, _
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Notice&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.content, content) || other.content == content)&&(identical(other.author, author) || other.author == author)&&(identical(other.readCount, readCount) || other.readCount == readCount)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author);
+int get hashCode => Object.hash(runtimeType,id,title,createdAt,content,author,readCount,totalCount);
 
 @override
 String toString() {
-  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author)';
+  return 'Notice(id: $id, title: $title, createdAt: $createdAt, content: $content, author: $author, readCount: $readCount, totalCount: $totalCount)';
 }
 
 
@@ -262,7 +270,7 @@ abstract mixin class _$NoticeCopyWith<$Res> implements $NoticeCopyWith<$Res> {
   factory _$NoticeCopyWith(_Notice value, $Res Function(_Notice) _then) = __$NoticeCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, DateTime createdAt, String? content, NoticeAuthor? author
+ int id, String title, DateTime createdAt, String? content, NoticeAuthor? author, int? readCount, int? totalCount
 });
 
 
@@ -279,14 +287,16 @@ class __$NoticeCopyWithImpl<$Res>
 
 /// Create a copy of Notice
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? createdAt = null,Object? content = freezed,Object? author = freezed,Object? readCount = freezed,Object? totalCount = freezed,}) {
   return _then(_Notice(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,content: freezed == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String?,author: freezed == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
-as NoticeAuthor?,
+as NoticeAuthor?,readCount: freezed == readCount ? _self.readCount : readCount // ignore: cast_nullable_to_non_nullable
+as int?,totalCount: freezed == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

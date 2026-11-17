@@ -5,16 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/constants/profile_color.dart';
+import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_detail_request.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_read_member.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_detail_page.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_list_page.dart';
 import 'package:moamoa/features/notice/presentation/pages/notice_write_page.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
+import 'package:moamoa/features/notice/presentation/widgets/notice_reads_view.dart';
 
 import '../../fakes/fake_group_my_role.dart';
 import '../../fakes/fake_notice_repository.dart';
@@ -176,6 +181,65 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.getNoticesCallCount, 2);
+    });
+
+    testWidgets('관리자에게는 공지마다 읽은 수를 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, readCount: 6, totalCount: 8)],
+        ),
+        page,
+        myRole: FakeGroupMyRole.admin(),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('읽음 6/8'), findsOneWidget);
+    });
+
+    testWidgets('일반 구성원에게는 읽은 수를 보여주지 않는다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, readCount: 6, totalCount: 8)],
+        ),
+        page,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('읽음 6/8'), findsNothing);
+    });
+
+    testWidgets('아직 안 읽은 구성원이 있으면 읽은 수를 굵은 파란색으로 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, readCount: 6, totalCount: 8)],
+        ),
+        page,
+        myRole: FakeGroupMyRole.admin(),
+      );
+      await tester.pumpAndSettle();
+
+      final text = tester.widget<Text>(find.text('읽음 6/8'));
+      expect(text.style?.color, MoaColors.accentText);
+      expect(text.style?.fontWeight, FontWeight.w600);
+    });
+
+    testWidgets('모두 읽었으면 읽은 수를 회색으로 보여준다', (tester) async {
+      await pumpPage(
+        tester,
+        FakeNoticeRepository(
+          notices: [buildNotice(1, readCount: 8, totalCount: 8)],
+        ),
+        page,
+        myRole: FakeGroupMyRole.admin(),
+      );
+      await tester.pumpAndSettle();
+
+      final text = tester.widget<Text>(find.text('읽음 8/8'));
+      expect(text.style?.color, MoaColors.textTertiary);
+      expect(text.style?.fontWeight, FontWeight.w400);
     });
   });
 
@@ -804,7 +868,11 @@ void main() {
         tester.element(find.byType(NoticeDetailPage)),
       );
 
-      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      container.invalidate(
+        noticeDetailProvider(
+          const NoticeDetailRequest(meetingId: 1, noticeId: 1),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(repository.readNoticeIds, [1]);
@@ -875,6 +943,77 @@ void main() {
       expect(find.text('2026년 9월 12일'), findsOneWidget);
     });
 
+    group(NoticeReadsView, () {
+      NoticeReadMember reader(int id) =>
+          NoticeReadMember(memberId: id, userName: '구성원$id');
+
+      Finder avatarsInReads() => find.descendant(
+        of: find.byType(NoticeReadsView),
+        matching: find.byType(MoaProfileAvatar),
+      );
+
+      testWidgets('읽은 수와 읽은 구성원 동그라미, 안 읽은 구성원을 보여준다', (tester) async {
+        final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+          ..readsByNoticeId[1] = NoticeReads(
+            readCount: 2,
+            totalCount: 4,
+            readMembers: [reader(3), reader(5)],
+            unreadMembers: const [
+              NoticeReadMember(memberId: 7, userName: '박지훈'),
+              NoticeReadMember(memberId: 8, userName: '최민아'),
+            ],
+          );
+        await pumpPage(tester, repository, page);
+        await tester.pumpAndSettle();
+
+        expect(find.text('읽은 구성원'), findsOneWidget);
+        expect(find.text('2/4'), findsOneWidget);
+        expect(avatarsInReads(), findsNWidgets(2));
+        expect(find.text('박지훈, 최민아 님이 아직 안 읽었어요.'), findsOneWidget);
+      });
+
+      testWidgets('읽은 구성원이 7명이면 동그라미 6개와 +1 을 보여준다', (tester) async {
+        final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+          ..readsByNoticeId[1] = NoticeReads(
+            readCount: 7,
+            totalCount: 7,
+            readMembers: [for (var id = 1; id <= 7; id++) reader(id)],
+            unreadMembers: const [],
+          );
+        await pumpPage(tester, repository, page);
+        await tester.pumpAndSettle();
+
+        expect(avatarsInReads(), findsNWidgets(6));
+        expect(find.text('+1'), findsOneWidget);
+        expect(find.text('모두 읽었어요.'), findsOneWidget);
+      });
+
+      testWidgets('읽음 현황을 불러오지 못해도 공지 내용은 그대로 보여준다', (tester) async {
+        final repository = FakeNoticeRepository(
+          notices: [buildNotice(1, title: '10월 회비 안내')],
+        )..readsError = Exception('시간 초과');
+        await pumpPage(tester, repository, page);
+        await tester.pumpAndSettle();
+
+        expect(find.text('10월 회비 안내'), findsOneWidget);
+        expect(find.text('읽음 현황을 불러오지 못했어요.'), findsOneWidget);
+      });
+
+      testWidgets('읽음 현황을 불러오지 못한 뒤 다시 시도를 누르면 다시 불러와 보여준다', (tester) async {
+        final repository = FakeNoticeRepository(notices: [buildNotice(1)])
+          ..readsError = Exception('시간 초과');
+        await pumpPage(tester, repository, page);
+        await tester.pumpAndSettle();
+
+        repository.readsError = null;
+        await tester.tap(find.text('다시 시도'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('읽음 현황을 불러오지 못했어요.'), findsNothing);
+        expect(find.text('0/0'), findsOneWidget);
+      });
+    });
+
     testWidgets('수정 후 상세를 다시 불러오는 동안에도 이전 내용을 그대로 보여준다', (tester) async {
       final repository = FakeNoticeRepository(
         notices: [buildNotice(1, title: '10월 회비 안내', content: '10일까지 납부')],
@@ -886,7 +1025,11 @@ void main() {
       );
 
       repository.detailGate = Completer<void>();
-      container.invalidate(noticeDetailProvider((meetingId: 1, noticeId: 1)));
+      container.invalidate(
+        noticeDetailProvider(
+          const NoticeDetailRequest(meetingId: 1, noticeId: 1),
+        ),
+      );
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsNothing);

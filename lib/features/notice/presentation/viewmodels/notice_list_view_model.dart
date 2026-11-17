@@ -28,6 +28,28 @@ class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
     state = result;
   }
 
+  /// 목록에서 [noticeId] 공지의 "읽음 N/M" 만 바꿉니다. 목록에 없으면 그대로 둡니다.
+  ///
+  /// 공지 상세에서 읽음 현황(3-7)을 받으면 호출합니다.
+  void updateReadCount({
+    required int noticeId,
+    required int readCount,
+    required int totalCount,
+  }) {
+    final current = state.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        notices: [
+          for (final notice in current.notices)
+            notice.id == noticeId
+                ? notice.copyWith(readCount: readCount, totalCount: totalCount)
+                : notice,
+        ],
+      ),
+    );
+  }
+
   /// 다음 페이지를 불러와 목록 뒤에 붙입니다.
   ///
   /// 새로고침 중에는 요청하지 않고, 요청 중에 새로고침이 일어나면 늦게 도착한 응답은 버립니다.
