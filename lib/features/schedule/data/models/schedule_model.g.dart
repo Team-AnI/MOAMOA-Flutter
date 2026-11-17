@@ -16,6 +16,7 @@ _ScheduleModel _$ScheduleModelFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['endAt'] as String),
       location: json['location'] as String? ?? '',
+      status: json['status'] as String? ?? 'SCHEDULED',
     );
 
 Map<String, dynamic> _$ScheduleModelToJson(_ScheduleModel instance) =>
@@ -26,4 +27,5 @@ Map<String, dynamic> _$ScheduleModelToJson(_ScheduleModel instance) =>
       'startAt': instance.startAt.toIso8601String(),
       'endAt': instance.endAt?.toIso8601String(),
       'location': instance.location,
+      'status': instance.status,
     };

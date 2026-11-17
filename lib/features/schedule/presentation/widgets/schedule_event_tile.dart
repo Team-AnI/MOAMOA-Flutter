@@ -30,7 +30,11 @@ class ScheduleEventTile extends StatelessWidget {
           child: Row(
             spacing: 14,
             children: [
-              _TimeColumn(start: start, end: schedule.endAt?.toLocal()),
+              _TimeColumn(
+                start: start,
+                end: schedule.endAt?.toLocal(),
+                isVoting: schedule.isVoting,
+              ),
               const _AccentBar(),
               Expanded(
                 child: _EventTexts(
@@ -38,7 +42,10 @@ class ScheduleEventTile extends StatelessWidget {
                   location: schedule.location,
                 ),
               ),
-              ScheduleStatusPill(isPast: start.isBefore(DateTime.now())),
+              ScheduleStatusPill(
+                isPast: start.isBefore(DateTime.now()),
+                isVoting: schedule.isVoting,
+              ),
             ],
           ),
         ),
@@ -48,11 +55,19 @@ class ScheduleEventTile extends StatelessWidget {
 }
 
 /// 시작 시각과 소요 시간입니다.
+/// 투표 중([isVoting])이면 시작 일시가 임시값(가장 이른 후보)이라 시각 대신 "투표"를 보여줍니다.
 class _TimeColumn extends StatelessWidget {
-  const _TimeColumn({required this.start, required this.end});
+  const _TimeColumn({
+    required this.start,
+    required this.end,
+    required this.isVoting,
+  });
 
   final DateTime start;
   final DateTime? end;
+  final bool isVoting;
+
+  String get _startLabel => isVoting ? '투표' : start.hhmm;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +77,7 @@ class _TimeColumn extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(start.hhmm, style: MoaText.bodyStrong),
+          Text(_startLabel, style: MoaText.bodyStrong),
           if (end != null)
             Text(
               durationLabel(end.difference(start)),

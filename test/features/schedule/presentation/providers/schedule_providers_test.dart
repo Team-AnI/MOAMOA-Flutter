@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/group/domain/entities/member_role.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/schedule/presentation/providers/schedule_providers.dart';
 
 void main() {
@@ -20,10 +24,38 @@ void main() {
     );
   });
 
-  test('권한 정보가 연동되기 전에는 관리자가 아니다 (일정 만들기 버튼 숨김)', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+  group('scheduleAdminProvider', () {
+    ProviderContainer containerWith(Future<MemberRole> Function() role) {
+      final container = ProviderContainer(
+        overrides: [groupMyRoleProvider.overrideWith((ref, groupId) => role())],
+      );
+      addTearDown(container.dispose);
+      // 화면이 구독하는 것처럼 유지한다. (autoDispose)
+      container.listen(scheduleAdminProvider(1), (_, _) {});
+      return container;
+    }
 
-    expect(container.read(scheduleAdminProvider), isFalse);
+    test('모임 관리자이면 true 가 된다', () async {
+      final container = containerWith(() async => MemberRole.admin);
+
+      await container.read(groupMyRoleProvider(1).future);
+
+      expect(container.read(scheduleAdminProvider(1)), isTrue);
+    });
+
+    test('일반 구성원이면 false 가 된다', () async {
+      final container = containerWith(() async => MemberRole.member);
+
+      await container.read(groupMyRoleProvider(1).future);
+
+      expect(container.read(scheduleAdminProvider(1)), isFalse);
+    });
+
+    test('역할을 확인하는 중이면 false 로 보고 버튼을 숨긴다', () {
+      final pending = Completer<MemberRole>();
+      final container = containerWith(() => pending.future);
+
+      expect(container.read(scheduleAdminProvider(1)), isFalse);
+    });
   });
 }

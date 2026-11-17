@@ -5,11 +5,15 @@ import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule_list_request.dart';
+import 'package:moamoa/features/vote/presentation/vote_routes.dart';
 
 import '../providers/schedule_providers.dart';
+import '../schedule_create_mode.dart';
 import '../schedule_format.dart';
+import '../schedule_id.dart';
 import '../widgets/schedule_calendar.dart';
 import '../widgets/schedule_card.dart';
+import '../widgets/schedule_create_mode_sheet.dart';
 import '../widgets/schedule_event_tile.dart';
 
 /// 일정 화면들의 라우트 기본 경로입니다. 예: `/meetings/1/schedules`
@@ -23,6 +27,29 @@ ScheduleListRequest _monthRequest(int meetingId, DateTime month) =>
       startDate: month,
       endDate: DateTime(month.year, month.month + 1, 0),
     );
+
+/// 일정을 엽니다. 투표 중인 일정은 투표 화면으로 가고, 그 밖의 일정은 상세로 갑니다.
+/// 투표 화면에서 확정하고 돌아오면(true) 일정 목록·상세를 다시 불러옵니다.
+/// 투표 쪽이 일정 Provider 를 알지 않도록 갱신은 이 화면에서 합니다.
+Future<void> _openSchedule(
+  BuildContext context,
+  WidgetRef ref,
+  int meetingId,
+  Schedule schedule,
+) async {
+  if (!schedule.isVoting) {
+    context.push('${_basePath(meetingId)}/${schedule.id}');
+    return;
+  }
+  final confirmed = await context.push<bool>(votePath(meetingId, schedule.id));
+  if (confirmed != true || !context.mounted) return;
+  ref.invalidate(scheduleListProvider);
+  ref.invalidate(
+    scheduleDetailProvider(
+      ScheduleId(meetingId: meetingId, scheduleId: schedule.id),
+    ),
+  );
+}
 
 /// 일정 탭 화면. 위에서부터 다음 순서로 구성됩니다.
 ///
@@ -45,6 +72,34 @@ class ScheduleListPage extends ConsumerStatefulWidget {
 class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
   bool _calendar = false;
 
+  /// 바로 만들지, 투표로 정할지 고른 뒤 해당 만들기 화면으로 이동합니다. 시트를 닫으면 그대로 둡니다.
+  Future<void> _selectCreateMode() async {
+    final mode = await showModalBottomSheet<ScheduleCreateMode>(
+      context: context,
+      backgroundColor: MoaColors.page,
+      barrierColor: MoaColors.scrim,
+      shape: const RoundedRectangleBorder(),
+      builder: (_) => const ScheduleCreateModeSheet(),
+    );
+    if (mode == null || !mounted) return;
+    switch (mode) {
+      case ScheduleCreateMode.direct:
+        context.push('${_basePath(widget.meetingId)}/new');
+      case ScheduleCreateMode.vote:
+        await _createByVote();
+    }
+  }
+
+  /// 투표 만들기 화면은 만든 일정 id 를 돌려주며 닫힙니다. 만들었을 때만 목록을 다시 불러옵니다.
+  /// 투표 쪽이 일정 Provider 를 알지 않도록 목록 갱신은 이 화면에서 합니다.
+  Future<void> _createByVote() async {
+    final createdScheduleId = await context.push<int>(
+      voteCreatePath(widget.meetingId),
+    );
+    if (createdScheduleId == null || !mounted) return;
+    ref.invalidate(scheduleListProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     // 목록 탭으로 가서 캘린더 탭이 사라져도 보던 달/선택 날짜가 남도록 구독을 유지합니다.
@@ -56,8 +111,8 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
         child: Column(
           children: [
             _Header(
-              showAdd: ref.watch(scheduleAdminProvider),
-              onAdd: () => context.push('${_basePath(widget.meetingId)}/new'),
+              showAdd: ref.watch(scheduleAdminProvider(widget.meetingId)),
+              onAdd: _selectCreateMode,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
@@ -81,7 +136,7 @@ class _ScheduleListPageState extends ConsumerState<ScheduleListPage> {
 /// 목록 탭: 지난 3개월 ~ 앞으로 1년의 일정을 시작 일시 순으로 카드로 보여줍니다.
 ///
 /// 불러오는 중에는 로딩 표시, 실패하면 "다시 시도" 버튼이 있는 안내, 일정이 없으면 빈 안내를 보여줍니다.
-/// 카드를 누르면 일정 상세 화면으로 이동합니다.
+/// 카드를 누르면 일정 상세 화면(투표 중이면 투표 화면)으로 이동합니다.
 class _ListTab extends ConsumerWidget {
   const _ListTab({required this.meetingId});
 
@@ -109,8 +164,7 @@ class _ListTab extends ConsumerWidget {
               separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (_, i) => ScheduleCard(
                 schedule: list[i],
-                onTap: () =>
-                    context.push('${_basePath(meetingId)}/${list[i].id}'),
+                onTap: () => _openSchedule(context, ref, meetingId, list[i]),
               ),
             ),
       error: (_, _) => _Message(
@@ -217,7 +271,7 @@ class _SelectedDaySchedules extends ConsumerWidget {
         for (final s in events)
           ScheduleEventTile(
             schedule: s,
-            onTap: () => context.push('${_basePath(meetingId)}/${s.id}'),
+            onTap: () => _openSchedule(context, ref, meetingId, s),
           ),
       ],
     );

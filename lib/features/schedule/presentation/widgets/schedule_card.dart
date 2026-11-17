@@ -10,7 +10,8 @@ import 'schedule_status_pill.dart';
 ///
 /// - 시간은 `수 19:00` 처럼 요일과 시작 시각을 보여주고, 장소가 비어 있으면 그 줄은 없앱니다.
 /// - 시작 일시가 지났으면 제목을 흐리게 하고 "지난 일정" 라벨을 붙입니다.
-/// - [onTap] 은 카드를 눌렀을 때(상세로 이동) 호출됩니다.
+/// - 투표 중인 일정은 날짜 대신 "투표" 배지와 "투표 중" 라벨을 붙이고, 임시 시작 시각은 보여주지 않습니다.
+/// - [onTap] 은 카드를 눌렀을 때(상세 또는 투표 화면으로 이동) 호출됩니다.
 class ScheduleCard extends StatelessWidget {
   const ScheduleCard({super.key, required this.schedule, this.onTap});
 
@@ -20,8 +21,8 @@ class ScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final start = schedule.startAt.toLocal();
-    // 서버 응답에는 상태가 없어서 시작 일시가 지났는지로 "지난 일정"을 판단합니다.
-    final isPast = start.isBefore(DateTime.now());
+    // "지난 일정" 상태는 서버가 주지 않아 시작 일시가 지났는지로 판단합니다. 투표 중 일정은 시작 일시가 임시값이라 보지 않습니다.
+    final isPast = !schedule.isVoting && start.isBefore(DateTime.now());
     final location = schedule.location;
     const radius = BorderRadius.all(Radius.circular(24));
 
@@ -36,7 +37,7 @@ class ScheduleCard extends StatelessWidget {
           child: Row(
             spacing: 14,
             children: [
-              _DateBadge(date: start),
+              _DateBadge(date: start, isVoting: schedule.isVoting),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,16 +51,17 @@ class ScheduleCard extends StatelessWidget {
                             : MoaColors.textPrimary,
                       ),
                     ),
-                    _Meta(
-                      icon: 'clock',
-                      text: '${start.weekdayKo} ${start.hhmm}',
-                    ),
+                    if (!schedule.isVoting)
+                      _Meta(
+                        icon: 'clock',
+                        text: '${start.weekdayKo} ${start.hhmm}',
+                      ),
                     if (location.isNotEmpty)
                       _Meta(icon: 'map_pin', text: location),
                   ],
                 ),
               ),
-              ScheduleStatusPill(isPast: isPast),
+              ScheduleStatusPill(isPast: isPast, isVoting: schedule.isVoting),
             ],
           ),
         ),
@@ -69,10 +71,14 @@ class ScheduleCard extends StatelessWidget {
 }
 
 /// 카드 왼쪽의 날짜 배지입니다. 위에 월(`10월`), 아래에 일(`11`)을 보여줍니다.
+/// 투표 중([isVoting])이면 일 대신 "투표"를 보여줍니다.
 class _DateBadge extends StatelessWidget {
-  const _DateBadge({required this.date});
+  const _DateBadge({required this.date, required this.isVoting});
 
   final DateTime date;
+  final bool isVoting;
+
+  String get _dayLabel => isVoting ? '투표' : '${date.day}';
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +95,7 @@ class _DateBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text('${date.month}월', style: MoaText.captionStrong.merge(style)),
-          Text('${date.day}', style: MoaText.titleL.merge(style)),
+          Text(_dayLabel, style: MoaText.titleL.merge(style)),
         ],
       ),
     );

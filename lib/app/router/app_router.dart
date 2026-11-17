@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/features/schedule/presentation/schedule_routes.dart';
+import 'package:moamoa/features/vote/presentation/vote_routes.dart';
 
 import '../../features/group/presentation/group_routes.dart';
 import '../../features/notice/presentation/notice_routes.dart';
@@ -16,6 +17,7 @@ final List<RouteBase> _featureRoutes = [
   // ...authRoutes,
   ...groupRoutes,
   ...scheduleRoutes,
+  ...voteRoutes,
   ...noticeRoutes,
   // ...settlementRoutes,
 ];
