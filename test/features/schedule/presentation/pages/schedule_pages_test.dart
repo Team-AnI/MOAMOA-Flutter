@@ -42,7 +42,7 @@ void main() {
         retry: (_, _) => null,
         overrides: [
           scheduleRepositoryProvider.overrideWithValue(repository),
-          scheduleAdminProvider.overrideWithValue(isAdmin),
+          scheduleAdminProvider.overrideWith((ref, meetingId) => isAdmin),
         ],
         child: MaterialApp(home: page),
       ),
@@ -73,6 +73,8 @@ void main() {
       await pumpPage(tester, const ScheduleListPage(meetingId: 1));
       expect(find.byKey(const Key('schedule-add-button')), findsOneWidget);
 
+      // overrideWith 는 같은 ProviderScope 를 다시 그려도 바뀌지 않아서, 화면을 비운 뒤 새로 띄운다.
+      await tester.pumpWidget(const SizedBox());
       await pumpPage(
         tester,
         const ScheduleListPage(meetingId: 1),

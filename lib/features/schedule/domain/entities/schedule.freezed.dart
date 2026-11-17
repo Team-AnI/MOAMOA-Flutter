@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Schedule {
 
- int get id; String get title; String get description; DateTime get startAt; DateTime? get endAt; String get location;
+ int get id; String get title; String get description; DateTime get startAt; DateTime? get endAt; String get location; ScheduleStatus get status;
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $ScheduleCopyWith<Schedule> get copyWith => _$ScheduleCopyWithImpl<Schedule>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Schedule&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Schedule&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,location);
+int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,location,status);
 
 @override
 String toString() {
-  return 'Schedule(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
+  return 'Schedule(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location, status: $status)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $ScheduleCopyWith<$Res>  {
   factory $ScheduleCopyWith(Schedule value, $Res Function(Schedule) _then) = _$ScheduleCopyWithImpl;
 @useResult
 $Res call({
- int id, String title, String description, DateTime startAt, DateTime? endAt, String location
+ int id, String title, String description, DateTime startAt, DateTime? endAt, String location, ScheduleStatus status
 });
 
 
@@ -63,7 +63,7 @@ class _$ScheduleCopyWithImpl<$Res>
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,Object? status = null,}) {
   return _then(Schedule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -71,7 +71,8 @@ as String,description: null == description ? _self.description : description // 
 as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String,
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as ScheduleStatus,
   ));
 }
 
@@ -156,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location,  ScheduleStatus status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Schedule() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
+return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location,_that.status);case _:
   return orElse();
 
 }
@@ -177,10 +178,10 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location,  ScheduleStatus status)  $default,) {final _that = this;
 switch (_that) {
 case _Schedule():
-return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
+return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location,_that.status);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +198,10 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String title,  String description,  DateTime startAt,  DateTime? endAt,  String location,  ScheduleStatus status)?  $default,) {final _that = this;
 switch (_that) {
 case _Schedule() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location);case _:
+return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt,_that.location,_that.status);case _:
   return null;
 
 }
@@ -211,8 +212,8 @@ return $default(_that.id,_that.title,_that.description,_that.startAt,_that.endAt
 /// @nodoc
 
 
-class _Schedule implements Schedule {
-  const _Schedule({required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = ''});
+class _Schedule extends Schedule {
+  const _Schedule({required this.id, required this.title, this.description = '', required this.startAt, this.endAt, this.location = '', this.status = ScheduleStatus.scheduled}): super._();
   
 
 @override final  int id;
@@ -221,6 +222,7 @@ class _Schedule implements Schedule {
 @override final  DateTime startAt;
 @override final  DateTime? endAt;
 @override@JsonKey() final  String location;
+@override@JsonKey() final  ScheduleStatus status;
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
@@ -232,16 +234,16 @@ _$ScheduleCopyWith<_Schedule> get copyWith => __$ScheduleCopyWithImpl<_Schedule>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Schedule&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Schedule&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.startAt, startAt) || other.startAt == startAt)&&(identical(other.endAt, endAt) || other.endAt == endAt)&&(identical(other.location, location) || other.location == location)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,location);
+int get hashCode => Object.hash(runtimeType,id,title,description,startAt,endAt,location,status);
 
 @override
 String toString() {
-  return 'Schedule(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location)';
+  return 'Schedule(id: $id, title: $title, description: $description, startAt: $startAt, endAt: $endAt, location: $location, status: $status)';
 }
 
 
@@ -252,7 +254,7 @@ abstract mixin class _$ScheduleCopyWith<$Res> implements $ScheduleCopyWith<$Res>
   factory _$ScheduleCopyWith(_Schedule value, $Res Function(_Schedule) _then) = __$ScheduleCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String title, String description, DateTime startAt, DateTime? endAt, String location
+ int id, String title, String description, DateTime startAt, DateTime? endAt, String location, ScheduleStatus status
 });
 
 
@@ -269,7 +271,7 @@ class __$ScheduleCopyWithImpl<$Res>
 
 /// Create a copy of Schedule
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? description = null,Object? startAt = null,Object? endAt = freezed,Object? location = null,Object? status = null,}) {
   return _then(_Schedule(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -277,7 +279,8 @@ as String,description: null == description ? _self.description : description // 
 as String,startAt: null == startAt ? _self.startAt : startAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endAt: freezed == endAt ? _self.endAt : endAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String,
+as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as ScheduleStatus,
   ));
 }
 

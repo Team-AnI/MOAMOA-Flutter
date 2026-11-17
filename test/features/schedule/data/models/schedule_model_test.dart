@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/schedule/data/models/schedule_model.dart';
 import 'package:moamoa/features/schedule/domain/entities/schedule.dart';
+import 'package:moamoa/features/schedule/domain/entities/schedule_status.dart';
 
 void main() {
   test('상세 응답의 ISO-8601(KST) 일시를 DateTime 으로 바꿔 Entity 로 변환한다', () {
@@ -50,5 +51,48 @@ void main() {
 
     expect(entity.description, '');
     expect(entity.location, '');
+  });
+
+  group(ScheduleModel, () {
+    const statuses = {
+      'SCHEDULED': ScheduleStatus.scheduled,
+      'VOTING': ScheduleStatus.voting,
+      'CONFIRMED': ScheduleStatus.confirmed,
+      'CANCELED': ScheduleStatus.canceled,
+    };
+
+    for (final MapEntry(key: value, value: status) in statuses.entries) {
+      test('상태가 $value 이면 Entity 상태는 ${status.name} 이 된다', () {
+        final entity = ScheduleModel.fromJson({
+          'scheduleId': 23,
+          'title': '정모',
+          'startAt': '2026-10-11T07:00:00+09:00',
+          'status': value,
+        }).toEntity();
+
+        expect(entity.status, status);
+      });
+    }
+
+    test('상태가 없으면 직접 만든 일정(SCHEDULED)으로 본다', () {
+      final entity = ScheduleModel.fromJson(const {
+        'scheduleId': 24,
+        'title': '정모',
+        'startAt': '2026-10-11T07:00:00+09:00',
+      }).toEntity();
+
+      expect(entity.status, ScheduleStatus.scheduled);
+    });
+
+    test('모르는 상태 값이면 FormatException 을 던진다', () {
+      final model = ScheduleModel.fromJson(const {
+        'scheduleId': 25,
+        'title': '정모',
+        'startAt': '2026-10-11T07:00:00+09:00',
+        'status': 'DRAFT',
+      });
+
+      expect(model.toEntity, throwsFormatException);
+    });
   });
 }
