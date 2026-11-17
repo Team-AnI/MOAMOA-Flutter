@@ -9,6 +9,12 @@ import '../domain/entities/vote_responses.dart';
 import '../domain/entities/vote_status.dart';
 import 'widgets/vote_colors.dart';
 
+/// 날짜가 이 개수를 넘으면 표의 칸 너비를 고정하고 옆으로 넘깁니다. (Figma "후보가 많을 때")
+const voteFlexDates = 3;
+
+/// 시각 줄이 이 개수를 넘으면 표 높이를 고정하고 위아래로 넘깁니다. (칸 38 + 간격 6 으로 286 에 들어가는 줄 수)
+const voteFlexTimes = 6;
+
 /// 투표 화면에 보여줄 표·상태 값입니다. 서버가 UTC 로 줄 수 있어 시각은 toLocal() 한 값으로 나눕니다.
 extension VoteDisplayX on Vote {
   /// 상단 상태 라벨. 투표 중이면 마감일을 함께 보여줍니다.
@@ -39,7 +45,8 @@ extension VoteDisplayX on Vote {
 
   /// 제목 아래 안내 문구입니다. 없으면 null 입니다. (Figma 투표 중·마감됨·확정됨·취소됨)
   String? subtitleFor({required bool isAdmin}) => switch (status) {
-    VoteStatus.voting when votingOpen => null,
+    VoteStatus.voting when votingOpen =>
+      isTableScrollable ? '날짜는 옆으로, 시간은 위아래로 넘겨 보세요.' : null,
     VoteStatus.voting => isAdmin ? '투표가 끝났어요. 일정을 확정해 주세요.' : '투표가 끝났어요.',
     VoteStatus.confirmed => '투표로 정한 일정이에요.',
     VoteStatus.canceled => '관리자가 투표를 취소했어요.',
@@ -55,6 +62,11 @@ extension VoteDisplayX on Vote {
         VoteStatus.confirmed => 0.4,
         VoteStatus.canceled => 1,
       };
+
+  /// 표를 옆이나 위아래로 넘겨야 하는지. 날짜나 시각 줄이 많을 때입니다.
+  bool get isTableScrollable =>
+      candidateDates.length > voteFlexDates ||
+      candidateTimes.length > voteFlexTimes;
 
   /// 표 카드 전체의 불투명도. 취소된 투표만 카드째 흐리게 합니다.
   double get tableOpacity => status == VoteStatus.canceled ? 0.4 : 1;

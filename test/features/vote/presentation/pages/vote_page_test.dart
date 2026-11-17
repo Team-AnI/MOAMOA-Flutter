@@ -8,6 +8,7 @@ import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/schedule/presentation/schedule_format.dart';
+import 'package:moamoa/features/vote/domain/entities/vote.dart';
 import 'package:moamoa/features/vote/domain/entities/vote_candidate.dart';
 import 'package:moamoa/features/vote/domain/entities/vote_status.dart';
 import 'package:moamoa/features/vote/presentation/pages/vote_page.dart';
@@ -335,6 +336,91 @@ void main() {
         tester.getTopLeft(find.text('어느 시간으로 확정할까요?')).dy,
         greaterThanOrEqualTo(59),
       );
+    });
+
+    // 후보가 많을 때(Figma "후보가 많을 때"): 날짜 5개 × 시각 10줄
+    group('후보가 많을 때', () {
+      Vote manyVote() => sampleVote().copyWith(
+        candidates: [
+          for (var day = 1; day <= 5; day++)
+            for (var hour = 12; hour < 22; hour++)
+              VoteCandidate(
+                meetingTime: DateTime(2099, 10, day, hour),
+                availableCount: (day + hour) % 9,
+                selectedByMe: false,
+              ),
+        ],
+      );
+
+      Future<void> pumpMany(WidgetTester tester) async {
+        tester.view
+          ..physicalSize = const Size(393, 852)
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        repository.vote = manyVote();
+        await pumpPage(tester, role: MemberRole.member);
+      }
+
+      testWidgets('넘겨 보라는 안내를 보여준다', (tester) async {
+        await pumpMany(tester);
+
+        expect(find.text('날짜는 옆으로, 시간은 위아래로 넘겨 보세요.'), findsOneWidget);
+      });
+
+      testWidgets('후보가 적으면 안내와 스크롤 영역 없이 보여준다', (tester) async {
+        await pumpPage(tester, role: MemberRole.member);
+
+        expect(find.text('날짜는 옆으로, 시간은 위아래로 넘겨 보세요.'), findsNothing);
+      });
+
+      testWidgets('칸 영역을 위아래로 넘기면 시각 열이 같이 움직이고 날짜 머리줄은 제자리에 있다', (
+        tester,
+      ) async {
+        await pumpMany(tester);
+        final time = find.text('12:00');
+        final dateLabel = find.text(DateTime(2099, 10, 1).shortDateLabel);
+        final timeBefore = tester.getTopLeft(time).dy;
+        final dateBefore = tester.getTopLeft(dateLabel).dy;
+
+        await tester.drag(
+          find.byKey(const Key('vote-grid')),
+          const Offset(0, -100),
+        );
+        await tester.pumpAndSettle();
+
+        expect(timeBefore - tester.getTopLeft(time).dy, closeTo(100, 20));
+        expect(tester.getTopLeft(dateLabel).dy, dateBefore);
+      });
+
+      testWidgets('칸 영역을 옆으로 넘기면 날짜 머리줄이 같이 움직이고 시각 열은 제자리에 있다', (
+        tester,
+      ) async {
+        await pumpMany(tester);
+        final time = find.text('12:00');
+        final dateLabel = find.text(DateTime(2099, 10, 1).shortDateLabel);
+        final dateBefore = tester.getTopLeft(dateLabel).dx;
+        final timeBefore = tester.getTopLeft(time).dx;
+
+        await tester.drag(
+          find.byKey(const Key('vote-grid')),
+          const Offset(-100, 0),
+        );
+        await tester.pumpAndSettle();
+
+        expect(dateBefore - tester.getTopLeft(dateLabel).dx, closeTo(100, 20));
+        expect(tester.getTopLeft(time).dx, timeBefore);
+      });
+
+      testWidgets('칸 영역 높이를 286 으로 고정해 아래 줄은 밖에 있다', (tester) async {
+        await pumpMany(tester);
+
+        final top = tester.getTopLeft(find.text('12:00')).dy;
+        // 시각 열의 마지막 줄은 고정된 영역(286) 밖에 있어 화면에 닿지 않고 스크롤로만 보입니다.
+        expect(
+          tester.getTopLeft(find.text('21:00')).dy - top,
+          greaterThan(286),
+        );
+      });
     });
   });
 }

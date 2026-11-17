@@ -136,6 +136,35 @@ void main() {
       expect(open.tableOpacity, 1);
     });
 
+    test('날짜가 3개를 넘거나 시각 줄이 6개를 넘으면 표를 넘겨 봐야 하고 안내 문구가 붙는다', () {
+      VoteCandidate at(int day, int hour) => VoteCandidate(
+        meetingTime: DateTime(2099, 10, day, hour),
+        availableCount: 1,
+        selectedByMe: false,
+      );
+      final fourDates = open.copyWith(
+        candidates: [for (var d = 1; d <= 4; d++) at(d, 19)],
+      );
+      final sevenTimes = open.copyWith(
+        candidates: [for (var h = 12; h < 19; h++) at(1, h)],
+      );
+      final threeByThree = open.copyWith(
+        candidates: [
+          for (var d = 1; d <= 3; d++)
+            for (var h = 18; h <= 20; h++) at(d, h),
+        ],
+      );
+
+      expect(fourDates.isTableScrollable, isTrue);
+      expect(sevenTimes.isTableScrollable, isTrue);
+      expect(threeByThree.isTableScrollable, isFalse);
+      expect(
+        fourDates.subtitleFor(isAdmin: false),
+        '날짜는 옆으로, 시간은 위아래로 넘겨 보세요.',
+      );
+      expect(threeByThree.subtitleFor(isAdmin: false), isNull);
+    });
+
     test('공유 문구는 투표 이름과 상태를 담는다', () {
       expect(open.shareText, '[모아모아] 일정 투표 · 10월 정기 모임\n투표 중 · 9월 20일 마감');
     });

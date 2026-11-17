@@ -198,19 +198,31 @@ class _Heading extends StatelessWidget {
 }
 
 /// 후보 표와 색 안내입니다. 열은 후보 날짜, 줄은 후보 시각이고, 그 날짜·시각에 후보가 없으면 빈 칸입니다.
-/// 날짜가 많아 칸이 [_minCellWidth] 보다 좁아지면 날짜 열만 옆으로 넘기고, 시각 열은 제자리에 둡니다.
+/// (Figma "후보가 많을 때")
+///
+/// - 날짜가 [voteFlexDates] 개 이하이면 칸이 표 폭을 나눠 채우고, 더 많으면 칸을 [_wideCellWidth] 로 두고 옆으로 넘깁니다.
+/// - 시각 줄이 많아 높이가 [_maxBodyHeight] 를 넘으면 그 높이로 고정하고 위아래로 넘깁니다.
+/// - 날짜 머리줄과 시각 열은 제자리에 두고, 칸 영역을 넘기면 같은 만큼 따라갑니다.
 /// 화면에서 한 단계만 나누므로, 50줄을 넘어도 안에서 다시 나누지 않고 구역을 주석으로 표시합니다.
-class _CandidateTable extends StatelessWidget {
+class _CandidateTable extends StatefulWidget {
   const _CandidateTable({required this.vote, required this.isAdmin});
 
   final Vote vote;
   final bool isAdmin;
 
+  @override
+  State<_CandidateTable> createState() => _CandidateTableState();
+}
+
+class _CandidateTableState extends State<_CandidateTable> {
   /// 시각 열 너비
   static const _timeWidth = 44.0;
 
-  /// 날짜 칸의 최소 너비. "10/13 화" 가 한 줄로 들어가는 너비입니다.
-  static const _minCellWidth = 64.0;
+  /// 날짜가 많을 때 날짜 칸 너비
+  static const _wideCellWidth = 76.0;
+
+  /// 칸 영역의 가장 큰 높이. 시각 줄이 6.5개 보이는 높이입니다.
+  static const _maxBodyHeight = 286.0;
 
   static const _gap = 6.0;
   static const _headerHeight = 16.0;
@@ -219,14 +231,61 @@ class _CandidateTable extends StatelessWidget {
   static const _cellRadius = BorderRadius.all(Radius.circular(12));
   static const _swatchRadius = BorderRadius.all(Radius.circular(4));
 
-  /// 날짜가 적으면 폭을 나눠 채우고, 많으면 최소 너비로 두고 옆으로 넘깁니다.
-  double _cellWidthOf(double maxWidth) {
-    final count = vote.candidateDates.length;
-    return math.max((maxWidth - _gap * (count - 1)) / count, _minCellWidth);
+  /// 날짜 머리줄과 시각 열은 직접 넘기지 않고, 칸 영역([_gridX], [_gridY])을 따라갑니다.
+  final _datesX = ScrollController();
+  final _timesY = ScrollController();
+  final _gridX = ScrollController();
+  final _gridY = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _gridX.addListener(() => _follow(_datesX, _gridX));
+    _gridY.addListener(() => _follow(_timesY, _gridY));
   }
 
   @override
+  void dispose() {
+    _datesX.dispose();
+    _timesY.dispose();
+    _gridX.dispose();
+    _gridY.dispose();
+    super.dispose();
+  }
+
+  /// [follower] 를 [leader] 와 같은 위치로 옮깁니다.
+  void _follow(ScrollController follower, ScrollController leader) {
+    if (!follower.hasClients || !leader.hasClients) return;
+    final target = leader.offset.clamp(
+      follower.position.minScrollExtent,
+      follower.position.maxScrollExtent,
+    );
+    if (follower.offset != target) follower.jumpTo(target);
+  }
+
+  /// 칸 영역의 스크롤바. 시안처럼 얇은 회색 막대입니다.
+  Widget _scrollbar({
+    required ScrollController controller,
+    required ScrollbarOrientation orientation,
+    required bool Function(ScrollNotification) notificationPredicate,
+    required Widget child,
+  }) => RawScrollbar(
+    controller: controller,
+    scrollbarOrientation: orientation,
+    notificationPredicate: notificationPredicate,
+    thumbVisibility: true,
+    thickness: 3,
+    radius: const Radius.circular(2),
+    thumbColor: VoteColors.textDisabled,
+    child: child,
+  );
+
+  @override
   Widget build(BuildContext context) {
+    final vote = widget.vote;
+    final isAdmin = widget.isAdmin;
+    final dates = vote.candidateDates;
+    final times = vote.candidateTimes;
     final captionStyle = MoaText.caption.copyWith(
       color: MoaColors.textSecondary,
     );
@@ -242,105 +301,167 @@ class _CandidateTable extends StatelessWidget {
         child: Column(
           spacing: 10,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: _gap,
-              children: [
-                // 시각 열 (날짜 머리줄 높이만큼 비우고 시작)
-                SizedBox(
-                  width: _timeWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: _gap,
-                    children: [
-                      const SizedBox(height: _headerHeight),
-                      for (final time in vote.candidateTimes)
-                        SizedBox(
-                          height: _cellHeight,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(time.hhmm, style: captionStyle),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                // 날짜 열: 머리줄과 칸. 칸 숫자는 가능 인원입니다.
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (_, constraints) {
-                      final cellWidth = _cellWidthOf(constraints.maxWidth);
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Column(
-                          spacing: _gap,
-                          children: [
-                            Row(
-                              spacing: _gap,
-                              children: [
-                                for (final date in vote.candidateDates)
-                                  SizedBox(
-                                    width: cellWidth,
-                                    height: _headerHeight,
-                                    child: Text(
-                                      date.shortDateLabel,
-                                      textAlign: TextAlign.center,
-                                      style: MoaText.captionStrong.copyWith(
-                                        color: MoaColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            for (final time in vote.candidateTimes)
-                              Row(
+            LayoutBuilder(
+              builder: (_, constraints) {
+                // 칸 영역 폭에서 날짜 칸 너비를 정합니다.
+                final viewportWidth = constraints.maxWidth - _timeWidth - _gap;
+                final dateCount = math.max(dates.length, 1);
+                final cellWidth = dates.length <= voteFlexDates
+                    ? (viewportWidth - _gap * (dateCount - 1)) / dateCount
+                    : _wideCellWidth;
+                final contentHeight =
+                    times.length * _cellHeight +
+                    math.max(times.length - 1, 0) * _gap;
+                final bodyHeight = math.min(contentHeight, _maxBodyHeight);
+
+                return Column(
+                  spacing: _gap,
+                  children: [
+                    // 날짜 머리줄 (고정, 옆으로만 따라감)
+                    SizedBox(
+                      height: _headerHeight,
+                      child: Row(
+                        spacing: _gap,
+                        children: [
+                          const SizedBox(width: _timeWidth),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              controller: _datesX,
+                              scrollDirection: Axis.horizontal,
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: Row(
                                 spacing: _gap,
                                 children: [
-                                  for (final date in vote.candidateDates)
+                                  for (final date in dates)
                                     SizedBox(
                                       width: cellWidth,
-                                      height: _cellHeight,
-                                      child: switch (vote.candidateAt(
-                                        date,
-                                        time,
-                                      )) {
-                                        null => null,
-                                        final candidate => Opacity(
-                                          opacity: vote.cellOpacityOf(
-                                            candidate,
-                                            isAdmin: isAdmin,
-                                          ),
-                                          child: Container(
-                                            alignment: Alignment.center,
-                                            decoration: BoxDecoration(
-                                              color: vote.heatColorOf(
-                                                candidate,
-                                              ),
-                                              borderRadius: _cellRadius,
-                                              border: candidate.mineBorder,
-                                            ),
-                                            child: Text(
-                                              '${candidate.availableCount}',
-                                              style: MoaText.bodyStrong
-                                                  .copyWith(
-                                                    color: vote.heatTextColorOf(
-                                                      candidate,
-                                                    ),
-                                                  ),
-                                            ),
-                                          ),
+                                      child: Text(
+                                        date.shortDateLabel,
+                                        textAlign: TextAlign.center,
+                                        style: MoaText.captionStrong.copyWith(
+                                          color: MoaColors.textSecondary,
                                         ),
-                                      },
+                                      ),
                                     ),
                                 ],
                               ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // 시각 열(고정, 위아래로만 따라감)과 칸 영역(가로·세로로 넘김)
+                    SizedBox(
+                      height: bodyHeight,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: _gap,
+                        children: [
+                          SizedBox(
+                            width: _timeWidth,
+                            child: SingleChildScrollView(
+                              controller: _timesY,
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: Column(
+                                spacing: _gap,
+                                children: [
+                                  for (final time in times)
+                                    SizedBox(
+                                      height: _cellHeight,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          time.hhmm,
+                                          style: captionStyle,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: _scrollbar(
+                              controller: _gridX,
+                              orientation: ScrollbarOrientation.bottom,
+                              notificationPredicate: (n) => n.depth == 1,
+                              child: _scrollbar(
+                                controller: _gridY,
+                                orientation: ScrollbarOrientation.right,
+                                notificationPredicate: (n) => n.depth == 0,
+                                child: SingleChildScrollView(
+                                  key: const Key('vote-grid'),
+                                  controller: _gridY,
+                                  child: SingleChildScrollView(
+                                    controller: _gridX,
+                                    scrollDirection: Axis.horizontal,
+                                    child: Column(
+                                      spacing: _gap,
+                                      children: [
+                                        for (final time in times)
+                                          Row(
+                                            spacing: _gap,
+                                            children: [
+                                              for (final date in dates)
+                                                SizedBox(
+                                                  width: cellWidth,
+                                                  height: _cellHeight,
+                                                  child: switch (vote
+                                                      .candidateAt(
+                                                        date,
+                                                        time,
+                                                      )) {
+                                                    null => null,
+                                                    final candidate => Opacity(
+                                                      opacity: vote
+                                                          .cellOpacityOf(
+                                                            candidate,
+                                                            isAdmin: isAdmin,
+                                                          ),
+                                                      child: Container(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color: vote
+                                                                  .heatColorOf(
+                                                                    candidate,
+                                                                  ),
+                                                              borderRadius:
+                                                                  _cellRadius,
+                                                              border: candidate
+                                                                  .mineBorder,
+                                                            ),
+                                                        child: Text(
+                                                          '${candidate.availableCount}',
+                                                          style: MoaText
+                                                              .bodyStrong
+                                                              .copyWith(
+                                                                color: vote
+                                                                    .heatTextColorOf(
+                                                                      candidate,
+                                                                    ),
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  },
+                                                ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             // 색 안내: 적음 → 많음, 내 선택
             Row(
