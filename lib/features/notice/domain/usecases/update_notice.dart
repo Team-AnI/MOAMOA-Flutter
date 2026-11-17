@@ -1,4 +1,6 @@
-import '../entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
+
 import '../repositories/notice_repository.dart';
 import 'usecase.dart';
 
@@ -32,10 +34,16 @@ final class UpdateNoticeImpl implements UpdateNotice {
     final title = params.title?.trim();
     final content = params.content?.trim();
     if (title != null && title.isEmpty) {
-      throw const NoticeException('공지 제목을 입력해주세요.');
+      throw const ApiException(
+        code: ApiErrorCode.validation,
+        message: '공지 제목을 입력해주세요.',
+      );
     }
     if (content != null && content.isEmpty) {
-      throw const NoticeException('공지 내용을 입력해주세요.');
+      throw const ApiException(
+        code: ApiErrorCode.validation,
+        message: '공지 내용을 입력해주세요.',
+      );
     }
     return _noticeRepository.updateNotice(
       meetingId: params.meetingId,

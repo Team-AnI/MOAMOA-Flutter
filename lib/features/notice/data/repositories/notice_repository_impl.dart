@@ -1,20 +1,25 @@
 import 'package:dio/dio.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
+import 'package:moamoa/core/errors/dio_exception_mapper.dart';
 
 import '../../domain/entities/notice.dart';
-import '../../domain/entities/notice_exception.dart';
 import '../../domain/entities/notice_list_result.dart';
+import '../../domain/entities/notice_reads.dart';
 import '../../domain/repositories/notice_repository.dart';
 import '../datasources/notice_remote_data_source.dart';
 import '../models/create_notice_request.dart';
 import '../models/delete_notice_request.dart';
 import '../models/fetch_notice_detail_request.dart';
+import '../models/fetch_notice_reads_request.dart';
 import '../models/fetch_notices_request.dart';
 import '../models/mark_notice_read_request.dart';
 import '../models/notice_list_model.dart';
 import '../models/notice_model.dart';
+import '../models/notice_reads_model.dart';
 import '../models/update_notice_request.dart';
 
-/// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
+/// DataSource 의 응답을 Entity 로 바꾸고, 실패하면 공통 예외 [ApiException] 을 던집니다.
 class NoticeRepositoryImpl implements NoticeRepository {
   const NoticeRepositoryImpl({
     required NoticeRemoteDataSource noticeRemoteDataSource,
@@ -103,31 +108,32 @@ class NoticeRepositoryImpl implements NoticeRepository {
     );
   }
 
+  @override
+  Future<NoticeReads> getNoticeReadsByNoticeId({
+    required int meetingId,
+    required int noticeId,
+  }) {
+    return _guard(() async {
+      final response = await _noticeRemoteDataSource.fetchNoticeReads(
+        FetchNoticeReadsRequest(meetingId: meetingId, noticeId: noticeId),
+      );
+      return response.toEntity();
+    });
+  }
+
+  /// Dio 오류와 응답 해석 실패를 공통 예외 [ApiException] 으로 바꿉니다.
+  ///
+  /// 성공 응답을 모델로 바꾸다 형식이 달라 실패하면(fromJson 의 TypeError·FormatException)
+  /// 서버 응답을 알 수 없는 경우로 보고 unknown 으로 바꿉니다.
   Future<T> _guard<T>(Future<T> Function() request) async {
     try {
       return await request();
     } on DioException catch (e) {
-      throw _toNoticeException(e);
+      throw e.toApiException();
+    } on FormatException {
+      throw const ApiException(code: ApiErrorCode.unknown);
+    } on TypeError {
+      throw const ApiException(code: ApiErrorCode.unknown);
     }
-  }
-
-  /// 실패 응답 { error: { code, message } } 의 메시지를 그대로 사용합니다.
-  NoticeException _toNoticeException(DioException e) {
-    final body = e.response?.data;
-    if (body is Map<String, dynamic>) {
-      final error = body['error'];
-      if (error is Map<String, dynamic> && error['message'] is String) {
-        return NoticeException(
-          error['message'] as String,
-          code: error['code'] as String?,
-        );
-      }
-    }
-    // 응답 자체를 받지 못한 경우(연결 실패, 시간 초과)
-    if (e.response == null) {
-      return const NoticeException('네트워크 연결을 확인해주세요.');
-    }
-    // 응답은 받았지만 형식이 예상과 다른 경우
-    return const NoticeException('요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
   }
 }

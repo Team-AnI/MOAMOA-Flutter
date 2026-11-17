@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_read_member.dart';
+import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/domain/usecases/create_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/delete_notice.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notice_detail.dart';
+import 'package:moamoa/features/notice/domain/usecases/get_notice_reads.dart';
 import 'package:moamoa/features/notice/domain/usecases/get_notices.dart';
 import 'package:moamoa/features/notice/domain/usecases/mark_notice_read.dart';
 import 'package:moamoa/features/notice/domain/usecases/update_notice.dart';
@@ -64,12 +68,18 @@ void main() {
       expect(notice.content, '10일까지 납부');
     });
 
-    test('없는 공지를 조회하면 NoticeException 예외가 발생한다', () async {
+    test('없는 공지를 조회하면 notFound 코드의 ApiException 예외가 발생한다', () async {
       expect(
         () => getNoticeDetail(
           const GetNoticeDetailParams(meetingId: 1, noticeId: 999),
         ),
-        throwsA(isA<NoticeException>()),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.notFound,
+          ),
+        ),
       );
     });
   });
@@ -104,12 +114,18 @@ void main() {
       expect(repository.notices.single.id, id);
     });
 
-    test('제목이 비어 있으면 NoticeException 예외가 발생한다', () async {
+    test('제목이 비어 있으면 validation 예외가 발생한다', () async {
       await expectLater(
         createNotice(
           const CreateNoticeParams(meetingId: 1, title: '   ', content: '내용'),
         ),
-        throwsA(isA<NoticeException>()),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
       );
     });
 
@@ -118,19 +134,25 @@ void main() {
         await createNotice(
           const CreateNoticeParams(meetingId: 1, title: '   ', content: '내용'),
         );
-      } on NoticeException catch (_) {
+      } on ApiException catch (_) {
         // 예외 발생은 위 테스트에서 확인합니다.
       }
 
       expect(repository.notices, isEmpty);
     });
 
-    test('내용이 비어 있으면 NoticeException 예외가 발생한다', () async {
+    test('내용이 비어 있으면 validation 예외가 발생한다', () async {
       await expectLater(
         createNotice(
           const CreateNoticeParams(meetingId: 1, title: '제목', content: ''),
         ),
-        throwsA(isA<NoticeException>()),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
       );
     });
 
@@ -139,7 +161,7 @@ void main() {
         await createNotice(
           const CreateNoticeParams(meetingId: 1, title: '제목', content: ''),
         );
-      } on NoticeException catch (_) {
+      } on ApiException catch (_) {
         // 예외 발생은 위 테스트에서 확인합니다.
       }
 
@@ -167,12 +189,18 @@ void main() {
       expect(repository.notices.single.content, '새 내용');
     });
 
-    test('제목을 공백으로 수정하면 NoticeException 예외가 발생한다', () async {
+    test('제목을 공백으로 수정하면 validation 예외가 발생한다', () async {
       await expectLater(
         updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, title: '  '),
         ),
-        throwsA(isA<NoticeException>()),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
       );
     });
 
@@ -181,19 +209,25 @@ void main() {
         await updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, title: '  '),
         );
-      } on NoticeException catch (_) {
+      } on ApiException catch (_) {
         // 예외 발생은 위 테스트에서 확인합니다.
       }
 
       expect(repository.notices.single.title, '기존 제목');
     });
 
-    test('내용을 공백으로 수정하면 NoticeException 예외가 발생한다', () async {
+    test('내용을 공백으로 수정하면 validation 예외가 발생한다', () async {
       await expectLater(
         updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, content: ''),
         ),
-        throwsA(isA<NoticeException>()),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.validation,
+          ),
+        ),
       );
     });
 
@@ -202,7 +236,7 @@ void main() {
         await updateNotice(
           const UpdateNoticeParams(meetingId: 1, noticeId: 1, content: ''),
         );
-      } on NoticeException catch (_) {
+      } on ApiException catch (_) {
         // 예외 발생은 위 테스트에서 확인합니다.
       }
 
@@ -233,6 +267,47 @@ void main() {
       );
 
       expect(repository.readNoticeIds, [1]);
+    });
+  });
+
+  group(GetNoticeReads, () {
+    late FakeNoticeRepository repository;
+    late GetNoticeReads getNoticeReads;
+
+    setUp(() {
+      repository = FakeNoticeRepository(
+        notices: [buildNotice(1), buildNotice(2)],
+      );
+      getNoticeReads = GetNoticeReadsImpl(noticeRepository: repository);
+    });
+
+    test('지정한 공지의 읽음 현황을 조회한다', () async {
+      repository.readsByNoticeId[1] = const NoticeReads(
+        readCount: 1,
+        totalCount: 2,
+        readMembers: [NoticeReadMember(memberId: 3, userName: '김모아')],
+        unreadMembers: [NoticeReadMember(memberId: 5, userName: '이모아')],
+      );
+
+      final reads = await getNoticeReads(
+        const GetNoticeReadsParams(meetingId: 1, noticeId: 1),
+      );
+
+      expect(reads.readMembers.single.userName, '김모아');
+      expect(reads.unreadMembers.single.userName, '이모아');
+    });
+
+    test('없는 공지의 읽음 현황을 조회하면 notFound 코드의 ApiException 예외가 발생한다', () async {
+      await expectLater(
+        getNoticeReads(const GetNoticeReadsParams(meetingId: 1, noticeId: 99)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.notFound,
+          ),
+        ),
+      );
     });
   });
 }

@@ -7,10 +7,13 @@ import '../../data/datasources/notice_remote_data_source.dart';
 import '../../data/datasources/notice_remote_data_source_impl.dart';
 import '../../data/repositories/notice_repository_impl.dart';
 import '../../domain/entities/notice.dart';
+import '../../domain/entities/notice_detail_request.dart';
+import '../../domain/entities/notice_reads.dart';
 import '../../domain/repositories/notice_repository.dart';
 import '../../domain/usecases/create_notice.dart';
 import '../../domain/usecases/delete_notice.dart';
 import '../../domain/usecases/get_notice_detail.dart';
+import '../../domain/usecases/get_notice_reads.dart';
 import '../../domain/usecases/get_notices.dart';
 import '../../domain/usecases/mark_notice_read.dart';
 import '../../domain/usecases/update_notice.dart';
@@ -67,6 +70,11 @@ final markNoticeReadProvider = Provider<MarkNoticeRead>(
       MarkNoticeReadImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
 );
 
+final getNoticeReadsProvider = Provider<GetNoticeReads>(
+  (ref) =>
+      GetNoticeReadsImpl(noticeRepository: ref.watch(noticeRepositoryProvider)),
+);
+
 // ViewModel / 화면 상태 (family 인자: meetingId)
 
 final noticeListProvider = AsyncNotifierProvider.autoDispose
@@ -75,21 +83,22 @@ final noticeListProvider = AsyncNotifierProvider.autoDispose
     );
 
 final noticeDetailProvider = AsyncNotifierProvider.autoDispose
-    .family<NoticeDetailViewModel, Notice, NoticeDetailArgs>(
-      (args) => NoticeDetailViewModel(args: args),
+    .family<NoticeDetailViewModel, Notice, NoticeDetailRequest>(
+      (request) => NoticeDetailViewModel(request: request),
     );
 
-/// 공지를 읽음으로 기록합니다. (3-6, family 인자: 공지 상세 인자)
+/// 공지를 읽음으로 기록합니다. (3-6, family 인자: 공지 상세와 같은 [NoticeDetailRequest])
 ///
 /// 상세 화면이 공지를 보여줄 수 있을 때 구독합니다. 화면이 열려 있는 동안에는 한 번만 보내고,
 /// 화면을 닫으면 정리되어 다음에 열 때 다시 보냅니다.
 /// 실패해도 상세 화면에 영향이 없도록 오류를 무시합니다. 서버는 여러 번 호출해도 처음 읽은 시각을 유지합니다.
+/// 목록의 "읽음 N/M" 은 읽음 현황([noticeReadsProvider])을 받은 뒤 바꿉니다.
 final noticeReadProvider = FutureProvider.autoDispose
-    .family<void, NoticeDetailArgs>((ref, args) async {
+    .family<void, NoticeDetailRequest>((ref, request) async {
       final markNoticeRead = ref.read(markNoticeReadProvider);
       final params = MarkNoticeReadParams(
-        meetingId: args.meetingId,
-        noticeId: args.noticeId,
+        meetingId: request.meetingId,
+        noticeId: request.noticeId,
       );
       try {
         await markNoticeRead(params);
@@ -99,9 +108,38 @@ final noticeReadProvider = FutureProvider.autoDispose
       }
     });
 
+/// 공지 읽음 현황 (3-7, family 인자: 공지 상세와 같은 [NoticeDetailRequest])
+///
+/// 상세 화면의 "읽은 구성원" 이 구독합니다. 내 읽음 기록([noticeReadProvider])이 끝난 뒤 불러와
+/// 방금 읽은 나도 읽은 구성원에 들어갑니다. 실패하면 오류 상태가 되고, 화면에서 다시 시도합니다.
+///
+/// 받은 읽은 수로 공지 목록의 그 공지만 "읽음 N/M" 을 바꿉니다. 목록을 다시 불러오지 않아
+/// 더 불러온 페이지가 그대로 남습니다. 목록이 열려 있지 않거나 상세 화면이 먼저 닫혔으면 바꾸지 않습니다.
+final noticeReadsProvider = FutureProvider.autoDispose
+    .family<NoticeReads, NoticeDetailRequest>((ref, request) async {
+      await ref.watch(noticeReadProvider(request).future);
+      final reads = await ref.watch(getNoticeReadsProvider)(
+        GetNoticeReadsParams(
+          meetingId: request.meetingId,
+          noticeId: request.noticeId,
+        ),
+      );
+      final listProvider = noticeListProvider(request.meetingId);
+      if (ref.mounted && ref.exists(listProvider)) {
+        ref
+            .read(listProvider.notifier)
+            .updateReadCount(
+              noticeId: request.noticeId,
+              readCount: reads.readCount,
+              totalCount: reads.totalCount,
+            );
+      }
+      return reads;
+    });
+
 final noticeDeleteProvider = NotifierProvider.autoDispose
-    .family<NoticeDeleteViewModel, NoticeDeleteState, NoticeDetailArgs>(
-      (args) => NoticeDeleteViewModel(args: args),
+    .family<NoticeDeleteViewModel, NoticeDeleteState, NoticeDetailRequest>(
+      (request) => NoticeDeleteViewModel(request: request),
     );
 
 final noticeWriteProvider = AsyncNotifierProvider.autoDispose

@@ -6,6 +6,7 @@ import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_error_widget.dart';
 
 import '../../domain/entities/notice.dart';
+import '../../domain/entities/notice_detail_request.dart';
 import '../notice_error.dart';
 import '../providers/notice_providers.dart';
 import '../widgets/notice_colors.dart';
@@ -67,22 +68,25 @@ class NoticeWritePage extends ConsumerWidget {
     final noticeId = this.noticeId;
     if (noticeId == null) return _NoticeForm(meetingId: meetingId);
 
-    final args = (meetingId: meetingId, noticeId: noticeId);
+    final request = NoticeDetailRequest(
+      meetingId: meetingId,
+      noticeId: noticeId,
+    );
     return ref
-        .watch(noticeDetailProvider(args))
+        .watch(noticeDetailProvider(request))
         .when(
           data: (notice) =>
               _NoticeForm(meetingId: meetingId, initialNotice: notice),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => isNoticeNotFound(error)
+          error: (error, _) => error.isNoticeNotFound
               ? MoaErrorWidget(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go('/meetings/$meetingId/notices'),
                 )
               : MoaErrorWidget(
-                  message: noticeErrorMessage(error),
-                  onAction: () => ref.invalidate(noticeDetailProvider(args)),
+                  message: error.noticeErrorMessage,
+                  onAction: () => ref.invalidate(noticeDetailProvider(request)),
                 ),
         );
   }
@@ -168,7 +172,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     final error = ref.read(noticeWriteProvider(widget.meetingId)).error;
     showMoaSnackBar(
       context,
-      message: noticeErrorMessage(error),
+      message: error.noticeErrorMessage,
       actionLabel: '다시 시도',
       onAction: _submit,
     );
