@@ -92,7 +92,7 @@ final noticeDetailProvider = AsyncNotifierProvider.autoDispose
 /// 상세 화면이 공지를 보여줄 수 있을 때 구독합니다. 화면이 열려 있는 동안에는 한 번만 보내고,
 /// 화면을 닫으면 정리되어 다음에 열 때 다시 보냅니다.
 /// 실패해도 상세 화면에 영향이 없도록 오류를 무시합니다. 서버는 여러 번 호출해도 처음 읽은 시각을 유지합니다.
-/// 성공하면 공지 목록을 다시 불러와, 목록으로 돌아왔을 때 "읽음 N/M" 이 바뀐 값으로 보이게 합니다.
+/// 목록의 "읽음 N/M" 은 읽음 현황([noticeReadsProvider])을 받은 뒤 바꿉니다.
 final noticeReadProvider = FutureProvider.autoDispose
     .family<void, NoticeDetailRequest>((ref, request) async {
       final markNoticeRead = ref.read(markNoticeReadProvider);
@@ -102,7 +102,6 @@ final noticeReadProvider = FutureProvider.autoDispose
       );
       try {
         await markNoticeRead(params);
-        ref.invalidate(noticeListProvider(request.meetingId));
       } on Exception {
         // 읽음 기록 실패는 사용자에게 알리지 않습니다. 여기서 잡지 않으면 Provider 가 오류 상태로 남아
         // 자동으로 다시 시도하므로, 공지 예외뿐 아니라 모든 Exception 을 잡습니다.
@@ -113,15 +112,29 @@ final noticeReadProvider = FutureProvider.autoDispose
 ///
 /// 상세 화면의 "읽은 구성원" 이 구독합니다. 내 읽음 기록([noticeReadProvider])이 끝난 뒤 불러와
 /// 방금 읽은 나도 읽은 구성원에 들어갑니다. 실패하면 오류 상태가 되고, 화면에서 다시 시도합니다.
+///
+/// 받은 읽은 수로 공지 목록의 그 공지만 "읽음 N/M" 을 바꿉니다. 목록을 다시 불러오지 않아
+/// 더 불러온 페이지가 그대로 남습니다. 목록이 열려 있지 않거나 상세 화면이 먼저 닫혔으면 바꾸지 않습니다.
 final noticeReadsProvider = FutureProvider.autoDispose
     .family<NoticeReads, NoticeDetailRequest>((ref, request) async {
       await ref.watch(noticeReadProvider(request).future);
-      return ref.watch(getNoticeReadsProvider)(
+      final reads = await ref.watch(getNoticeReadsProvider)(
         GetNoticeReadsParams(
           meetingId: request.meetingId,
           noticeId: request.noticeId,
         ),
       );
+      final listProvider = noticeListProvider(request.meetingId);
+      if (ref.mounted && ref.exists(listProvider)) {
+        ref
+            .read(listProvider.notifier)
+            .updateReadCount(
+              noticeId: request.noticeId,
+              readCount: reads.readCount,
+              totalCount: reads.totalCount,
+            );
+      }
+      return reads;
     });
 
 final noticeDeleteProvider = NotifierProvider.autoDispose

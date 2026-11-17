@@ -65,6 +65,9 @@ class FakeNoticeRepository implements NoticeRepository {
   /// 값이 있으면 getNoticeReadsByNoticeId 만 이 예외를 던집니다. (상세는 보이고 읽음 현황만 실패하는 상황)
   Exception? readsError;
 
+  /// 값이 있으면 getNoticeReadsByNoticeId 응답을 complete 될 때까지 붙잡아 둡니다.
+  Completer<void>? readsGate;
+
   /// getNoticeReadsByNoticeId 를 요청한 때마다, 그 순간까지 읽음 처리를 요청한 공지 ID
   final List<List<int>> readNoticeIdsAtReadsRequest = [];
 
@@ -174,6 +177,7 @@ class FakeNoticeRepository implements NoticeRepository {
   }) async {
     _throwIfError();
     readNoticeIdsAtReadsRequest.add([...readNoticeIds]);
+    await readsGate?.future;
     if (readsError != null) throw readsError!;
     _indexOf(noticeId);
     return readsByNoticeId[noticeId] ??
