@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/core/errors/dio_exception_mapper.dart';
 
@@ -120,12 +121,19 @@ class NoticeRepositoryImpl implements NoticeRepository {
     });
   }
 
-  /// Dio 오류를 공통 예외 [ApiException] 으로 바꿉니다.
+  /// Dio 오류와 응답 해석 실패를 공통 예외 [ApiException] 으로 바꿉니다.
+  ///
+  /// 성공 응답을 모델로 바꾸다 형식이 달라 실패하면(fromJson 의 TypeError·FormatException)
+  /// 서버 응답을 알 수 없는 경우로 보고 unknown 으로 바꿉니다.
   Future<T> _guard<T>(Future<T> Function() request) async {
     try {
       return await request();
     } on DioException catch (e) {
       throw e.toApiException();
+    } on FormatException {
+      throw const ApiException(code: ApiErrorCode.unknown);
+    } on TypeError {
+      throw const ApiException(code: ApiErrorCode.unknown);
     }
   }
 }

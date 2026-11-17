@@ -188,6 +188,42 @@ void main() {
       );
     });
 
+    test('상세 응답 형식이 다르면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = _repositoryWith(
+        200,
+        '{"success": true, "data": {"noticeId": "삼십"}}',
+      );
+
+      await expectLater(
+        repository.getNoticeDetail(meetingId: 1, noticeId: 30),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
+    test('상세 응답의 작성 시각 형식이 다르면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = _repositoryWith(200, '''
+      {"success": true, "data": {"noticeId": 30, "title": "10월 회비 안내",
+       "content": "10일까지 납부", "createdAt": "어제"}}
+    ''');
+
+      await expectLater(
+        repository.getNoticeDetail(meetingId: 1, noticeId: 30),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
+    test('작성 응답의 noticeId 형식이 다르면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = _repositoryWith(
+        201,
+        '{"success": true, "data": {"noticeId": "삼십"}}',
+      );
+
+      await expectLater(
+        repository.createNotice(meetingId: 1, title: '제목', content: '내용'),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
     test('실패 응답이면 서버의 error 메시지와 코드를 담은 ApiException 예외가 발생한다', () async {
       final repository = _repositoryWith(404, '''
       {"success": false, "data": null,
