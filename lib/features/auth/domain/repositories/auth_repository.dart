@@ -11,6 +11,8 @@ abstract interface class AuthRepository {
   Future<void> requestPasswordReset({required String email});
 
   /// 7-6 새 비밀번호 설정. 링크가 만료되었거나 이미 쓰였으면 validation 오류입니다.
+  ///
+  /// 성공하면 이 기기의 토큰을 지웁니다. 새 비밀번호로 다시 로그인해야 합니다.
   Future<void> resetPassword({
     required String token,
     required String newPassword,

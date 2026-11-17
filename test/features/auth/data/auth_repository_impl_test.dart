@@ -138,6 +138,45 @@ void main() {
       );
     });
 
+    test('로그인 응답에 토큰 필드가 빠지면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(
+        200,
+        '{"success": true, "data": {}, "error": null}',
+      );
+
+      await expectLater(
+        repository.login(email: 'moa@example.com', password: 'moamoa123'),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
+    test('로그인 응답의 토큰 타입이 다르면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(
+        200,
+        '{"success": true, "error": null, '
+        '"data": {"accessToken": 1, "refreshToken": "refresh"}}',
+      );
+
+      await expectLater(
+        repository.login(email: 'moa@example.com', password: 'moamoa123'),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
+    test('로그인 응답을 해석하지 못하면 토큰을 저장하지 않는다', () async {
+      final repository = repositoryWith(
+        200,
+        '{"success": true, "data": {}, "error": null}',
+      );
+
+      await expectLater(
+        repository.login(email: 'moa@example.com', password: 'moamoa123'),
+        throwsA(isA<ApiException>()),
+      );
+
+      expect(await storage.read(), isNull);
+    });
+
     test('로그인·재설정 메일 요청·새 비밀번호 설정은 인증이 필요 없는 요청으로 보낸다', () async {
       final repository = repositoryWith(200, loginOk);
 
@@ -176,6 +215,31 @@ void main() {
       expect(request.method, 'POST');
       expect(request.path, '/v1/auth/password-resets');
       expect(request.data, {'token': 'abc', 'newPassword': 'moamoa123'});
+    });
+
+    test('새 비밀번호를 설정하면 이 기기의 토큰을 지운다', () async {
+      await storage.save(const Jwt(accessToken: 'a', refreshToken: 'r'));
+      final repository = repositoryWith(200, _ok);
+
+      await repository.resetPassword(token: 'abc', newPassword: 'moamoa123');
+
+      expect(await storage.read(), isNull);
+    });
+
+    test('새 비밀번호 설정에 실패하면 이 기기의 토큰을 지우지 않는다', () async {
+      const tokens = Jwt(accessToken: 'a', refreshToken: 'r');
+      await storage.save(tokens);
+      final repository = repositoryWith(
+        400,
+        '{"success": false, "data": null, "error": {"code": "VALIDATION_ERROR"}}',
+      );
+
+      await expectLater(
+        repository.resetPassword(token: 'old', newPassword: 'moamoa123'),
+        throwsA(isA<ApiException>()),
+      );
+
+      expect(await storage.read(), tokens);
     });
 
     test('링크가 만료되면 서버의 코드와 문구를 담은 ApiException 예외가 발생한다', () async {

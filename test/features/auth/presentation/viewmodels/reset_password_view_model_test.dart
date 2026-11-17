@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
+import 'package:moamoa/core/network/auth_session.dart';
 import 'package:moamoa/features/auth/presentation/providers/auth_providers.dart';
 import 'package:moamoa/features/auth/presentation/viewmodels/reset_password_state.dart';
 import 'package:moamoa/features/auth/presentation/viewmodels/reset_password_status.dart';
@@ -19,7 +20,13 @@ void main() {
     setUp(() {
       repository = FakeAuthRepository();
       container = ProviderContainer.test(
-        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(repository),
+          // 로그인한 기기에서 메일 링크를 연 상태
+          initialAuthStatusProvider.overrideWithValue(
+            AuthSessionStatus.authenticated,
+          ),
+        ],
         retry: (_, _) => null,
       );
       // 화면이 열려 있는 상태
@@ -36,6 +43,26 @@ void main() {
       expect(
         container.read(passwordResetProvider).status,
         ResetPasswordStatus.success,
+      );
+    });
+
+    test('요청에 성공하면 로그인해 있던 기기도 로그아웃 상태가 된다', () async {
+      await viewModel().submit(token: 'abc', newPassword: 'moamoa123');
+
+      expect(
+        container.read(authSessionProvider),
+        AuthSessionStatus.unauthorized,
+      );
+    });
+
+    test('요청에 실패하면 로그인 상태를 그대로 둔다', () async {
+      repository.error = const ApiException(code: ApiErrorCode.validation);
+
+      await viewModel().submit(token: 'abc', newPassword: 'moamoa123');
+
+      expect(
+        container.read(authSessionProvider),
+        AuthSessionStatus.authenticated,
       );
     });
 

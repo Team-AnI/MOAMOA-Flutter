@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
+import 'package:moamoa/app/router/app_router.dart';
 import 'package:moamoa/core/network/auth_session.dart';
 import 'package:moamoa/features/auth/presentation/providers/auth_providers.dart';
 
@@ -65,6 +66,23 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('로그인이 만료되었어요. 다시 로그인해 주세요.'), findsOneWidget);
+    });
+
+    testWidgets('로그인한 기기에서 비밀번호를 바꾼 뒤 로그인하러 가기를 누르면 로그인 화면이 표시된다', (
+      tester,
+    ) async {
+      await pumpApp(tester, AuthSessionStatus.authenticated);
+      container.read(appRouterProvider).go('/reset-password?token=abc');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).at(0), 'moamoa123');
+      await tester.enterText(find.byType(TextField).at(1), 'moamoa123');
+      await tester.tap(find.text('비밀번호 변경하기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('로그인하러 가기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('흩어진 모임 운영을 한 곳에서'), findsOneWidget);
     });
   });
 }
