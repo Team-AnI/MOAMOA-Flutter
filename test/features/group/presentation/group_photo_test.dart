@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:moamoa/app/app.dart';
+import 'package:moamoa/core/network/auth_session.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 
 import '../fake_group_repository.dart';
@@ -42,6 +43,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          // 로그인한 상태로 시작합니다. 로그인하지 않으면 앱 라우터가 로그인 화면으로 보냅니다.
+          initialAuthStatusProvider.overrideWithValue(
+            AuthSessionStatus.authenticated,
+          ),
           groupRepositoryProvider.overrideWithValue(FakeGroupRepository()),
           groupImagePickerProvider.overrideWithValue(picker),
         ],
