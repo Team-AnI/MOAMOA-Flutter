@@ -218,5 +218,30 @@ void main() {
       );
       expect(apply.onPressed, isNull);
     });
+
+    testWidgets('30분 간격에 맞지 않는 시각이 들어와도 오류 없이 열린다', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: VoteTimeSheet(
+              initialRange: VoteTimeRange(
+                start: Duration(hours: 18, minutes: 10),
+                end: Duration(hours: 20, minutes: 40),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 목록에 없는 값이면 음수 칸이 아니라 맨 위(0:00)를 가리킵니다.
+      final wheel = tester.widget<ListWheelScrollView>(
+        find.byType(ListWheelScrollView).first,
+      );
+      expect(
+        (wheel.controller! as FixedExtentScrollController).selectedItem,
+        0,
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 }

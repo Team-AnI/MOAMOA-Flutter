@@ -183,7 +183,11 @@ class _TimeWheelState extends State<_TimeWheel> {
 
   late final _controller = FixedExtentScrollController(initialItem: _selected);
 
-  int get _selected => _times.indexOf(widget.value);
+  /// 휠이 가리킬 칸. 30분 간격 목록에 없는 값이 들어와도 오류 없이 맨 위(0:00)에 둡니다.
+  int get _selected {
+    final index = _times.indexOf(widget.value);
+    return index < 0 ? 0 : index;
+  }
 
   Color get _selectedColor =>
       widget.invalid ? VoteColors.alert : MoaColors.textPrimary;
