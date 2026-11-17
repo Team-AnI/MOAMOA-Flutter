@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -44,6 +45,13 @@ void main() {
         GoRoute(
           path: '/vote',
           builder: (_, _) => const VotePage(meetingId: 1, scheduleId: 7),
+        ),
+        // 확정된 투표의 "일정 보기" 가 이동하는 일정 상세 자리
+        GoRoute(
+          path: '/meetings/:meetingId/schedules/:scheduleId',
+          builder: (_, state) => Scaffold(
+            body: Text('일정 상세 ${state.pathParameters['scheduleId']}'),
+          ),
         ),
       ],
     );
@@ -199,6 +207,134 @@ void main() {
       expect(find.byType(VotePage), findsOneWidget);
       expect(find.text('확정'), findsOneWidget);
       expect(find.text('일정 확정하기'), findsNothing);
+    });
+
+    // 시안(Figma)과 맞춘 부분: 알약 너비, 상태별 안내 문구, 일정 보기, 공유, 확정 시트 안전영역
+    testWidgets('상태 알약은 화면 폭이 아니라 글자 너비만큼만 차지한다', (tester) async {
+      await pumpPage(tester, role: MemberRole.member);
+
+      final pill = find
+          .ancestor(
+            of: find.text('투표 중 · 9월 20일 마감'),
+            matching: find.byType(Container),
+          )
+          .first;
+
+      expect(tester.getSize(pill).width, lessThan(240));
+    });
+
+    testWidgets('마감된 투표는 구성원에게 "투표가 끝났어요." 를 보여주고 확정 버튼은 없다', (tester) async {
+      repository.vote = sampleVote(votingOpen: false);
+
+      await pumpPage(tester, role: MemberRole.member);
+
+      expect(find.text('투표 마감'), findsOneWidget);
+      expect(find.text('투표가 끝났어요.'), findsOneWidget);
+      expect(find.text('일정 확정하기'), findsNothing);
+    });
+
+    testWidgets('마감된 투표는 관리자에게 확정 전임을 알리고 일정 확정하기를 보여준다', (tester) async {
+      repository.vote = sampleVote(votingOpen: false);
+
+      await pumpPage(tester);
+
+      expect(find.text('투표 마감 · 확정 전'), findsOneWidget);
+      expect(find.text('투표가 끝났어요. 일정을 확정해 주세요.'), findsOneWidget);
+      expect(find.text('일정 확정하기'), findsOneWidget);
+    });
+
+    testWidgets('확정된 투표는 안내와 "일정 보기" 만 보여주고, 누르면 일정 상세로 이동한다', (tester) async {
+      repository.vote = sampleVote(
+        status: VoteStatus.confirmed,
+        votingOpen: false,
+      );
+      await pumpPage(tester, role: MemberRole.member);
+
+      expect(find.text('투표로 정한 일정이에요.'), findsOneWidget);
+      expect(find.text('일정 확정하기'), findsNothing);
+
+      await tester.tap(find.text('일정 보기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('일정 상세 7'), findsOneWidget);
+    });
+
+    testWidgets('취소된 투표는 안내만 보여주고 버튼은 없다', (tester) async {
+      repository.vote = sampleVote(
+        status: VoteStatus.canceled,
+        votingOpen: false,
+      );
+
+      await pumpPage(tester);
+
+      expect(find.text('취소된 투표'), findsOneWidget);
+      expect(find.text('관리자가 투표를 취소했어요.'), findsOneWidget);
+      expect(find.text('일정 확정하기'), findsNothing);
+      expect(find.text('일정 보기'), findsNothing);
+    });
+
+    testWidgets('공유 버튼을 누르면 투표 이름과 상태를 복사하고 안내한다', (tester) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pumpPage(tester, role: MemberRole.member);
+
+      await tester.tap(find.byTooltip('공유'));
+      await tester.pumpAndSettle();
+
+      expect(copied, '[모아모아] 일정 투표 · 10월 정기 모임\n투표 중 · 9월 20일 마감');
+      expect(find.text('투표 내용을 복사했어요'), findsOneWidget);
+    });
+
+    testWidgets('투표를 불러오지 못하면 공유 버튼을 보여주지 않는다', (tester) async {
+      repository.error = const ApiException(code: ApiErrorCode.network);
+
+      await pumpPage(tester);
+
+      expect(find.byTooltip('공유'), findsNothing);
+    });
+
+    testWidgets('확정 시트는 후보가 많아 화면 끝까지 길어져도 상태바·Dynamic Island 아래에서 시작한다', (
+      tester,
+    ) async {
+      // 상단 59pt 가 상태바 영역인 휴대폰 화면
+      tester.view
+        ..physicalSize = const Size(1179, 2556)
+        ..devicePixelRatio = 3
+        ..padding = const FakeViewPadding(top: 177);
+      addTearDown(tester.view.reset);
+      // 시트가 화면 위쪽까지 닿으려면 후보가 많아야 합니다.
+      repository.vote = sampleVote().copyWith(
+        candidates: [
+          for (var day = 1; day <= 12; day++)
+            VoteCandidate(
+              meetingTime: DateTime(2099, 10, day, 19),
+              availableCount: day % 8,
+              selectedByMe: false,
+            ),
+        ],
+      );
+      await pumpPage(tester);
+
+      await openConfirmSheet(tester);
+
+      expect(
+        tester.getTopLeft(find.text('어느 시간으로 확정할까요?')).dy,
+        greaterThanOrEqualTo(59),
+      );
     });
   });
 }

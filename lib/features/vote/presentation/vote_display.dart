@@ -21,6 +21,47 @@ extension VoteDisplayX on Vote {
     VoteStatus.canceled => '취소된 투표',
   };
 
+  /// 상단 알약 문구. 관리자는 마감된 뒤에 "확정 전" 이라는 것도 함께 봅니다. (Figma 마감됨 관리자)
+  String statusLabelFor({required bool isAdmin}) => switch (status) {
+    VoteStatus.voting when !votingOpen && isAdmin => '투표 마감 · 확정 전',
+    _ => statusLabel,
+  };
+
+  /// 알약의 (배경, 글자) 색. 투표 중·확정은 파랑, 마감·취소는 회색입니다.
+  (Color, Color) get statusPillColors => switch (status) {
+    VoteStatus.voting when votingOpen => (
+      MoaColors.accentTint,
+      MoaColors.accentText,
+    ),
+    VoteStatus.confirmed => (MoaColors.accentTint, MoaColors.accentText),
+    _ => (MoaColors.fill, MoaColors.textSecondary),
+  };
+
+  /// 제목 아래 안내 문구입니다. 없으면 null 입니다. (Figma 투표 중·마감됨·확정됨·취소됨)
+  String? subtitleFor({required bool isAdmin}) => switch (status) {
+    VoteStatus.voting when votingOpen => null,
+    VoteStatus.voting => isAdmin ? '투표가 끝났어요. 일정을 확정해 주세요.' : '투표가 끝났어요.',
+    VoteStatus.confirmed => '투표로 정한 일정이에요.',
+    VoteStatus.canceled => '관리자가 투표를 취소했어요.',
+  };
+
+  /// 표의 칸을 보여줄 불투명도입니다.
+  /// 구성원이 더 고를 수 없는 마감 뒤에는 흐리게 하되 내가 고른 칸은 그대로 두고, 확정된 뒤에는 모든 칸을 더 흐리게 합니다.
+  /// 관리자는 마감 뒤에도 확정해야 해서 흐리게 하지 않습니다. 취소된 투표는 표 전체를 흐리게 하므로([tableOpacity]) 칸은 그대로 둡니다.
+  double cellOpacityOf(VoteCandidate candidate, {required bool isAdmin}) =>
+      switch (status) {
+        VoteStatus.voting when votingOpen => 1,
+        VoteStatus.voting => isAdmin || candidate.selectedByMe ? 1 : 0.6,
+        VoteStatus.confirmed => 0.4,
+        VoteStatus.canceled => 1,
+      };
+
+  /// 표 카드 전체의 불투명도. 취소된 투표만 카드째 흐리게 합니다.
+  double get tableOpacity => status == VoteStatus.canceled ? 0.4 : 1;
+
+  /// 공유할 때 복사하는 문구입니다.
+  String get shareText => '[모아모아] 일정 투표 · $title\n$statusLabel';
+
   /// 관리자가 확정할 수 있는지. 마감 전에도 확정할 수 있고, 확정·취소된 뒤에는 바꿀 수 없습니다. (API 5-5)
   bool get canConfirm => status == VoteStatus.voting && candidates.isNotEmpty;
 

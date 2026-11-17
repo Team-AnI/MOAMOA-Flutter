@@ -90,6 +90,57 @@ void main() {
     });
   });
 
+  group('VoteDisplayX 상태별 표시', () {
+    final open = sampleVote();
+    final closed = sampleVote(votingOpen: false);
+    final confirmed = sampleVote(
+      status: VoteStatus.confirmed,
+      votingOpen: false,
+    );
+    final canceled = sampleVote(status: VoteStatus.canceled, votingOpen: false);
+    final mine = open.candidates.firstWhere((c) => c.selectedByMe);
+    final others = open.candidates.firstWhere((c) => !c.selectedByMe);
+
+    test('알약 문구는 마감 뒤에만 관리자에게 "확정 전" 을 덧붙인다', () {
+      expect(open.statusLabelFor(isAdmin: true), '투표 중 · 9월 20일 마감');
+      expect(closed.statusLabelFor(isAdmin: false), '투표 마감');
+      expect(closed.statusLabelFor(isAdmin: true), '투표 마감 · 확정 전');
+      expect(confirmed.statusLabelFor(isAdmin: true), '확정');
+      expect(canceled.statusLabelFor(isAdmin: false), '취소된 투표');
+    });
+
+    test('알약 색은 투표 중·확정은 파랑, 마감·취소는 회색이다', () {
+      expect(open.statusPillColors, confirmed.statusPillColors);
+      expect(closed.statusPillColors, canceled.statusPillColors);
+      expect(open.statusPillColors, isNot(closed.statusPillColors));
+    });
+
+    test('제목 아래 안내 문구는 상태마다 다르고, 투표 중에는 없다', () {
+      expect(open.subtitleFor(isAdmin: false), isNull);
+      expect(closed.subtitleFor(isAdmin: false), '투표가 끝났어요.');
+      expect(closed.subtitleFor(isAdmin: true), '투표가 끝났어요. 일정을 확정해 주세요.');
+      expect(confirmed.subtitleFor(isAdmin: false), '투표로 정한 일정이에요.');
+      expect(canceled.subtitleFor(isAdmin: true), '관리자가 투표를 취소했어요.');
+    });
+
+    test('마감 뒤 구성원은 내가 고른 칸만 진하게 보고, 관리자는 모두 진하게 본다', () {
+      expect(closed.cellOpacityOf(mine, isAdmin: false), 1);
+      expect(closed.cellOpacityOf(others, isAdmin: false), 0.6);
+      expect(closed.cellOpacityOf(others, isAdmin: true), 1);
+    });
+
+    test('확정되면 모든 칸을 흐리게 하고, 취소되면 칸이 아니라 표 전체를 흐리게 한다', () {
+      expect(confirmed.cellOpacityOf(mine, isAdmin: false), 0.4);
+      expect(canceled.cellOpacityOf(mine, isAdmin: false), 1);
+      expect(canceled.tableOpacity, 0.4);
+      expect(open.tableOpacity, 1);
+    });
+
+    test('공유 문구는 투표 이름과 상태를 담는다', () {
+      expect(open.shareText, '[모아모아] 일정 투표 · 10월 정기 모임\n투표 중 · 9월 20일 마감');
+    });
+  });
+
   group('VoteResponsesDisplayX', () {
     test('응답하지 않은 구성원 이름을 모아 보여주고, 이름이 없으면 기본 문구로 바꾼다', () {
       final responses = sampleResponses().copyWith(

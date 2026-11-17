@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
+import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 
 import '../../domain/entities/vote.dart';
+import '../../domain/entities/vote_status.dart';
 import '../providers/vote_providers.dart';
 import '../viewmodels/vote_confirm_state.dart';
 import '../viewmodels/vote_confirm_status.dart';
@@ -66,6 +70,7 @@ class VotePage extends ConsumerWidget {
           .select((s) => s.status == VoteConfirmStatus.submitting),
     );
     final vote = ref.watch(voteProvider(_id));
+    final isAdmin = ref.watch(voteAdminProvider(meetingId));
 
     // 확정 중에 닫으면 목록이 결과를 받지 못해 갱신되지 않습니다.
     // 시스템 뒤로가기·스와이프만 막습니다. 상단 바 버튼은 context.pop 이라 PopScope 를 거치지 않습니다.
@@ -73,7 +78,12 @@ class VotePage extends ConsumerWidget {
       canPop: !confirming,
       child: Scaffold(
         backgroundColor: MoaColors.page,
-        appBar: MoaAppBar(),
+        // 공유 버튼은 투표를 불러온 뒤에만 보여줍니다.
+        appBar: MoaAppBar(
+          actions: [
+            if (vote.value case final loaded?) _ShareButton(vote: loaded),
+          ],
+        ),
         body: SafeArea(
           child: vote.when(
             data: (vote) => Column(
@@ -84,8 +94,8 @@ class VotePage extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _Heading(vote: vote),
-                        _CandidateTable(vote: vote),
+                        _Heading(vote: vote, isAdmin: isAdmin),
+                        _CandidateTable(vote: vote, isAdmin: isAdmin),
                         _ResponsesCard(id: _id, vote: vote),
                       ],
                     ),
@@ -106,14 +116,54 @@ class VotePage extends ConsumerWidget {
   }
 }
 
-/// 상태 라벨(예: 투표 중 · 9월 20일 마감)과 일정 이름입니다.
-class _Heading extends StatelessWidget {
-  const _Heading({required this.vote});
+/// 오른쪽 위의 공유 버튼입니다. (Figma "ph:share-network")
+///
+/// 공유할 링크가 아직 없어서, 지금은 투표 이름과 상태를 문구로 복사합니다.
+/// 공유 시트와 링크는 공유 동작이 정해지면 이어서 붙입니다. (#124)
+class _ShareButton extends StatelessWidget {
+  const _ShareButton({required this.vote});
 
   final Vote vote;
 
+  Future<void> _share(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: vote.shareText));
+    if (!context.mounted) return;
+    showMoaSnackBar(context, message: '투표 내용을 복사했어요');
+  }
+
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 16),
+      child: IconButton(
+        tooltip: '공유',
+        onPressed: () => _share(context),
+        style: IconButton.styleFrom(
+          backgroundColor: MoaColors.fill,
+          fixedSize: const Size(40, 40),
+        ),
+        icon: SvgPicture.asset(
+          'assets/icons/share_network.svg',
+          width: 20,
+          height: 20,
+        ),
+      ),
+    );
+  }
+}
+
+/// 상태 알약(예: 투표 중 · 9월 20일 마감), 일정 이름, 상태별 안내 문구입니다.
+/// 알약은 글자 너비만큼만 차지합니다.
+class _Heading extends StatelessWidget {
+  const _Heading({required this.vote, required this.isAdmin});
+
+  final Vote vote;
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context) {
+    final (pillBackground, pillForeground) = vote.statusPillColors;
+    final subtitle = vote.subtitleFor(isAdmin: isAdmin);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -123,19 +173,24 @@ class _Heading extends StatelessWidget {
           Container(
             height: 26,
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: MoaColors.accentTint,
-              borderRadius: BorderRadius.all(Radius.circular(9999)),
+            decoration: BoxDecoration(
+              color: pillBackground,
+              borderRadius: const BorderRadius.all(Radius.circular(9999)),
             ),
-            child: Text(
-              vote.statusLabel,
-              style: MoaText.captionStrong.copyWith(
-                color: MoaColors.accentText,
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                vote.statusLabelFor(isAdmin: isAdmin),
+                style: MoaText.captionStrong.copyWith(color: pillForeground),
               ),
             ),
           ),
           Text(vote.title, style: MoaText.titleXl),
+          if (subtitle != null)
+            Text(
+              subtitle,
+              style: MoaText.body.copyWith(color: MoaColors.textSecondary),
+            ),
         ],
       ),
     );
@@ -146,9 +201,10 @@ class _Heading extends StatelessWidget {
 /// 날짜가 많아 칸이 [_minCellWidth] 보다 좁아지면 날짜 열만 옆으로 넘기고, 시각 열은 제자리에 둡니다.
 /// 화면에서 한 단계만 나누므로, 50줄을 넘어도 안에서 다시 나누지 않고 구역을 주석으로 표시합니다.
 class _CandidateTable extends StatelessWidget {
-  const _CandidateTable({required this.vote});
+  const _CandidateTable({required this.vote, required this.isAdmin});
 
   final Vote vote;
+  final bool isAdmin;
 
   /// 시각 열 너비
   static const _timeWidth = 44.0;
@@ -157,7 +213,7 @@ class _CandidateTable extends StatelessWidget {
   static const _minCellWidth = 64.0;
 
   static const _gap = 6.0;
-  static const _headerHeight = 20.0;
+  static const _headerHeight = 16.0;
   static const _cellHeight = 38.0;
 
   static const _cellRadius = BorderRadius.all(Radius.circular(12));
@@ -175,134 +231,146 @@ class _CandidateTable extends StatelessWidget {
       color: MoaColors.textSecondary,
     );
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
-        color: MoaColors.fill,
-        borderRadius: BorderRadius.all(Radius.circular(24)),
-      ),
-      child: Column(
-        spacing: 10,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: _gap,
-            children: [
-              // 시각 열 (날짜 머리줄 높이만큼 비우고 시작)
-              SizedBox(
-                width: _timeWidth,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: _gap,
-                  children: [
-                    const SizedBox(height: _headerHeight),
-                    for (final time in vote.candidateTimes)
-                      SizedBox(
-                        height: _cellHeight,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(time.hhmm, style: captionStyle),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // 날짜 열: 머리줄과 칸. 칸 숫자는 가능 인원입니다.
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (_, constraints) {
-                    final cellWidth = _cellWidthOf(constraints.maxWidth);
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Column(
-                        spacing: _gap,
-                        children: [
-                          Row(
-                            spacing: _gap,
-                            children: [
-                              for (final date in vote.candidateDates)
-                                SizedBox(
-                                  width: cellWidth,
-                                  height: _headerHeight,
-                                  child: Text(
-                                    date.shortDateLabel,
-                                    textAlign: TextAlign.center,
-                                    style: MoaText.captionStrong.copyWith(
-                                      color: MoaColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                            ],
+    return Opacity(
+      opacity: vote.tableOpacity,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: const BoxDecoration(
+          color: MoaColors.fill,
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+        ),
+        child: Column(
+          spacing: 10,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: _gap,
+              children: [
+                // 시각 열 (날짜 머리줄 높이만큼 비우고 시작)
+                SizedBox(
+                  width: _timeWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: _gap,
+                    children: [
+                      const SizedBox(height: _headerHeight),
+                      for (final time in vote.candidateTimes)
+                        SizedBox(
+                          height: _cellHeight,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(time.hhmm, style: captionStyle),
                           ),
-                          for (final time in vote.candidateTimes)
+                        ),
+                    ],
+                  ),
+                ),
+                // 날짜 열: 머리줄과 칸. 칸 숫자는 가능 인원입니다.
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (_, constraints) {
+                      final cellWidth = _cellWidthOf(constraints.maxWidth);
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Column(
+                          spacing: _gap,
+                          children: [
                             Row(
                               spacing: _gap,
                               children: [
                                 for (final date in vote.candidateDates)
                                   SizedBox(
                                     width: cellWidth,
-                                    height: _cellHeight,
-                                    child: switch (vote.candidateAt(
-                                      date,
-                                      time,
-                                    )) {
-                                      null => null,
-                                      final candidate => Container(
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: vote.heatColorOf(candidate),
-                                          borderRadius: _cellRadius,
-                                          border: candidate.mineBorder,
-                                        ),
-                                        child: Text(
-                                          '${candidate.availableCount}',
-                                          style: MoaText.bodyStrong.copyWith(
-                                            color: vote.heatTextColorOf(
-                                              candidate,
-                                            ),
-                                          ),
-                                        ),
+                                    height: _headerHeight,
+                                    child: Text(
+                                      date.shortDateLabel,
+                                      textAlign: TextAlign.center,
+                                      style: MoaText.captionStrong.copyWith(
+                                        color: MoaColors.textSecondary,
                                       ),
-                                    },
+                                    ),
                                   ),
                               ],
                             ),
-                        ],
-                      ),
-                    );
-                  },
+                            for (final time in vote.candidateTimes)
+                              Row(
+                                spacing: _gap,
+                                children: [
+                                  for (final date in vote.candidateDates)
+                                    SizedBox(
+                                      width: cellWidth,
+                                      height: _cellHeight,
+                                      child: switch (vote.candidateAt(
+                                        date,
+                                        time,
+                                      )) {
+                                        null => null,
+                                        final candidate => Opacity(
+                                          opacity: vote.cellOpacityOf(
+                                            candidate,
+                                            isAdmin: isAdmin,
+                                          ),
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: vote.heatColorOf(
+                                                candidate,
+                                              ),
+                                              borderRadius: _cellRadius,
+                                              border: candidate.mineBorder,
+                                            ),
+                                            child: Text(
+                                              '${candidate.availableCount}',
+                                              style: MoaText.bodyStrong
+                                                  .copyWith(
+                                                    color: vote.heatTextColorOf(
+                                                      candidate,
+                                                    ),
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      },
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          // 색 안내: 적음 → 많음, 내 선택
-          Row(
-            spacing: 4,
-            children: [
-              Text('적음', style: captionStyle),
-              for (final color in VoteColors.heat.skip(1))
+              ],
+            ),
+            // 색 안내: 적음 → 많음, 내 선택
+            Row(
+              spacing: 4,
+              children: [
+                Text('적음', style: captionStyle),
+                for (final color in VoteColors.heat.skip(1))
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: _swatchRadius,
+                    ),
+                  ),
+                Text('많음', style: captionStyle),
+                const Spacer(),
                 Container(
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: color,
                     borderRadius: _swatchRadius,
+                    border: Border.all(color: MoaColors.textPrimary, width: 2),
                   ),
                 ),
-              Text('많음', style: captionStyle),
-              const Spacer(),
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  borderRadius: _swatchRadius,
-                  border: Border.all(color: MoaColors.textPrimary, width: 2),
-                ),
-              ),
-              Text('내 선택', style: captionStyle),
-            ],
-          ),
-        ],
+                Text('내 선택', style: captionStyle),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -404,18 +472,28 @@ class _ResponsesCard extends ConsumerWidget {
   }
 }
 
-/// 관리자에게만 보이는 "일정 확정하기" 버튼입니다. 투표 중일 때만 보이고, 확정 중에는 눌리지 않습니다.
+/// 화면 아래 버튼입니다.
+/// - 관리자에게는 확정할 수 있는 투표(투표 중·마감 뒤 확정 전)에서 "일정 확정하기" 를 보여주고, 확정 중에는 누를 수 없습니다.
+/// - 확정된 투표는 모두에게 "일정 보기" 하나만 보여줍니다. (Figma 확정됨)
 class _ConfirmBar extends ConsumerWidget {
   const _ConfirmBar({required this.id, required this.vote});
 
   final VoteId id;
   final Vote vote;
 
+  /// 확정된 일정의 상세로 이동합니다. 뒤로 가면 투표 화면이 아니라 이전 화면(일정 목록)으로 돌아갑니다.
+  /// 일정 상세 경로(`/meetings/:meetingId/schedules/:scheduleId`)를 그대로 씁니다.
+  void _openSchedule(BuildContext context) => context.pushReplacement(
+    '/meetings/${id.meetingId}/schedules/${id.scheduleId}',
+  );
+
   /// 확정 시트에서 후보를 고르면 확정을 요청합니다. 그냥 닫으면 그대로 둡니다.
   Future<void> _openConfirmSheet(BuildContext context, WidgetRef ref) async {
     final meetingTime = await showModalBottomSheet<DateTime>(
       context: context,
       isScrollControlled: true,
+      // 전체 높이로 열릴 때 상태바·Dynamic Island 아래에서 시작하도록 합니다.
+      useSafeArea: true,
       backgroundColor: MoaColors.page,
       barrierColor: MoaColors.scrim,
       shape: const RoundedRectangleBorder(),
@@ -432,6 +510,15 @@ class _ConfirmBar extends ConsumerWidget {
       voteConfirmProvider(id)
           .select((s) => s.status == VoteConfirmStatus.submitting),
     );
+    if (vote.status == VoteStatus.confirmed) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: VotePrimaryButton(
+          label: '일정 보기',
+          onPressed: () => _openSchedule(context),
+        ),
+      );
+    }
     if (!isAdmin || !vote.canConfirm) return const SizedBox.shrink();
 
     return Padding(
