@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_write_view_model.dart';
 
@@ -61,7 +62,7 @@ void main() {
 
       expect(
         container.read(noticeWriteProvider(meetingId)).error,
-        isA<NoticeException>(),
+        isA<ApiException>(),
       );
     });
 
@@ -76,7 +77,10 @@ void main() {
     });
 
     test('서버에서 실패하면 false 를 반환한다', () async {
-      repository.error = const NoticeException('ADMIN 이 아닙니다.');
+      repository.error = const ApiException(
+        code: ApiErrorCode.forbidden,
+        message: 'ADMIN 이 아닙니다.',
+      );
 
       final success = await container
           .read(noticeWriteProvider(meetingId).notifier)
@@ -86,7 +90,10 @@ void main() {
     });
 
     test('서버에서 실패하면 오류 상태가 된다', () async {
-      repository.error = const NoticeException('ADMIN 이 아닙니다.');
+      repository.error = const ApiException(
+        code: ApiErrorCode.forbidden,
+        message: 'ADMIN 이 아닙니다.',
+      );
 
       await container
           .read(noticeWriteProvider(meetingId).notifier)
@@ -94,7 +101,7 @@ void main() {
 
       expect(
         container.read(noticeWriteProvider(meetingId)).error,
-        isA<NoticeException>(),
+        isA<ApiException>(),
       );
     });
 

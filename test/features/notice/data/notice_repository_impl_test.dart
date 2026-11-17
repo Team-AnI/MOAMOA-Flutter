@@ -6,7 +6,8 @@ import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/features/notice/data/datasources/notice_remote_data_source_impl.dart';
 import 'package:moamoa/features/notice/data/repositories/notice_repository_impl.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 
 /// 서버 대신 정해 둔 응답을 돌려주는 Dio 어댑터
 class _StubAdapter implements HttpClientAdapter {
@@ -175,7 +176,7 @@ void main() {
       expect(notice.author, isNull);
     });
 
-    test('응답에 data 가 없으면 크래시 대신 NoticeException 예외가 발생한다', () async {
+    test('응답에 data 가 없으면 크래시 대신 ApiException 예외가 발생한다', () async {
       final repository = _repositoryWith(
         200,
         '{"success": true, "data": null}',
@@ -183,11 +184,11 @@ void main() {
 
       await expectLater(
         repository.getNoticeDetail(meetingId: 1, noticeId: 30),
-        throwsA(isA<NoticeException>()),
+        throwsA(isA<ApiException>()),
       );
     });
 
-    test('실패 응답이면 서버의 error 메시지와 코드를 담은 NoticeException 예외가 발생한다', () async {
+    test('실패 응답이면 서버의 error 메시지와 코드를 담은 ApiException 예외가 발생한다', () async {
       final repository = _repositoryWith(404, '''
       {"success": false, "data": null,
        "error": {"code": "NOT_FOUND", "message": "요청한 리소스를 찾을 수 없습니다."}}
@@ -196,8 +197,8 @@ void main() {
       await expectLater(
         repository.getNoticeDetail(meetingId: 1, noticeId: 30),
         throwsA(
-          isA<NoticeException>()
-              .having((e) => e.code, 'code', 'NOT_FOUND')
+          isA<ApiException>()
+              .having((e) => e.code, 'code', ApiErrorCode.notFound)
               .having((e) => e.message, 'message', '요청한 리소스를 찾을 수 없습니다.'),
         ),
       );
@@ -217,7 +218,7 @@ void main() {
       expect(requests.single.data, isNull);
     });
 
-    test('읽음 처리 실패 응답이면 서버의 코드를 담은 NoticeException 예외가 발생한다', () async {
+    test('읽음 처리 실패 응답이면 서버의 코드를 담은 ApiException 예외가 발생한다', () async {
       final repository = _repositoryWith(404, '''
       {"success": false, "data": null,
        "error": {"code": "NOT_FOUND", "message": "요청한 리소스를 찾을 수 없습니다."}}
@@ -226,7 +227,11 @@ void main() {
       await expectLater(
         repository.markNoticeRead(meetingId: 1, noticeId: 30),
         throwsA(
-          isA<NoticeException>().having((e) => e.code, 'code', 'NOT_FOUND'),
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.notFound,
+          ),
         ),
       );
     });
@@ -370,7 +375,7 @@ void main() {
       expect(reads.unreadMembers.single.userName, isNull);
     });
 
-    test('읽음 현황 실패 응답이면 서버의 코드를 담은 NoticeException 예외가 발생한다', () async {
+    test('읽음 현황 실패 응답이면 서버의 코드를 담은 ApiException 예외가 발생한다', () async {
       final repository = _repositoryWith(403, '''
       {"success": false, "data": null,
        "error": {"code": "FORBIDDEN", "message": "모임 구성원이 아닙니다."}}
@@ -379,7 +384,11 @@ void main() {
       await expectLater(
         repository.getNoticeReadsByNoticeId(meetingId: 1, noticeId: 30),
         throwsA(
-          isA<NoticeException>().having((e) => e.code, 'code', 'FORBIDDEN'),
+          isA<ApiException>().having(
+            (e) => e.code,
+            'code',
+            ApiErrorCode.forbidden,
+          ),
         ),
       );
     });

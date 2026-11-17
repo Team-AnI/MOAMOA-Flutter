@@ -11,7 +11,8 @@ import 'package:moamoa/features/group/domain/repositories/group_repository.dart'
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_detail_request.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_read_member.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/presentation/notice_routes.dart';
@@ -274,7 +275,7 @@ void main() {
     // 예외처리 4-3
     testWidgets('등록에 실패하면 작성한 내용을 유지하고 다시 시도를 안내한다', (tester) async {
       final repository = FakeNoticeRepository()
-        ..error = const NoticeException('네트워크 연결을 확인해주세요.');
+        ..error = const ApiException(code: ApiErrorCode.network);
       await pumpPage(tester, repository, page);
 
       await tester.enterText(find.byType(TextField).first, '10월 회비 안내');
@@ -515,7 +516,7 @@ void main() {
       await tester.tap(find.byTooltip('닫기'));
       await pumpFrames(tester);
 
-      repository.error = const NoticeException('네트워크 연결을 확인해주세요.');
+      repository.error = const ApiException(code: ApiErrorCode.network);
       repository.createGate!.complete();
       await tester.pumpAndSettle();
 
@@ -527,7 +528,7 @@ void main() {
       await tester.tap(find.byTooltip('닫기'));
       await pumpFrames(tester);
 
-      repository.error = const NoticeException('네트워크 연결을 확인해주세요.');
+      repository.error = const ApiException(code: ApiErrorCode.network);
       repository.createGate!.complete();
       await tester.pumpAndSettle();
 
@@ -842,7 +843,10 @@ void main() {
 
     testWidgets('공지를 불러오지 못하면 읽음 처리를 요청하지 않는다', (tester) async {
       final repository = FakeNoticeRepository(notices: [buildNotice(1)])
-        ..error = const NoticeException('잠시 후 다시 시도해주세요.');
+        ..error = const ApiException(
+          code: ApiErrorCode.unknown,
+          message: '잠시 후 다시 시도해주세요.',
+        );
       await pumpPage(tester, repository, page);
       await tester.pumpAndSettle();
 
@@ -1095,7 +1099,10 @@ void main() {
       WidgetTester tester,
       FakeNoticeRepository repository,
     ) async {
-      repository.error = const NoticeException('삭제에 실패했어요.');
+      repository.error = const ApiException(
+        code: ApiErrorCode.unknown,
+        message: '삭제에 실패했어요.',
+      );
       repository.deleteGate!.complete();
       await tester.pumpAndSettle();
     }

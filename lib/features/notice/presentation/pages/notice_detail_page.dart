@@ -62,7 +62,7 @@ class NoticeDetailPage extends ConsumerWidget {
           context.go(_listPath);
         }
       case NoticeDeleteStatus.failure:
-        showMoaSnackBar(context, message: noticeErrorMessage(next.error));
+        showMoaSnackBar(context, message: next.error.noticeErrorMessage);
       case NoticeDeleteStatus.initial || NoticeDeleteStatus.deleting:
         break;
     }
@@ -103,14 +103,14 @@ class NoticeDetailPage extends ConsumerWidget {
           data: (notice) => _NoticeContent(notice: notice, request: _request),
           loading: () => const Center(child: CircularProgressIndicator()),
           // 삭제되었거나 없는 공지는 안내하고 목록으로 보냅니다. (예외처리 4-6)
-          error: (error, _) => isNoticeNotFound(error)
+          error: (error, _) => error.isNoticeNotFound
               ? MoaErrorWidget(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go(_listPath),
                 )
               : MoaErrorWidget(
-                  message: noticeErrorMessage(error),
+                  message: error.noticeErrorMessage,
                   onAction: () =>
                       ref.invalidate(noticeDetailProvider(_request)),
                 ),

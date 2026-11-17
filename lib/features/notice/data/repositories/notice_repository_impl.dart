@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
+import 'package:moamoa/core/errors/dio_exception_mapper.dart';
 
 import '../../domain/entities/notice.dart';
-import '../../domain/entities/notice_exception.dart';
 import '../../domain/entities/notice_list_result.dart';
 import '../../domain/entities/notice_reads.dart';
 import '../../domain/repositories/notice_repository.dart';
@@ -17,7 +18,7 @@ import '../models/notice_model.dart';
 import '../models/notice_reads_model.dart';
 import '../models/update_notice_request.dart';
 
-/// DataSource 의 응답을 Entity 로 바꾸고, DioException 을 NoticeException 으로 바꿉니다.
+/// DataSource 의 응답을 Entity 로 바꾸고, 실패하면 공통 예외 [ApiException] 을 던집니다.
 class NoticeRepositoryImpl implements NoticeRepository {
   const NoticeRepositoryImpl({
     required NoticeRemoteDataSource noticeRemoteDataSource,
@@ -119,31 +120,12 @@ class NoticeRepositoryImpl implements NoticeRepository {
     });
   }
 
+  /// Dio 오류를 공통 예외 [ApiException] 으로 바꿉니다.
   Future<T> _guard<T>(Future<T> Function() request) async {
     try {
       return await request();
     } on DioException catch (e) {
-      throw _toNoticeException(e);
+      throw e.toApiException();
     }
-  }
-
-  /// 실패 응답 { error: { code, message } } 의 메시지를 그대로 사용합니다.
-  NoticeException _toNoticeException(DioException e) {
-    final body = e.response?.data;
-    if (body is Map<String, dynamic>) {
-      final error = body['error'];
-      if (error is Map<String, dynamic> && error['message'] is String) {
-        return NoticeException(
-          error['message'] as String,
-          code: error['code'] as String?,
-        );
-      }
-    }
-    // 응답 자체를 받지 못한 경우(연결 실패, 시간 초과)
-    if (e.response == null) {
-      return const NoticeException('네트워크 연결을 확인해주세요.');
-    }
-    // 응답은 받았지만 형식이 예상과 다른 경우
-    return const NoticeException('요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.');
   }
 }

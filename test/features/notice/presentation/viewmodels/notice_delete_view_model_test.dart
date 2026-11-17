@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_detail_request.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_delete_state.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_delete_status.dart';
@@ -91,13 +92,16 @@ void main() {
     });
 
     test('삭제에 실패하면 실패 상태가 되고 원인을 담는다', () async {
-      repository.error = const NoticeException('ADMIN 이 아닙니다.');
+      repository.error = const ApiException(
+        code: ApiErrorCode.forbidden,
+        message: 'ADMIN 이 아닙니다.',
+      );
 
       await container.read(noticeDeleteProvider(request).notifier).delete();
 
       final state = container.read(noticeDeleteProvider(request));
       expect(state.status, NoticeDeleteStatus.failure);
-      expect(state.error, isA<NoticeException>());
+      expect(state.error, isA<ApiException>());
     });
 
     test('삭제 중에 다시 요청하면 무시하고 첫 요청의 결과를 유지한다', () async {

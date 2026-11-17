@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:moamoa/features/notice/domain/entities/notice.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_author.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_list_result.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_reads.dart';
 import 'package:moamoa/features/notice/domain/repositories/notice_repository.dart';
@@ -35,7 +36,7 @@ class FakeNoticeRepository implements NoticeRepository {
   final List<Notice> notices;
 
   /// 값이 있으면 모든 호출이 이 예외를 던집니다.
-  NoticeException? error;
+  ApiException? error;
 
   /// getNotices 호출 횟수
   int getNoticesCallCount = 0;
@@ -80,7 +81,10 @@ class FakeNoticeRepository implements NoticeRepository {
   int _indexOf(int noticeId) {
     final index = notices.indexWhere((notice) => notice.id == noticeId);
     if (index < 0) {
-      throw const NoticeException('공지를 찾을 수 없습니다.', code: 'NOT_FOUND');
+      throw const ApiException(
+        code: ApiErrorCode.notFound,
+        message: '공지를 찾을 수 없습니다.',
+      );
     }
     return index;
   }

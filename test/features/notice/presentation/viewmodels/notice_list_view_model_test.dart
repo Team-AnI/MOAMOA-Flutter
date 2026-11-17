@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_state.dart';
 import 'package:moamoa/features/notice/presentation/viewmodels/notice_list_view_model.dart';
@@ -204,9 +205,12 @@ void main() {
     });
 
     test('조회에 실패하면 에러 상태가 된다', () async {
-      repository.error = const NoticeException('모임 구성원이 아닙니다.');
+      repository.error = const ApiException(
+        code: ApiErrorCode.forbidden,
+        message: '모임 구성원이 아닙니다.',
+      );
 
-      await expectLater(openList(), throwsA(isA<NoticeException>()));
+      await expectLater(openList(), throwsA(isA<ApiException>()));
       expect(container.read(noticeListProvider(meetingId)).hasError, isTrue);
     });
   });

@@ -53,7 +53,7 @@ class NoticeListViewModel extends AsyncNotifier<NoticeListState> {
   /// 다음 페이지를 불러와 목록 뒤에 붙입니다.
   ///
   /// 새로고침 중에는 요청하지 않고, 요청 중에 새로고침이 일어나면 늦게 도착한 응답은 버립니다.
-  /// 실패하면 목록은 그대로 두고 NoticeException 을 던집니다.
+  /// 실패하면 목록은 그대로 두고 ApiException 을 던집니다.
   Future<void> loadMore() async {
     final current = state.value;
     if (current == null || !current.hasNext || current.isLoadingMore) return;

@@ -78,14 +78,14 @@ class NoticeWritePage extends ConsumerWidget {
           data: (notice) =>
               _NoticeForm(meetingId: meetingId, initialNotice: notice),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => isNoticeNotFound(error)
+          error: (error, _) => error.isNoticeNotFound
               ? MoaErrorWidget(
                   message: '삭제되었거나 존재하지 않는 공지입니다.',
                   actionLabel: '목록으로',
                   onAction: () => context.go('/meetings/$meetingId/notices'),
                 )
               : MoaErrorWidget(
-                  message: noticeErrorMessage(error),
+                  message: error.noticeErrorMessage,
                   onAction: () => ref.invalidate(noticeDetailProvider(request)),
                 ),
         );
@@ -172,7 +172,7 @@ class _NoticeFormState extends ConsumerState<_NoticeForm> {
     final error = ref.read(noticeWriteProvider(widget.meetingId)).error;
     showMoaSnackBar(
       context,
-      message: noticeErrorMessage(error),
+      message: error.noticeErrorMessage,
       actionLabel: '다시 시도',
       onAction: _submit,
     );

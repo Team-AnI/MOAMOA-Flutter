@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/features/notice/domain/entities/notice_detail_request.dart';
-import 'package:moamoa/features/notice/domain/entities/notice_exception.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/notice/presentation/providers/notice_providers.dart';
 
 import '../../fakes/fake_notice_repository.dart';
@@ -46,7 +47,10 @@ void main() {
     });
 
     test('읽음 처리가 공지 예외로 실패해도 오류 없이 끝난다', () async {
-      repository.readError = const NoticeException('모임 구성원이 아닙니다.');
+      repository.readError = const ApiException(
+        code: ApiErrorCode.forbidden,
+        message: '모임 구성원이 아닙니다.',
+      );
 
       await container.read(noticeReadProvider(request).future);
 

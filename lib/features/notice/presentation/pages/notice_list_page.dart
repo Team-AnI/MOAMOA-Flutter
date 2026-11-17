@@ -50,7 +50,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    showMoaSnackBar(context, message: noticeErrorMessage(error));
+    showMoaSnackBar(context, message: error.noticeErrorMessage);
   }
 
   void _goWrite() => context.push('/meetings/${widget.meetingId}/notices/new');
@@ -96,7 +96,7 @@ class _NoticeListPageState extends ConsumerState<NoticeListPage> {
                       ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => MoaErrorWidget(
-                  message: noticeErrorMessage(error),
+                  message: error.noticeErrorMessage,
                   onAction: () =>
                       ref.invalidate(noticeListProvider(widget.meetingId)),
                 ),

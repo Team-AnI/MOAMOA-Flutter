@@ -4,7 +4,7 @@ import '../entities/notice_reads.dart';
 
 /// 공지 Repository
 ///
-/// 실패하면 `NoticeException` 을 던집니다.
+/// 실패하면 공통 예외 `ApiException` 을 던집니다.
 abstract interface class NoticeRepository {
   /// 3-2 공지 목록 (최신순, 페이지 단위)
   Future<NoticeListResult> getNotices({
