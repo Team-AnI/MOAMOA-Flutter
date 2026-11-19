@@ -121,7 +121,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         label: '로그인',
         isLoading: isSubmitting,
         onPressed: _submit,
-        footer: _SignUpLink(onPressed: _goToSignUp),
+        // 로그인 요청 중에 회원가입으로 넘어가 두 요청의 토큰이 겹치지 않도록 막습니다.
+        footer: _SignUpLink(onPressed: isSubmitting ? null : _goToSignUp),
       ),
     );
   }
@@ -249,10 +250,12 @@ class _ForgotPasswordLink extends StatelessWidget {
 }
 
 /// 로그인 버튼 아래 "계정이 없으신가요? 회원가입" 링크
+///
+/// [onPressed] 가 null 이면(로그인 요청 중) 누를 수 없습니다.
 class _SignUpLink extends StatelessWidget {
   const _SignUpLink({required this.onPressed});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

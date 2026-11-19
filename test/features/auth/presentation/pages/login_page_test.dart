@@ -149,6 +149,23 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('로그인하는 중에는 회원가입 화면으로 넘어가지 않는다', (tester) async {
+      repository.gate = Completer<void>();
+      await openLogin(tester);
+      await enterAndSubmit(
+        tester,
+        email: 'moa@example.com',
+        password: 'moamoa123',
+      );
+
+      await tester.tap(find.text('회원가입'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('이름과 이메일만 있으면 시작할 수 있어요.'), findsNothing);
+      repository.gate!.complete();
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('다시 로그인해야 할 때는 로그인이 만료되었다고 안내한다', (tester) async {
       await openLogin(tester, initialStatus: AuthSessionStatus.expired);
 
