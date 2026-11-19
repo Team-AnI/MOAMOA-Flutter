@@ -11,7 +11,9 @@ import '../../../group/presentation/widgets/group_icon.dart';
 import '../../domain/entities/settlement.dart';
 import '../providers/settlement_providers.dart';
 import '../settlement_format.dart';
+import '../settlement_list_display.dart';
 import '../widgets/settlement_bottom_tabs.dart';
+import '../widgets/settlement_status_counts.dart';
 
 class SettlementListPage extends ConsumerWidget {
   const SettlementListPage({super.key, required this.meetingId});
@@ -43,107 +45,95 @@ class SettlementListPage extends ConsumerWidget {
             AsyncData(value: final settlements) => RefreshIndicator(
               onRefresh: () async =>
                   ref.refresh(settlementListProvider(meetingId).future),
-              child: _Content(
-                meetingId: meetingId,
-                isAdmin: value.canManageGroup,
-                settlements: settlements,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                children: [
+                  Text('회비', style: MoaText.titleXl),
+                  const SizedBox(height: 26),
+                  if (value.canManageGroup) ...[
+                    if (settlements.active.isNotEmpty) ...[
+                      _AdminFeatureCard(
+                        meetingId: meetingId,
+                        settlement: settlements.active.first,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    Text('정산 관리', style: MoaText.titleM),
+                    const SizedBox(height: 10),
+                    _ActionCard(
+                      title: '새 정산 등록',
+                      subtitle: '구성원에게 정산 요청을 보내요',
+                      onTap: () =>
+                          context.push('/meetings/$meetingId/settlements/new'),
+                    ),
+                    const SizedBox(height: 24),
+                  ] else if (settlements.myUnpaid.isNotEmpty) ...[
+                    _MemberFeatureCard(
+                      meetingId: meetingId,
+                      settlement: settlements.myUnpaid.first,
+                    ),
+                    const SizedBox(height: 28),
+                  ],
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          value.canManageGroup ? '진행 중인 정산' : '내 정산 기록',
+                          style: MoaText.titleM,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push(
+                          '/meetings/$meetingId/settlements/history',
+                        ),
+                        child: const Text('전체'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (settlements.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 26),
+                      child: Text('아직 정산 내역이 없어요.'),
+                    )
+                  else
+                    for (final settlement
+                        in (value.canManageGroup
+                                ? settlements.active
+                                : settlements.recent)
+                            .take(3))
+                      _SettlementRow(
+                        meetingId: meetingId,
+                        settlement: settlement,
+                      ),
+                  if (value.canManageGroup &&
+                      settlements.history.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: Text('지난 정산', style: MoaText.titleM)),
+                        TextButton(
+                          onPressed: () => context.push(
+                            '/meetings/$meetingId/settlements/history',
+                          ),
+                          child: const Text('전체'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    for (final settlement in settlements.history.take(3))
+                      _SettlementRow(
+                        meetingId: meetingId,
+                        settlement: settlement,
+                      ),
+                  ],
+                ],
               ),
             ),
           },
         },
       ),
-    );
-  }
-}
-
-class _Content extends StatelessWidget {
-  const _Content({
-    required this.meetingId,
-    required this.isAdmin,
-    required this.settlements,
-  });
-
-  final int meetingId;
-  final bool isAdmin;
-  final List<Settlement> settlements;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = settlements.where(
-      (item) => item.status == SettlementStatus.inProgress,
-    );
-    final history = settlements.where(
-      (item) => item.status != SettlementStatus.inProgress,
-    );
-    final myUnpaid = active.where(
-      (item) => item.myPaymentStatus == PaymentStatus.unpaid,
-    );
-    final recent = [...settlements]
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-      children: [
-        Text('회비', style: MoaText.titleXl),
-        const SizedBox(height: 26),
-        if (isAdmin) ...[
-          if (active.isNotEmpty) ...[
-            _AdminFeatureCard(meetingId: meetingId, settlement: active.first),
-            const SizedBox(height: 20),
-          ],
-          Text('정산 관리', style: MoaText.titleM),
-          const SizedBox(height: 10),
-          _ActionCard(
-            title: '새 정산 등록',
-            subtitle: '구성원에게 정산 요청을 보내요',
-            onTap: () => context.push('/meetings/$meetingId/settlements/new'),
-          ),
-          const SizedBox(height: 24),
-        ] else if (myUnpaid.isNotEmpty) ...[
-          _MemberFeatureCard(meetingId: meetingId, settlement: myUnpaid.first),
-          const SizedBox(height: 28),
-        ],
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                isAdmin ? '진행 중인 정산' : '내 정산 기록',
-                style: MoaText.titleM,
-              ),
-            ),
-            TextButton(
-              onPressed: () =>
-                  context.push('/meetings/$meetingId/settlements/history'),
-              child: const Text('전체'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (settlements.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 26),
-            child: Text('아직 정산 내역이 없어요.'),
-          )
-        else
-          for (final settlement in (isAdmin ? active : recent).take(3))
-            _SettlementRow(meetingId: meetingId, settlement: settlement),
-        if (isAdmin && history.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(child: Text('지난 정산', style: MoaText.titleM)),
-              TextButton(
-                onPressed: () =>
-                    context.push('/meetings/$meetingId/settlements/history'),
-                child: const Text('전체'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          for (final settlement in history.take(3))
-            _SettlementRow(meetingId: meetingId, settlement: settlement),
-        ],
-      ],
     );
   }
 }
@@ -156,7 +146,14 @@ class _AdminFeatureCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref
-        .watch(settlementDetailProvider((meetingId, settlement.id)))
+        .watch(
+          settlementDetailProvider(
+            SettlementDetailRequest(
+              meetingId: meetingId,
+              settlementId: settlement.id,
+            ),
+          ),
+        )
         .asData
         ?.value
         .summary;
@@ -180,15 +177,7 @@ class _AdminFeatureCard extends ConsumerWidget {
           ),
           if (summary != null) ...[
             const SizedBox(height: 18),
-            Row(
-              children: [
-                _StatusCount(value: summary.paidCount, label: '완납'),
-                const SizedBox(width: 8),
-                _StatusCount(value: summary.pendingCount, label: '확인 대기'),
-                const SizedBox(width: 8),
-                _StatusCount(value: summary.unpaidCount, label: '미납'),
-              ],
-            ),
+            SettlementStatusCounts(summary: summary),
           ],
           const SizedBox(height: 18),
           FilledButton(
@@ -209,33 +198,6 @@ class _AdminFeatureCard extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _StatusCount extends StatelessWidget {
-  const _StatusCount({required this.value, required this.label});
-  final int value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3A3A3C),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text('$value', style: MoaText.titleS.copyWith(color: Colors.white)),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: MoaText.caption.copyWith(color: MoaColors.onDarkSecondary),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 class _MemberFeatureCard extends StatelessWidget {

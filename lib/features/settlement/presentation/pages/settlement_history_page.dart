@@ -74,26 +74,30 @@ class _HistoryContent extends StatelessWidget {
   final List<Settlement> items;
   final bool isAdmin;
 
+  List<Settlement> get _sorted =>
+      [...items]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  Iterable<Settlement> get _thisYear => _sorted.where(
+    (item) =>
+        item.createdAt.toLocal().year == DateTime.now().year &&
+        item.status != SettlementStatus.canceled,
+  );
+  int get _totalAmount => _thisYear.fold(
+    0,
+    (sum, item) => sum + (isAdmin ? item.totalAmount : (item.myAmount ?? 0)),
+  );
+  String get _thisYearLabel => '${_thisYear.length}건';
+  String get _totalAmountLabel => won(_totalAmount);
+  Map<String, List<Settlement>> get _groups {
+    final result = <String, List<Settlement>>{};
+    for (final item in _sorted) {
+      final date = item.createdAt.toLocal();
+      result.putIfAbsent('${date.year}년 ${date.month}월', () => []).add(item);
+    }
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final sorted = [...items]
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    final now = DateTime.now();
-    final thisYear = sorted.where(
-      (item) =>
-          item.createdAt.toLocal().year == now.year &&
-          item.status != SettlementStatus.canceled,
-    );
-    final totalAmount = thisYear.fold<int>(
-      0,
-      (sum, item) => sum + (isAdmin ? item.totalAmount : (item.myAmount ?? 0)),
-    );
-    final groups = <String, List<Settlement>>{};
-    for (final item in sorted) {
-      final date = item.createdAt.toLocal();
-      final key = '${date.year}년 ${date.month}월';
-      groups.putIfAbsent(key, () => []).add(item);
-    }
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 36),
@@ -105,20 +109,49 @@ class _HistoryContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _SummaryCard(value: '${thisYear.length}건', label: '올해 정산'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: MoaColors.fill,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Column(
+                  children: [
+                    Text(_thisYearLabel, style: MoaText.titleS),
+                    const SizedBox(height: 4),
+                    Text('올해 정산', style: MoaText.caption),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _SummaryCard(
-                value: won(totalAmount),
-                label: isAdmin ? '모든 금액' : '내 청구 금액',
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: MoaColors.fill,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Column(
+                  children: [
+                    Text(_totalAmountLabel, style: MoaText.titleS),
+                    const SizedBox(height: 4),
+                    Text(isAdmin ? '모든 금액' : '내 청구 금액', style: MoaText.caption),
+                  ],
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 28),
-        if (groups.isEmpty) const Text('아직 정산 내역이 없어요.'),
-        for (final entry in groups.entries) ...[
+        if (_groups.isEmpty) const Text('아직 정산 내역이 없어요.'),
+        for (final entry in _groups.entries) ...[
           Text(entry.key, style: MoaText.titleS),
           const SizedBox(height: 10),
           Material(
@@ -168,26 +201,4 @@ class _HistoryContent extends StatelessWidget {
       ],
     );
   }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.value, required this.label});
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-    decoration: BoxDecoration(
-      color: MoaColors.fill,
-      borderRadius: BorderRadius.circular(22),
-    ),
-    child: Column(
-      children: [
-        Text(value, style: MoaText.titleS),
-        const SizedBox(height: 4),
-        Text(label, style: MoaText.caption),
-      ],
-    ),
-  );
 }
