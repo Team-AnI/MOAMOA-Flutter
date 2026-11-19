@@ -12,6 +12,8 @@ import '../../../group/presentation/viewmodels/group_members_state.dart';
 import '../../domain/entities/settlement.dart';
 import '../providers/settlement_providers.dart';
 import '../settlement_format.dart';
+import '../widgets/settlement_text_field.dart';
+import '../../domain/usecases/settlement_input_validation.dart';
 
 class SettlementEditPage extends ConsumerWidget {
   const SettlementEditPage({
@@ -27,7 +29,12 @@ class SettlementEditPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(groupMyRoleProvider(meetingId));
     final detail = ref.watch(
-      settlementDetailProvider((meetingId, settlementId)),
+      settlementDetailProvider(
+        SettlementDetailRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+        ),
+      ),
     );
     final members = ref.watch(groupMembersProvider(meetingId));
     if (role.isLoading) {
@@ -61,7 +68,12 @@ class SettlementEditPage extends ConsumerWidget {
           child: TextButton(
             onPressed: () {
               ref.invalidate(
-                settlementDetailProvider((meetingId, settlementId)),
+                settlementDetailProvider(
+                  SettlementDetailRequest(
+                    meetingId: meetingId,
+                    settlementId: settlementId,
+                  ),
+                ),
               );
               ref.read(groupMembersProvider(meetingId).notifier).refresh();
             },
@@ -108,7 +120,8 @@ class _EditFormState extends ConsumerState<_EditForm> {
   late final Set<int> _selected;
   late DateTime _dueAt;
   bool _unlinkSchedule = false;
-  bool _busy = false;
+  bool get _busy =>
+      ref.read(settlementActionsProvider(widget.meetingId)).isSubmitting;
 
   bool get _hasSubmission => widget.settlement.payments.any(
     (item) => item.submittedAt != null || item.status != PaymentStatus.unpaid,
@@ -149,18 +162,6 @@ class _EditFormState extends ConsumerState<_EditForm> {
     final changedMembers =
         !_selected.containsAll(originalIds) ||
         !originalIds.containsAll(_selected);
-    if (changedMembers && _selected.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('정산 대상자를 선택해 주세요.')));
-      return;
-    }
-    if ((changedMembers || amount != item.totalAmount) &&
-        amount < _selected.length) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('총 금액은 정산 대상 인원보다 적을 수 없어요.')),
-      );
-      return;
-    }
     final input = SettlementEditInput(
       title: _title.text.trim() == item.title ? null : _title.text.trim(),
       totalAmount: amount == item.totalAmount ? null : amount,
@@ -187,14 +188,11 @@ class _EditFormState extends ConsumerState<_EditForm> {
           .showSnackBar(const SnackBar(content: Text('변경된 내용이 없어요.')));
       return;
     }
-    setState(() => _busy = true);
     try {
-      await ref
-          .read(settlementRepositoryProvider)
-          .updateSettlement(widget.meetingId, item.id, input);
-      if (!mounted) return;
-      ref.invalidate(settlementDetailProvider((widget.meetingId, item.id)));
-      ref.invalidate(settlementListProvider(widget.meetingId));
+      final updated = await ref
+          .read(settlementActionsProvider(widget.meetingId).notifier)
+          .update(item.id, input, memberCount: item.summary.totalCount);
+      if (!mounted || updated != true) return;
       final messenger = ScaffoldMessenger.of(context);
       context.pop();
       messenger.showSnackBar(const SnackBar(content: Text('정산을 수정했어요.')));
@@ -207,13 +205,12 @@ class _EditFormState extends ConsumerState<_EditForm> {
           ),
         ),
       );
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(settlementActionsProvider(widget.meetingId));
     final item = widget.settlement;
     return Scaffold(
       backgroundColor: MoaColors.page,
@@ -228,7 +225,11 @@ class _EditFormState extends ConsumerState<_EditForm> {
           children: [
             Text('정산 정보 수정', style: MoaText.titleXl),
             const SizedBox(height: 16),
-            _field(_title, '정산 이름'),
+            SettlementTextField(
+              controller: _title,
+              label: '정산 이름',
+              validator: SettlementInputValidation.title,
+            ),
             if (_hasSubmission)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
@@ -236,7 +237,15 @@ class _EditFormState extends ConsumerState<_EditForm> {
                   '납부 제출 기록이 있어 금액과 대상 구성원을 바꿀 수 없어요. 변경이 필요하면 정산을 취소한 뒤 새로 등록해 주세요.',
                 ),
               ),
-            _field(_amount, '총 정산 금액', numeric: true, enabled: !_hasSubmission),
+            SettlementTextField(
+              controller: _amount,
+              label: '총 정산 금액',
+              numeric: true,
+              enabled: !_hasSubmission,
+              validator: _hasSubmission
+                  ? null
+                  : SettlementInputValidation.amount,
+            ),
             Text('정산 대상', style: MoaText.titleS),
             for (final member in widget.members)
               CheckboxListTile(
@@ -255,9 +264,21 @@ class _EditFormState extends ConsumerState<_EditForm> {
                 contentPadding: EdgeInsets.zero,
               ),
             const SizedBox(height: 12),
-            _field(_bank, '은행'),
-            _field(_account, '계좌번호'),
-            _field(_holder, '예금주'),
+            SettlementTextField(
+              controller: _bank,
+              label: '은행',
+              validator: SettlementInputValidation.bankName,
+            ),
+            SettlementTextField(
+              controller: _account,
+              label: '계좌번호',
+              validator: SettlementInputValidation.accountNumber,
+            ),
+            SettlementTextField(
+              controller: _holder,
+              label: '예금주',
+              validator: SettlementInputValidation.accountHolder,
+            ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('납부 기한'),
@@ -311,26 +332,4 @@ class _EditFormState extends ConsumerState<_EditForm> {
       ),
     );
   }
-
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    bool numeric = false,
-    bool enabled = true,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 18),
-    child: TextFormField(
-      controller: controller,
-      enabled: enabled,
-      keyboardType: numeric ? TextInputType.number : TextInputType.text,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) {
-        if (!enabled) return null;
-        final text = value?.trim() ?? '';
-        if (text.isEmpty) return '$label을 입력해 주세요.';
-        if (numeric && (int.tryParse(text) ?? 0) < 1) return '1원 이상 입력해 주세요.';
-        return null;
-      },
-    ),
-  );
 }

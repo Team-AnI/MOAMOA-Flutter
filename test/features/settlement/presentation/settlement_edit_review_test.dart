@@ -65,6 +65,11 @@ void main() {
         180,
         scrollable: find.byType(Scrollable).first,
       );
+      await Scrollable.ensureVisible(
+        tester.element(find.text(scenario.$2).first),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text(scenario.$2).first);
       await tester.pumpAndSettle();
       visible.value = false;

@@ -1,118 +1,44 @@
-import 'package:dio/dio.dart';
+import '../models/settlement_edit_request.dart';
+import '../models/settlement_cancel_request.dart';
+import '../models/settlement_updated_model.dart';
+import '../models/settlement_canceled_model.dart';
+import '../models/regular_dues_list_model.dart';
+import '../models/regular_due_create_model.dart';
+import '../models/regular_due_update_model.dart';
+import '../models/regular_due_delete_model.dart';
+import '../models/regular_due_create_request.dart';
+import '../models/regular_due_update_request.dart';
+import '../models/settlement_create_request.dart';
+import '../models/settlement_create_model.dart';
+import '../models/settlement_list_model.dart';
+import '../models/settlement_detail_model.dart';
+import '../models/settlement_payment_request.dart';
+import '../models/payment_action_model.dart';
 
-/// HTTP 요청과 공통 Envelope 해석만 담당합니다. 화면 판단은 하지 않습니다.
-class SettlementRemoteDataSource {
-  const SettlementRemoteDataSource({required Dio dio, required String baseUrl})
-    : _dio = dio,
-      _baseUrl = baseUrl;
-
-  final Dio _dio;
-  final String _baseUrl;
-
-  Future<Map<String, dynamic>> create(
-    int meetingId,
-    Map<String, Object?> body,
-  ) => _request('POST', '/v1/meetings/$meetingId/settlements', body: body);
-
-  Future<Map<String, dynamic>> list(int meetingId) =>
-      _request('GET', '/v1/meetings/$meetingId/settlements');
-
-  Future<Map<String, dynamic>> detail(int meetingId, int settlementId) =>
-      _request('GET', '/v1/meetings/$meetingId/settlements/$settlementId');
-
-  Future<Map<String, dynamic>> submitPayment(
-    int meetingId,
-    int settlementId,
-  ) => _request(
-    'POST',
-    '/v1/meetings/$meetingId/settlements/$settlementId/payments/me/submissions',
+abstract interface class SettlementRemoteDataSource {
+  Future<SettlementCreateModel> create(SettlementCreateRequest request);
+  Future<SettlementListModel> list(int meetingId);
+  Future<SettlementDetailModel> detail(int meetingId, int settlementId);
+  Future<PaymentActionModel> submitPayment(SettlementPaymentRequest request);
+  Future<PaymentActionModel> approvePayment(SettlementPaymentRequest request);
+  Future<PaymentActionModel> rejectPayment(SettlementPaymentRequest request);
+  Future<RegularDuesListModel> listRegularDues(int meetingId);
+  Future<RegularDueCreateModel> createRegularDue(
+    RegularDueCreateRequest request,
   );
-
-  Future<Map<String, dynamic>> approvePayment(
-    int meetingId,
-    int settlementId,
-    int paymentId,
-  ) => _request(
-    'POST',
-    '/v1/meetings/$meetingId/settlements/$settlementId/payments/$paymentId/approval',
+  Future<RegularDueUpdateModel> updateRegularDue(
+    RegularDueUpdateRequest request,
   );
-
-  Future<Map<String, dynamic>> rejectPayment(
+  Future<RegularDueDeleteModel> deleteRegularDue(
     int meetingId,
-    int settlementId,
-    int paymentId, {
-    String? reason,
-  }) => _request(
-    'POST',
-    '/v1/meetings/$meetingId/settlements/$settlementId/payments/$paymentId/rejection',
-    body: reason == null ? null : {'reason': reason},
+    int regularDuesId,
   );
-
-  Future<Map<String, dynamic>> listRegularDues(int meetingId) =>
-      _request('GET', '/v1/meetings/$meetingId/regular-dues');
-
-  Future<Map<String, dynamic>> createRegularDue(
-    int meetingId,
-    Map<String, Object?> body,
-  ) => _request('POST', '/v1/meetings/$meetingId/regular-dues', body: body);
-
-  Future<Map<String, dynamic>> updateRegularDue(
-    int meetingId,
-    int id,
-    Map<String, Object?> body,
-  ) =>
-      _request('PATCH', '/v1/meetings/$meetingId/regular-dues/$id', body: body);
-
-  Future<Map<String, dynamic>> deleteRegularDue(int meetingId, int id) =>
-      _request('DELETE', '/v1/meetings/$meetingId/regular-dues/$id');
-
-  Future<Map<String, dynamic>> updateSettlement(
-    int meetingId,
-    int id,
-    Map<String, Object?> body,
-  ) => _request('PATCH', '/v1/meetings/$meetingId/settlements/$id', body: body);
-
-  Future<Map<String, dynamic>> cancelSettlement(
-    int meetingId,
-    int id, {
-    String? reason,
-  }) => _request(
-    'POST',
-    '/v1/meetings/$meetingId/settlements/$id/cancellation',
-    body: reason == null ? null : {'reason': reason},
+  Future<SettlementUpdatedModel> updateSettlement(
+    SettlementEditRequest request, {
+    required bool unlinkSchedule,
+  });
+  Future<SettlementCanceledModel> cancelSettlement(
+    SettlementCancelRequest request,
   );
-
-  Future<Map<String, dynamic>> refundPayment(
-    int meetingId,
-    int settlementId,
-    int paymentId,
-  ) => _request(
-    'POST',
-    '/v1/meetings/$meetingId/settlements/$settlementId/payments/$paymentId/refund',
-  );
-
-  Future<Map<String, dynamic>> _request(
-    String method,
-    String path, {
-    Map<String, Object?>? body,
-  }) async {
-    final base = _baseUrl.endsWith('/') ? _baseUrl : '$_baseUrl/';
-    final target = _baseUrl.isEmpty
-        ? path
-        : Uri.parse(base).resolve(path.substring(1)).toString();
-    final response = await _dio.request<Object?>(
-      target,
-      data: body,
-      options: Options(method: method, contentType: Headers.jsonContentType),
-    );
-    final envelope = response.data;
-    if (envelope is! Map || envelope['success'] != true) {
-      throw const FormatException('잘못된 정산 API 응답');
-    }
-    final data = envelope['data'];
-    if (data is! Map<String, dynamic>) {
-      throw const FormatException('정산 응답 데이터가 없습니다');
-    }
-    return data;
-  }
+  Future<PaymentActionModel> refundPayment(SettlementPaymentRequest request);
 }
