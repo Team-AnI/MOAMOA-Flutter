@@ -101,6 +101,31 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('저장하는 중에는 나중에 할게요를 눌러도 첫 화면으로 넘어가지 않는다', (tester) async {
+      repository.gate = Completer<void>();
+      await openProfileSetup(tester);
+      await tester.tap(find.text('시작하기'));
+      await tester.pump();
+
+      await tester.tap(find.text('나중에 할게요'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('첫 화면'), findsNothing);
+      repository.gate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('폭이 320 인 화면에서도 색 고르기가 넘치지 않는다', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await openProfileSetup(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.bySemanticsLabel('검정'), findsOneWidget);
+    });
+
     testWidgets('고른 색을 선택된 상태로 알린다', (tester) async {
       await openProfileSetup(tester);
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:moamoa/core/constants/profile_color.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
@@ -13,6 +12,7 @@ import '../viewmodels/profile_setup_status.dart';
 import '../widgets/auth_page_title.dart';
 import '../widgets/auth_step_bar.dart';
 import '../widgets/auth_submit_bar.dart';
+import '../widgets/profile_color_card.dart';
 
 /// 가입 직후 프로필 설정 화면 (7-8 프로필 색)
 ///
@@ -68,7 +68,7 @@ class ProfileSetupPage extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            _ColorCard(
+            ProfileColorCard(
               userName: userName,
               selected: state.color,
               onSelected: viewModel.select,
@@ -80,99 +80,9 @@ class ProfileSetupPage extends ConsumerWidget {
         label: '시작하기',
         isLoading: state.isSubmitting,
         onPressed: viewModel.save,
-        footer: _SkipButton(onPressed: () => _goHome(context)),
-      ),
-    );
-  }
-}
-
-/// 화면에 보여줄 프로필 색 이름 (화면 읽기 프로그램이 읽어 줍니다)
-extension ProfileColorLabelX on ProfileColor {
-  String get label => switch (this) {
-    ProfileColor.lightBlue => '연파랑',
-    ProfileColor.gray => '회색',
-    ProfileColor.blue => '진한 파랑',
-    ProfileColor.dark => '검정',
-  };
-}
-
-/// 기본 프로필 색 4개 중 하나를 고르는 카드
-class _ColorCard extends StatelessWidget {
-  const _ColorCard({
-    required this.userName,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String? userName;
-  final ProfileColor selected;
-  final ValueChanged<ProfileColor> onSelected;
-
-  bool _isSelected(ProfileColor color) => color == selected;
-
-  /// 고른 색에만 진한 테두리를 둘러 줍니다.
-  BoxBorder? _border(ProfileColor color) =>
-      _isSelected(color) ? Border.all(color: MoaColors.accent, width: 2) : null;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: MoaColors.fill,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 제목
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                '기본 프로필 색',
-                style: MoaText.subStrong.copyWith(
-                  color: MoaColors.textSecondary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // 색 고르기
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  for (final color in ProfileColor.values)
-                    // 동그라미 안 이름 첫 글자 대신 색 이름만 읽어 줍니다.
-                    Semantics(
-                      button: true,
-                      selected: _isSelected(color),
-                      label: color.label,
-                      excludeSemantics: true,
-                      onTap: () => onSelected(color),
-                      child: GestureDetector(
-                        onTap: () => onSelected(color),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: _border(color),
-                          ),
-                          child: MoaProfileAvatar(
-                            userName: userName,
-                            color: color,
-                            size: 48,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
+        // 저장을 보낸 뒤에는 저장하지 않고 넘어갈 수 없으므로 끝날 때까지 막습니다.
+        footer: _SkipButton(
+          onPressed: state.isSubmitting ? null : () => _goHome(context),
         ),
       ),
     );
@@ -180,23 +90,23 @@ class _ColorCard extends StatelessWidget {
 }
 
 /// 프로필 색을 고르지 않고 첫 화면으로 가는 버튼. 서버 기본값(LIGHT_BLUE)이 그대로 쓰입니다.
+///
+/// [onPressed] 가 null 이면(저장 중) 누를 수 없습니다.
 class _SkipButton extends StatelessWidget {
   const _SkipButton({required this.onPressed});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
+        foregroundColor: MoaColors.textSecondary,
         minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      child: Text(
-        '나중에 할게요',
-        style: MoaText.sub.copyWith(color: MoaColors.textSecondary),
-      ),
+      child: Text('나중에 할게요', style: MoaText.sub),
     );
   }
 }

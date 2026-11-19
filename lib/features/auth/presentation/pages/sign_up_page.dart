@@ -331,10 +331,10 @@ class _TermsAgreement extends StatelessWidget {
             ),
           ),
         ),
-        // 전문 보기 링크
+        // 전문 보기 링크. 좁은 화면(320)에서는 넘치지 않게 다음 줄로 내립니다.
         Padding(
           padding: const EdgeInsets.only(left: 34),
-          child: Row(
+          child: Wrap(
             children: [
               for (final terms in AuthTerms.values)
                 TextButton(

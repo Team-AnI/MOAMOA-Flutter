@@ -167,6 +167,15 @@ void main() {
       expect(find.text('이미 가입했거나 탈퇴 후 7일이 지나지 않은 이메일이에요.'), findsOneWidget);
     });
 
+    testWidgets('폭이 320 인 화면에서도 약관 보기 링크가 넘치지 않는다', (tester) async {
+      await openSignUp(tester);
+      tester.view.physicalSize = const Size(320, 1100);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('개인정보 처리방침 보기'), findsOneWidget);
+    });
+
     testWidgets('이용약관 보기를 누르면 이용약관 전문을 보여준다', (tester) async {
       await openSignUp(tester);
 
