@@ -19,8 +19,11 @@ void main() {
     late ProviderContainer container;
 
     /// 로그인 여부에 따라 화면을 옮기는 실제 앱 라우터로 탈퇴 안내를 엽니다.
-    Future<void> openWithdrawal(WidgetTester tester) async {
-      tester.view.physicalSize = const Size(393, 852);
+    Future<void> openWithdrawal(
+      WidgetTester tester, {
+      Size size = const Size(393, 852),
+    }) async {
+      tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       container = ProviderContainer.test(
@@ -39,7 +42,17 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    /// 키보드가 화면 아래 300px 를 가린 상태로 만듭니다.
+    Future<void> openKeyboard(WidgetTester tester) async {
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+    }
+
     Future<void> checkAndOpenDialog(WidgetTester tester) async {
+      // 작은 화면에서는 아래 버튼에 가려질 수 있어 보이는 위치로 스크롤합니다.
+      await tester.ensureVisible(find.text('안내 내용을 모두 확인했어요'));
+      await tester.pump();
       await tester.tap(find.text('안내 내용을 모두 확인했어요'));
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, '회원 탈퇴'));
@@ -53,6 +66,29 @@ void main() {
     }
 
     setUp(() => repository = FakeAuthRepository());
+
+    testWidgets('키보드가 열린 작은 화면에서도 확인 팝업이 넘치지 않는다', (tester) async {
+      await openWithdrawal(tester, size: const Size(320, 568));
+      await checkAndOpenDialog(tester);
+
+      await openKeyboard(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('정말 탈퇴할까요?'), findsOneWidget);
+    });
+
+    testWidgets('키보드가 열린 작은 화면에서도 탈퇴하기를 누르면 탈퇴를 요청한다', (tester) async {
+      await openWithdrawal(tester, size: const Size(320, 568));
+      await checkAndOpenDialog(tester);
+      await openKeyboard(tester);
+      await tester.enterText(find.byType(TextField), 'moamoa123');
+
+      await tester.ensureVisible(find.text('탈퇴하기'));
+      await tester.tap(find.text('탈퇴하기'));
+      await tester.pumpAndSettle();
+
+      expect(repository.withdrawals, hasLength(1));
+    });
 
     testWidgets('안내를 확인하지 않은 채 회원 탈퇴를 누르면 확인하라고 안내한다', (tester) async {
       await openWithdrawal(tester);

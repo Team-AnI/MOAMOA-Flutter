@@ -128,7 +128,13 @@ class AuthRepositoryImpl implements AuthRepository {
       () =>
           _authRemoteDataSource.withdraw(WithdrawalRequest(password: password)),
     );
-    await _tokenStorage.clear();
+    // 서버에서는 이미 탈퇴했으므로 기기의 토큰을 지우지 못해도 탈퇴는 성공으로 봅니다.
+    // 남은 토큰은 탈퇴한 계정의 것이라 다음 요청에서 재발급에 실패해 지워지고 다시 로그인하게 됩니다.
+    try {
+      await _tokenStorage.clear();
+    } on Exception {
+      // 탈퇴 완료를 알리는 쪽이 더 중요합니다.
+    }
   }
 
   @override

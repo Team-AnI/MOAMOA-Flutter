@@ -260,71 +260,76 @@ class _WithdrawalConfirmDialogState
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 제목과 안내 문구
-              Text('정말 탈퇴할까요?', style: MoaText.titleM),
-              const SizedBox(height: 8),
-              Text(
-                '계정과 프로필이 삭제되고 되돌릴 수 없어요.',
-                style: MoaText.body.copyWith(color: MoaColors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              // 비밀번호
-              AuthTextField(
-                label: '비밀번호',
-                controller: _passwordController,
-                obscureText: true,
-                hintText: '비밀번호를 입력하세요',
-                helperText: '본인 확인을 위해 비밀번호를 입력해 주세요.',
-                errorText: _passwordError(state),
-                onSubmitted: (_) => _submit(),
-              ),
-              const SizedBox(height: 20),
-              // 취소·탈퇴하기
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: state.isSubmitting ? null : _close,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: MoaColors.fill,
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+          // 키보드가 열린 작은 화면에서는 내용을 스크롤해 비밀번호 입력과 버튼을 함께 쓸 수 있게 합니다.
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 제목과 안내 문구
+                Text('정말 탈퇴할까요?', style: MoaText.titleM),
+                const SizedBox(height: 8),
+                Text(
+                  '계정과 프로필이 삭제되고 되돌릴 수 없어요.',
+                  style: MoaText.body.copyWith(color: MoaColors.textSecondary),
+                ),
+                const SizedBox(height: 20),
+                // 비밀번호
+                AuthTextField(
+                  label: '비밀번호',
+                  controller: _passwordController,
+                  obscureText: true,
+                  hintText: '비밀번호를 입력하세요',
+                  helperText: '본인 확인을 위해 비밀번호를 입력해 주세요.',
+                  errorText: _passwordError(state),
+                  onSubmitted: (_) => _submit(),
+                ),
+                const SizedBox(height: 20),
+                // 취소·탈퇴하기
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: state.isSubmitting ? null : _close,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: MoaColors.fill,
+                          minimumSize: const Size(0, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '취소',
-                        style: MoaText.button.copyWith(
-                          color: MoaColors.textPrimary,
+                        child: Text(
+                          '취소',
+                          style: MoaText.button.copyWith(
+                            color: MoaColors.textPrimary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: state.isSubmitting ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: MoaColors.dangerTint,
-                        disabledBackgroundColor: MoaColors.dangerTint,
-                        minimumSize: const Size(0, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: state.isSubmitting ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: MoaColors.dangerTint,
+                          disabledBackgroundColor: MoaColors.dangerTint,
+                          minimumSize: const Size(0, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          '탈퇴하기',
+                          style: MoaText.button.copyWith(
+                            color: MoaColors.danger,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        '탈퇴하기',
-                        style: MoaText.button.copyWith(color: MoaColors.danger),
-                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

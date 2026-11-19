@@ -15,6 +15,8 @@ import 'package:moamoa/features/auth/data/datasources/auth_remote_data_source_im
 import 'package:moamoa/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:moamoa/features/auth/domain/entities/my_account.dart';
 
+import '../fakes/clear_fails_token_storage.dart';
+
 /// 서버 대신 정해 둔 응답을 돌려주고, 보낸 요청을 담는 Dio 어댑터
 class _StubAdapter implements HttpClientAdapter {
   _StubAdapter(this.statusCode, this.body);
@@ -530,6 +532,23 @@ void main() {
       await repository.withdraw(password: 'moamoa123');
 
       expect(await storage.read(), isNull);
+    });
+
+    test('탈퇴했는데 이 기기의 토큰을 지우지 못해도 오류 없이 끝난다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      adapter = _StubAdapter(200, _ok);
+      final repository = AuthRepositoryImpl(
+        authRemoteDataSource: AuthRemoteDataSourceImpl(
+          dio: Dio()..httpClientAdapter = adapter,
+        ),
+        tokenStorage: ClearFailsTokenStorage(storage),
+      );
+
+      await repository.withdraw(password: 'moamoa123');
+
+      expect(adapter.requests, hasLength(1));
     });
 
     test('탈퇴할 수 없으면 unprocessableEntity 코드의 ApiException 예외가 발생한다', () async {
