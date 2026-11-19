@@ -9,6 +9,9 @@ import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/settlement.dart';
 import '../providers/settlement_providers.dart';
 import '../settlement_format.dart';
+import '../regular_due_changes.dart';
+import '../regular_due_application_message.dart';
+import '../../domain/usecases/settlement_input_validation.dart';
 
 class RegularDuesFormPage extends ConsumerWidget {
   const RegularDuesFormPage({
@@ -93,7 +96,8 @@ class _FormState extends ConsumerState<_Form> {
   late bool _postNotice;
   late bool _isActive;
   bool _applyCurrent = false;
-  bool _busy = false;
+  bool get _busy =>
+      ref.read(regularDueActionsProvider(widget.meetingId)).isSubmitting;
 
   @override
   void initState() {
@@ -105,9 +109,7 @@ class _FormState extends ConsumerState<_Form> {
     _bank = TextEditingController(text: due?.bankName ?? '');
     _account = TextEditingController(text: due?.accountNumber ?? '');
     _holder = TextEditingController(text: due?.accountHolder ?? '');
-    _cycle = due?.cycle == DuesCycle.weekly
-        ? DuesCycle.weekly
-        : DuesCycle.monthly;
+    _cycle = due?.cycle ?? DuesCycle.monthly;
     _cycleDay = due?.cycleDay ?? '10';
     final parts = (due?.sendTime ?? '09:00').split(':');
     _sendTime = TimeOfDay(
@@ -152,54 +154,32 @@ class _FormState extends ConsumerState<_Form> {
     if (!_formKey.currentState!.validate()) return;
     final input = _input;
     final original = widget.initial;
-    if (original != null &&
-        !_applyCurrent &&
-        input.title == original.title &&
-        input.amount == original.amount &&
-        input.cycle == original.cycle &&
-        input.cycleDay == original.cycleDay &&
-        input.sendTime == original.sendTime &&
-        input.dueDays == original.dueDays &&
-        input.bankName == original.bankName &&
-        input.accountNumber == original.accountNumber &&
-        input.accountHolder == original.accountHolder &&
-        input.postNotice == original.postNotice &&
-        input.isActive == original.isActive) {
+    final changes = original == null
+        ? null
+        : input.changesFrom(original, applyToCurrentSettlement: _applyCurrent);
+    if (changes?.isEmpty == true) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('변경된 내용이 없어요.')));
       return;
     }
-    setState(() => _busy = true);
     try {
-      final repository = ref.read(settlementRepositoryProvider);
-      bool? applied;
+      final actions = ref.read(
+        regularDueActionsProvider(widget.meetingId).notifier,
+      );
+      String message;
       if (original == null) {
-        await repository.createRegularDue(widget.meetingId, input);
+        final result = await actions.create(input);
+        if (result == null) return;
+        message = '정기 회비를 저장했어요.';
       } else {
-        applied = await repository.updateRegularDue(
-          widget.meetingId,
-          original.id,
-          input,
-          previous: original,
-          applyToCurrentSettlement: _applyCurrent,
-        );
+        final result = await actions.update(original.id, changes!);
+        if (result == null) return;
+        message = result.message;
       }
       if (!mounted) return;
-      ref.invalidate(regularDuesProvider(widget.meetingId));
-      if (applied == true) {
-        ref.invalidate(settlementListProvider(widget.meetingId));
-      }
       final messenger = ScaffoldMessenger.of(context);
       context.pop();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            applied == false
-                ? '설정은 저장했지만 이번 회차에는 적용되지 않았어요. 기존 정산을 확인해 주세요.'
-                : '정기 회비를 저장했어요.',
-          ),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -209,8 +189,6 @@ class _FormState extends ConsumerState<_Form> {
           ),
         ),
       );
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -235,13 +213,11 @@ class _FormState extends ConsumerState<_Form> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    setState(() => _busy = true);
     try {
-      await ref
-          .read(settlementRepositoryProvider)
-          .deleteRegularDue(widget.meetingId, original.id);
-      if (!mounted) return;
-      ref.invalidate(regularDuesProvider(widget.meetingId));
+      final deleted = await ref
+          .read(regularDueActionsProvider(widget.meetingId).notifier)
+          .delete(original.id);
+      if (!mounted || deleted != true) return;
       context.pop();
     } catch (error) {
       if (!mounted) return;
@@ -252,23 +228,27 @@ class _FormState extends ConsumerState<_Form> {
           ),
         ),
       );
-    } finally {
-      if (mounted) setState(() => _busy = false);
     }
+  }
+
+  List<String> get _cycleDays {
+    final days = _cycle == DuesCycle.weekly
+        ? <String>['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+        : <String>[...List.generate(28, (i) => '${i + 1}'), 'LAST'];
+    // 알 수 없는 응답 값을 build에서 임의로 고치지 않고 선택값으로 보존합니다.
+    if (!days.contains(_cycleDay)) days.insert(0, _cycleDay);
+    return days;
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(regularDueActionsProvider(widget.meetingId));
     if (widget.missing) {
       return Scaffold(
         appBar: AppBar(title: const Text('정기 회비')),
         body: const Center(child: Text('해당 정기 회비를 찾을 수 없어요.')),
       );
     }
-    final cycleDays = _cycle == DuesCycle.weekly
-        ? const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-        : [...List.generate(28, (index) => '${index + 1}'), 'LAST'];
-    if (!cycleDays.contains(_cycleDay)) _cycleDay = cycleDays.first;
     return Scaffold(
       backgroundColor: MoaColors.page,
       appBar: AppBar(
@@ -292,9 +272,14 @@ class _FormState extends ConsumerState<_Form> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<DuesCycle>(
+                    isExpanded: true,
                     initialValue: _cycle,
                     decoration: _inputDecoration(),
                     items: const [
+                      DropdownMenuItem(
+                        value: DuesCycle.unknown,
+                        child: Text('주기 다시 선택'),
+                      ),
                       DropdownMenuItem(
                         value: DuesCycle.monthly,
                         child: Text('매월'),
@@ -313,10 +298,11 @@ class _FormState extends ConsumerState<_Form> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     key: ValueKey(_cycle),
                     initialValue: _cycleDay,
                     decoration: _inputDecoration(),
-                    items: cycleDays
+                    items: _cycleDays
                         .map(
                           (day) => DropdownMenuItem(
                             value: day,
@@ -330,7 +316,7 @@ class _FormState extends ConsumerState<_Form> {
                         )
                         .toList(),
                     onChanged: (value) =>
-                        setState(() => _cycleDay = value ?? cycleDays.first),
+                        setState(() => _cycleDay = value ?? _cycleDays.first),
                   ),
                 ),
               ],
@@ -444,6 +430,21 @@ class _FormState extends ConsumerState<_Form> {
           validator: (value) {
             final text = value?.trim() ?? '';
             if (text.isEmpty) return '$label을 입력해 주세요.';
+            final maxLength = switch (label) {
+              '이름' => 50,
+              '은행' => 20,
+              '계좌번호' => 30,
+              '예금주' => 20,
+              _ => null,
+            };
+            if (maxLength != null) {
+              final error = SettlementInputValidation.text(
+                text,
+                label,
+                maxLength,
+              );
+              if (error != null) return error;
+            }
             if (numeric) {
               final number = int.tryParse(text);
               if (number == null ||
