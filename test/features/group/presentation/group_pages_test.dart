@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moamoa/app/app.dart';
+import 'package:moamoa/core/network/auth_session.dart';
 import 'package:moamoa/features/group/domain/entities/current_group.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/domain/repositories/group_repository.dart';
@@ -22,6 +23,10 @@ Future<void> openGroups(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        // 로그인한 상태로 시작합니다. 로그인하지 않으면 앱 라우터가 로그인 화면으로 보냅니다.
+        initialAuthStatusProvider.overrideWithValue(
+          AuthSessionStatus.authenticated,
+        ),
         groupRepositoryProvider.overrideWithValue(repository),
         groupCurrentUserNameProvider.overrideWithValue(userName),
       ],
