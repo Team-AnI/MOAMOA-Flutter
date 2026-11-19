@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:moamoa/core/theme/moa_theme.dart';
 import 'package:moamoa/core/utils/moa_dialogs.dart';
+import 'package:moamoa/core/utils/moa_snack_bar.dart';
 import 'package:moamoa/core/widgets/moa_app_bar.dart';
 import 'package:moamoa/core/widgets/moa_error_widget.dart';
 import 'package:moamoa/core/widgets/moa_profile_avatar.dart';
@@ -62,6 +63,14 @@ class MyAccountPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(myAccountProvider.select((state) => state.logoutFailed), (
+      _,
+      failed,
+    ) {
+      if (failed) {
+        showMoaSnackBar(context, message: '이 기기에서 로그아웃하지 못했어요. 다시 시도해 주세요.');
+      }
+    });
     final state = ref.watch(myAccountProvider);
 
     return Scaffold(

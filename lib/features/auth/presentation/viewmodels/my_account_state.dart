@@ -19,5 +19,8 @@ abstract class MyAccountState with _$MyAccountState {
 
     /// 로그아웃 요청 중이면 true. 중복 요청을 막습니다.
     @Default(false) bool isLoggingOut,
+
+    /// 이 기기의 로그인 정보를 지우지 못해 로그아웃하지 못했으면 true. 다시 시도할 수 있습니다.
+    @Default(false) bool logoutFailed,
   }) = _MyAccountState;
 }

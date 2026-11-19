@@ -43,6 +43,70 @@ class _StubAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// 액세스 토큰 `access-old` 로 보낸 로그아웃은 401 로 돌려주고, 재발급하면 `*-new` 토큰을 주는 Dio 어댑터
+///
+/// 보낸 로그아웃 요청의 (인증 헤더, 본문)을 순서대로 담습니다.
+class _RotatingAdapter implements HttpClientAdapter {
+  final logouts = <({Object? authorization, Object? body})>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    var status = 200;
+    var body = '{"success": true, "data": null, "error": null}';
+    if (options.path == '/v1/auth/refresh') {
+      body =
+          '{"success": true, "error": null, "data": '
+          '{"accessToken": "access-new", "refreshToken": "refresh-new"}}';
+    } else if (options.path == '/v1/auth/logout') {
+      logouts.add((
+        authorization: options.headers['Authorization'],
+        body: options.data == null ? null : Map.of(options.data as Map),
+      ));
+      if (options.headers['Authorization'] == 'Bearer access-old') status = 401;
+    }
+    return ResponseBody.fromString(
+      body,
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// 토큰을 지우는 데만 실패하는 토큰 저장소
+class _ClearFailsStorage implements TokenStorage {
+  _ClearFailsStorage(this._inner);
+
+  final TokenStorage _inner;
+
+  @override
+  Future<Jwt?> read() => _inner.read();
+
+  @override
+  Future<void> save(Jwt tokens) => _inner.save(tokens);
+
+  @override
+  Future<void> clear() => Future.error(Exception('토큰 삭제 실패'));
+
+  @override
+  Future<bool> saveIfUnchanged({
+    required String refreshToken,
+    required Jwt tokens,
+  }) => _inner.saveIfUnchanged(refreshToken: refreshToken, tokens: tokens);
+
+  @override
+  Future<bool> clearIfUnchanged({required String refreshToken}) =>
+      _inner.clearIfUnchanged(refreshToken: refreshToken);
+}
+
 const _ok = '{"success": true, "data": null, "error": null}';
 
 void main() {
@@ -311,6 +375,30 @@ void main() {
       );
     });
 
+    const emptyData = '{"success": true, "data": {}, "error": null}';
+
+    test('내 정보 응답의 필드가 빠지면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(200, emptyData);
+
+      await expectLater(
+        repository.getMyAccount(),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
+    test('프로필 편집 응답의 필드가 빠지면 unknown 코드의 ApiException 예외가 발생한다', () async {
+      final repository = repositoryWith(200, emptyData);
+
+      await expectLater(
+        repository.updateMyProfile(
+          name: '이서연',
+          phone: null,
+          color: ProfileColor.dark,
+        ),
+        throwsA(const ApiException(code: ApiErrorCode.unknown)),
+      );
+    });
+
     test('프로필 편집은 휴대폰을 비웠으면 null 로 담아 PATCH /v1/me 로 보낸다', () async {
       final repository = repositoryWith(200, meOk);
 
@@ -356,7 +444,7 @@ void main() {
       expect(await storage.read(), isNull);
     });
 
-    test('로그아웃 요청이 실패해도 저장된 토큰을 지운다', () async {
+    test('로그아웃 요청이 실패해도 오류 없이 저장된 토큰을 지운다', () async {
       await storage.save(
         const Jwt(accessToken: 'access', refreshToken: 'refresh'),
       );
@@ -365,8 +453,51 @@ void main() {
         '{"success": false, "data": null, "error": {"code": "INTERNAL"}}',
       );
 
-      await expectLater(repository.logout(), throwsA(isA<ApiException>()));
+      await repository.logout();
 
+      expect(await storage.read(), isNull);
+    });
+
+    test('이 기기의 토큰을 지우지 못하면 로그아웃 오류가 발생한다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access', refreshToken: 'refresh'),
+      );
+      adapter = _StubAdapter(200, _ok);
+      final repository = AuthRepositoryImpl(
+        authRemoteDataSource: AuthRemoteDataSourceImpl(
+          dio: Dio()..httpClientAdapter = adapter,
+        ),
+        tokenStorage: _ClearFailsStorage(storage),
+      );
+
+      await expectLater(repository.logout(), throwsA(isA<Exception>()));
+
+      expect(await storage.read(), isNotNull);
+    });
+
+    test('로그아웃하는 사이 토큰이 재발급되면 바뀐 리프레시 토큰으로 한 번 더 요청한다', () async {
+      await storage.save(
+        const Jwt(accessToken: 'access-old', refreshToken: 'refresh-old'),
+      );
+      final rotating = _RotatingAdapter();
+      final dio = Dio()..httpClientAdapter = rotating;
+      dio.interceptors.add(
+        AuthInterceptor(
+          tokenStorage: storage,
+          plainDio: Dio()..httpClientAdapter = rotating,
+          onSessionExpired: () {},
+        ),
+      );
+      final repository = AuthRepositoryImpl(
+        authRemoteDataSource: AuthRemoteDataSourceImpl(dio: dio),
+        tokenStorage: storage,
+      );
+
+      await repository.logout();
+
+      // 재발급 뒤 다시 보낸 요청은 옛 토큰을 담지만, 마지막 요청은 재발급된 토큰을 담습니다.
+      expect(rotating.logouts.last.authorization, 'Bearer access-new');
+      expect(rotating.logouts.last.body, {'refreshToken': 'refresh-new'});
       expect(await storage.read(), isNull);
     });
 

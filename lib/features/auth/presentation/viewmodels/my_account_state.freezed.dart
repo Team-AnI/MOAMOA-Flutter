@@ -18,7 +18,8 @@ mixin _$MyAccountState {
  MyAccountStatus get status;/// [status] 가 loaded 일 때만 값이 있습니다.
  MyAccount? get account;/// [status] 가 failure 일 때만 값이 있습니다.
  Object? get error;/// 로그아웃 요청 중이면 true. 중복 요청을 막습니다.
- bool get isLoggingOut;
+ bool get isLoggingOut;/// 이 기기의 로그인 정보를 지우지 못해 로그아웃하지 못했으면 true. 다시 시도할 수 있습니다.
+ bool get logoutFailed;
 /// Create a copy of MyAccountState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +30,16 @@ $MyAccountStateCopyWith<MyAccountState> get copyWith => _$MyAccountStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MyAccountState&&(identical(other.status, status) || other.status == status)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.isLoggingOut, isLoggingOut) || other.isLoggingOut == isLoggingOut));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MyAccountState&&(identical(other.status, status) || other.status == status)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.isLoggingOut, isLoggingOut) || other.isLoggingOut == isLoggingOut)&&(identical(other.logoutFailed, logoutFailed) || other.logoutFailed == logoutFailed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,account,const DeepCollectionEquality().hash(error),isLoggingOut);
+int get hashCode => Object.hash(runtimeType,status,account,const DeepCollectionEquality().hash(error),isLoggingOut,logoutFailed);
 
 @override
 String toString() {
-  return 'MyAccountState(status: $status, account: $account, error: $error, isLoggingOut: $isLoggingOut)';
+  return 'MyAccountState(status: $status, account: $account, error: $error, isLoggingOut: $isLoggingOut, logoutFailed: $logoutFailed)';
 }
 
 
@@ -49,7 +50,7 @@ abstract mixin class $MyAccountStateCopyWith<$Res>  {
   factory $MyAccountStateCopyWith(MyAccountState value, $Res Function(MyAccountState) _then) = _$MyAccountStateCopyWithImpl;
 @useResult
 $Res call({
- MyAccountStatus status, MyAccount? account, Object? error, bool isLoggingOut
+ MyAccountStatus status, MyAccount? account, Object? error, bool isLoggingOut, bool logoutFailed
 });
 
 
@@ -66,11 +67,12 @@ class _$MyAccountStateCopyWithImpl<$Res>
 
 /// Create a copy of MyAccountState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? account = freezed,Object? error = freezed,Object? isLoggingOut = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? account = freezed,Object? error = freezed,Object? isLoggingOut = null,Object? logoutFailed = null,}) {
   return _then(MyAccountState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as MyAccountStatus,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
 as MyAccount?,error: freezed == error ? _self.error : error ,isLoggingOut: null == isLoggingOut ? _self.isLoggingOut : isLoggingOut // ignore: cast_nullable_to_non_nullable
+as bool,logoutFailed: null == logoutFailed ? _self.logoutFailed : logoutFailed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -168,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut,  bool logoutFailed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MyAccountState() when $default != null:
-return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case _:
+return $default(_that.status,_that.account,_that.error,_that.isLoggingOut,_that.logoutFailed);case _:
   return orElse();
 
 }
@@ -189,10 +191,10 @@ return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut,  bool logoutFailed)  $default,) {final _that = this;
 switch (_that) {
 case _MyAccountState():
-return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case _:
+return $default(_that.status,_that.account,_that.error,_that.isLoggingOut,_that.logoutFailed);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +211,10 @@ return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case 
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MyAccountStatus status,  MyAccount? account,  Object? error,  bool isLoggingOut,  bool logoutFailed)?  $default,) {final _that = this;
 switch (_that) {
 case _MyAccountState() when $default != null:
-return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case _:
+return $default(_that.status,_that.account,_that.error,_that.isLoggingOut,_that.logoutFailed);case _:
   return null;
 
 }
@@ -224,7 +226,7 @@ return $default(_that.status,_that.account,_that.error,_that.isLoggingOut);case 
 
 
 class _MyAccountState implements MyAccountState {
-  const _MyAccountState({this.status = MyAccountStatus.loading, this.account, this.error, this.isLoggingOut = false});
+  const _MyAccountState({this.status = MyAccountStatus.loading, this.account, this.error, this.isLoggingOut = false, this.logoutFailed = false});
   
 
 @override@JsonKey() final  MyAccountStatus status;
@@ -234,6 +236,8 @@ class _MyAccountState implements MyAccountState {
 @override final  Object? error;
 /// 로그아웃 요청 중이면 true. 중복 요청을 막습니다.
 @override@JsonKey() final  bool isLoggingOut;
+/// 이 기기의 로그인 정보를 지우지 못해 로그아웃하지 못했으면 true. 다시 시도할 수 있습니다.
+@override@JsonKey() final  bool logoutFailed;
 
 /// Create a copy of MyAccountState
 /// with the given fields replaced by the non-null parameter values.
@@ -245,16 +249,16 @@ _$MyAccountStateCopyWith<_MyAccountState> get copyWith => __$MyAccountStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MyAccountState&&(identical(other.status, status) || other.status == status)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.isLoggingOut, isLoggingOut) || other.isLoggingOut == isLoggingOut));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MyAccountState&&(identical(other.status, status) || other.status == status)&&(identical(other.account, account) || other.account == account)&&const DeepCollectionEquality().equals(other.error, error)&&(identical(other.isLoggingOut, isLoggingOut) || other.isLoggingOut == isLoggingOut)&&(identical(other.logoutFailed, logoutFailed) || other.logoutFailed == logoutFailed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,account,const DeepCollectionEquality().hash(error),isLoggingOut);
+int get hashCode => Object.hash(runtimeType,status,account,const DeepCollectionEquality().hash(error),isLoggingOut,logoutFailed);
 
 @override
 String toString() {
-  return 'MyAccountState(status: $status, account: $account, error: $error, isLoggingOut: $isLoggingOut)';
+  return 'MyAccountState(status: $status, account: $account, error: $error, isLoggingOut: $isLoggingOut, logoutFailed: $logoutFailed)';
 }
 
 
@@ -265,7 +269,7 @@ abstract mixin class _$MyAccountStateCopyWith<$Res> implements $MyAccountStateCo
   factory _$MyAccountStateCopyWith(_MyAccountState value, $Res Function(_MyAccountState) _then) = __$MyAccountStateCopyWithImpl;
 @override @useResult
 $Res call({
- MyAccountStatus status, MyAccount? account, Object? error, bool isLoggingOut
+ MyAccountStatus status, MyAccount? account, Object? error, bool isLoggingOut, bool logoutFailed
 });
 
 
@@ -282,11 +286,12 @@ class __$MyAccountStateCopyWithImpl<$Res>
 
 /// Create a copy of MyAccountState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? account = freezed,Object? error = freezed,Object? isLoggingOut = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? account = freezed,Object? error = freezed,Object? isLoggingOut = null,Object? logoutFailed = null,}) {
   return _then(_MyAccountState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as MyAccountStatus,account: freezed == account ? _self.account : account // ignore: cast_nullable_to_non_nullable
 as MyAccount?,error: freezed == error ? _self.error : error ,isLoggingOut: null == isLoggingOut ? _self.isLoggingOut : isLoggingOut // ignore: cast_nullable_to_non_nullable
+as bool,logoutFailed: null == logoutFailed ? _self.logoutFailed : logoutFailed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -113,6 +113,31 @@ void main() {
       );
     });
 
+    testWidgets('이 기기의 로그인 정보를 지우지 못하면 다시 시도하라고 안내한다', (tester) async {
+      await openMyAccount(tester);
+      await tapLogout(tester);
+      repository.error = Exception('저장소 삭제 실패');
+
+      await tester.tap(find.text('로그아웃').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('이 기기에서 로그아웃하지 못했어요. 다시 시도해 주세요.'), findsOneWidget);
+    });
+
+    testWidgets('이 기기의 로그인 정보를 지우지 못하면 로그인한 상태가 그대로다', (tester) async {
+      await openMyAccount(tester);
+      await tapLogout(tester);
+      repository.error = Exception('저장소 삭제 실패');
+
+      await tester.tap(find.text('로그아웃').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(authSessionProvider),
+        AuthSessionStatus.authenticated,
+      );
+    });
+
     testWidgets('로그아웃을 취소하면 로그아웃하지 않는다', (tester) async {
       await openMyAccount(tester);
       await tapLogout(tester);

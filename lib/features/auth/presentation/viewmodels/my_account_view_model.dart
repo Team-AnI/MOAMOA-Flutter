@@ -33,16 +33,20 @@ class MyAccountViewModel extends Notifier<MyAccountState> {
     }
   }
 
-  /// 로그아웃합니다. 서버 요청이 실패해도 기기의 토큰은 지워졌으므로 로그아웃한 상태로 바꿉니다.
+  /// 로그아웃합니다. 서버 요청이 실패해도 기기의 토큰은 지워지므로 로그아웃한 상태로 바꿉니다.
+  ///
+  /// 이 기기의 토큰을 지우지 못하면 로그아웃한 것이 아니므로 상태를 바꾸지 않고 실패로 알립니다.
   Future<void> logout() async {
     if (state.isLoggingOut) return; // 중복 요청 방지
-    state = state.copyWith(isLoggingOut: true);
+    state = state.copyWith(isLoggingOut: true, logoutFailed: false);
     // 로그아웃하면 이 화면이 닫히므로 앱 전체 상태를 미리 꺼내 둡니다.
     final session = ref.read(authSessionProvider.notifier);
     try {
       await ref.read(logoutProvider)(const NoParams());
     } on Exception {
-      // 토큰은 이미 지워졌습니다. 화면은 로그인 화면으로 이동합니다.
+      if (!ref.mounted) return;
+      state = state.copyWith(isLoggingOut: false, logoutFailed: true);
+      return;
     }
     session.signOut();
   }

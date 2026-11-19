@@ -17,8 +17,11 @@ void main() {
     late FakeAuthRepository repository;
 
     /// 내 계정 화면에서 편집을 눌러 엽니다.
-    Future<void> openEdit(WidgetTester tester) async {
-      tester.view.physicalSize = const Size(393, 1000);
+    Future<void> openEdit(
+      WidgetTester tester, {
+      Size size = const Size(393, 1000),
+    }) async {
+      tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
@@ -48,6 +51,13 @@ void main() {
     }
 
     setUp(() => repository = FakeAuthRepository());
+
+    testWidgets('폭이 320 인 화면에서도 색 고르기가 넘치지 않는다', (tester) async {
+      await openEdit(tester, size: const Size(320, 1000));
+
+      expect(tester.takeException(), isNull);
+      expect(find.bySemanticsLabel('검정'), findsOneWidget);
+    });
 
     testWidgets('지금 이름·휴대폰·이메일을 채워서 보여준다', (tester) async {
       await openEdit(tester);

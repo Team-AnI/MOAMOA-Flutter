@@ -86,17 +86,38 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
+    await _revokeRefreshToken();
+    // 서버 요청이 실패해도 이 기기에서는 로그아웃합니다. (7-4: 앱은 저장한 토큰을 모두 지운다)
+    // 여기서 지우지 못하면 로그아웃하지 못한 것이므로 오류를 그대로 던집니다.
+    await _tokenStorage.clear();
+  }
+
+  /// 서버에 이 기기의 리프레시 토큰을 지우라고 요청합니다. 요청이 실패해도 오류를 던지지 않습니다.
+  ///
+  /// 요청하는 사이 액세스 토큰이 만료돼 `AuthInterceptor` 가 토큰을 재발급하면, 요청 본문에는 재발급으로
+  /// 교체된 옛 리프레시 토큰이 남아 새 토큰이 서버에 남습니다. 그래서 요청한 뒤 저장된 토큰이 바뀌었으면
+  /// 바뀐 토큰으로 한 번 더 요청합니다.
+  Future<void> _revokeRefreshToken() async {
     try {
-      final tokens = await _tokenStorage.read();
-      if (tokens == null) return;
-      await _guard(
-        () => _authRemoteDataSource.logout(
-          LogoutRequest(refreshToken: tokens.refreshToken),
-        ),
-      );
-    } finally {
-      // 서버 요청이 실패해도 이 기기에서는 로그아웃합니다. (7-4: 앱은 저장한 토큰을 모두 지운다)
-      await _tokenStorage.clear();
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final sent = await _tokenStorage.read();
+        if (sent == null) return;
+        try {
+          await _guard(
+            () => _authRemoteDataSource.logout(
+              LogoutRequest(refreshToken: sent.refreshToken),
+            ),
+          );
+        } on ApiException {
+          // 요청에 실패해도 아래에서 저장된 토큰이 바뀌었는지는 확인합니다.
+        }
+        final current = await _tokenStorage.read();
+        if (current == null || current.refreshToken == sent.refreshToken) {
+          return;
+        }
+      }
+    } on Exception {
+      // 토큰을 읽지 못해도 이 기기의 토큰은 지웁니다.
     }
   }
 
