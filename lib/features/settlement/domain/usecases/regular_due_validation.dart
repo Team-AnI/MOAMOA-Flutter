@@ -16,7 +16,9 @@ class RegularDueValidation {
 
   static String? dueDays(String value) {
     final number = int.tryParse(value);
-    return number == null || number < 0 || number > 2147483647
+    return number == null ||
+            number < 0 ||
+            number > SettlementInputValidation.maxServerInt
         ? '납부 기한 일수를 확인해 주세요.'
         : null;
   }

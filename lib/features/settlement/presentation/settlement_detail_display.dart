@@ -2,6 +2,25 @@ import '../domain/entities/settlement.dart';
 import 'settlement_format.dart';
 
 extension SettlementDetailDisplay on SettlementDetail {
+  bool get canEdit => status == SettlementStatus.inProgress;
+  bool get canCancel =>
+      status == SettlementStatus.inProgress ||
+      status == SettlementStatus.completed;
+  bool get hasPendingForCancellation =>
+      summary.pendingCount > 0 && status != SettlementStatus.canceled;
+  bool get canReplace =>
+      status == SettlementStatus.canceled && replacedBySettlementId == null;
+  bool get canRefund => status == SettlementStatus.canceled;
+  bool get hasReplacement =>
+      replacedBySettlementId != null || replacesSettlementId != null;
+  bool get hasSubmission => payments.any(
+    (payment) =>
+        payment.submittedAt != null || payment.status != PaymentStatus.unpaid,
+  );
+  List<SettlementPayment> get refundedPayments => payments
+      .where((payment) => payment.status == PaymentStatus.refunded)
+      .toList(growable: false);
+
   bool get canSubmit =>
       status == SettlementStatus.inProgress &&
       myPayment?.status == PaymentStatus.unpaid;
@@ -37,6 +56,9 @@ extension SettlementSummaryDisplay on SettlementSummary {
 }
 
 extension SettlementPaymentDisplay on SettlementPayment {
+  String get refundPrompt =>
+      '$displayName님에게 ${won(amount)}을 앱 밖에서 전액 돌려준 뒤 기록해 주세요. 이 버튼은 송금하지 않습니다.';
+
   String get displayName =>
       userName?.trim().isNotEmpty == true ? userName! : '구성원';
   String get displayStatus => status.label;

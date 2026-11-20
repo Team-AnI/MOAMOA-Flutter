@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/group/domain/entities/group_member_profile.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
 import 'package:moamoa/features/group/presentation/providers/group_members_providers.dart';
 import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
@@ -13,7 +14,14 @@ import 'package:moamoa/features/settlement/presentation/providers/settlement_pro
 class TestMembers extends GroupMembersViewModel {
   TestMembers() : super(groupId: 7);
   @override
-  GroupMembersState build() => const GroupMembersState(hasLoaded: true);
+  GroupMembersState build() => const GroupMembersState(
+    hasLoaded: true,
+    members: [
+      GroupMemberProfile(memberId: 3, userName: '김모아', role: MemberRole.admin),
+      GroupMemberProfile(memberId: 5, userName: '이모아', role: MemberRole.member),
+      GroupMemberProfile(memberId: 7, userName: '박모아', role: MemberRole.member),
+    ],
+  );
 }
 
 class TestSettlementRepository implements SettlementRepository {

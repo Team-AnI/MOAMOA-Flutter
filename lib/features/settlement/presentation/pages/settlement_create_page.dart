@@ -23,8 +23,13 @@ import '../widgets/settlement_schedule_picker.dart';
 import '../widgets/settlement_text_field.dart';
 
 class SettlementCreatePage extends ConsumerWidget {
-  const SettlementCreatePage({super.key, required this.meetingId});
+  const SettlementCreatePage({
+    super.key,
+    required this.meetingId,
+    this.replacesSettlementId,
+  });
   final int meetingId;
+  final int? replacesSettlementId;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(groupMyRoleProvider(meetingId));
@@ -47,15 +52,19 @@ class SettlementCreatePage extends ConsumerWidget {
         AsyncData(:final value) when !value.canManageGroup => const Center(
           child: Text('관리자만 정산을 등록할 수 있어요.'),
         ),
-        AsyncData() => _SettlementForm(meetingId: meetingId),
+        AsyncData() => _SettlementForm(
+          meetingId: meetingId,
+          replacesSettlementId: replacesSettlementId,
+        ),
       },
     );
   }
 }
 
 class _SettlementForm extends ConsumerStatefulWidget {
-  const _SettlementForm({required this.meetingId});
+  const _SettlementForm({required this.meetingId, this.replacesSettlementId});
   final int meetingId;
+  final int? replacesSettlementId;
   @override
   ConsumerState<_SettlementForm> createState() => _SettlementFormState();
 }
@@ -105,6 +114,7 @@ class _SettlementFormState extends ConsumerState<_SettlementForm> {
         .create(
           CreateSettlementParams(
             meetingId: widget.meetingId,
+            replacesSettlementId: widget.replacesSettlementId,
             scheduleId: _schedule?.id,
             title: _title.text,
             amount: _amount.text,

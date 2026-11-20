@@ -7,15 +7,18 @@ import '../../data/repositories/settlement_repository_impl.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
 import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/cancel_settlement.dart';
 import '../../domain/usecases/create_regular_due.dart';
 import '../../domain/usecases/create_settlement.dart';
 import '../../domain/usecases/delete_regular_due.dart';
 import '../../domain/usecases/get_regular_dues.dart';
 import '../../domain/usecases/get_settlement.dart';
 import '../../domain/usecases/get_settlements.dart';
+import '../../domain/usecases/refund_payment.dart';
 import '../../domain/usecases/reject_payment.dart';
 import '../../domain/usecases/submit_payment.dart';
 import '../../domain/usecases/update_regular_due.dart';
+import '../../domain/usecases/update_settlement.dart';
 import '../settlement_detail_request.dart';
 import '../viewmodels/regular_due_action_state.dart';
 import '../viewmodels/regular_due_actions_view_model.dart';
@@ -119,3 +122,21 @@ final regularDueActionsProvider = NotifierProvider.autoDispose
     .family<RegularDueActionsViewModel, RegularDueActionState, int>(
       (meetingId) => RegularDueActionsViewModel(meetingId: meetingId),
     );
+
+final updateSettlementProvider = Provider<UpdateSettlement>(
+  (ref) => UpdateSettlementImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final cancelSettlementProvider = Provider<CancelSettlement>(
+  (ref) => CancelSettlementImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final refundPaymentProvider = Provider<RefundPayment>(
+  (ref) => RefundPaymentImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);

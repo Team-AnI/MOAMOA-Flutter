@@ -86,7 +86,7 @@ void main() {
         const SettlementDetailPage(meetingId: 7, settlementId: 40),
         value: support.detail.copyWith(
           payments: [
-            support.detail.payments.single.copyWith(
+            support.detail.payments.first.copyWith(
               status: PaymentStatus.pending,
             ),
           ],
@@ -95,8 +95,14 @@ void main() {
       tester.view.physicalSize = const Size(320, 568);
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(find.text('반려'), 160);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('반려')),
+        alignment: 0.5,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('반려'));
       await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
       tester.view.viewInsets = const FakeViewPadding(bottom: 300);
       addTearDown(tester.view.resetViewInsets);
       await tester.pumpAndSettle();

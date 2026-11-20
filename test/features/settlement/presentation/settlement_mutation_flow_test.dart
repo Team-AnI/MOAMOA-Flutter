@@ -78,11 +78,19 @@ Future<GoRouter> _open(WidgetTester tester, _Repository repo) async {
 }
 
 Future<void> submit(WidgetTester tester) async {
+  // 오류 안내가 사라진 뒤 같은 버튼으로 재시도합니다.
+  await tester.pump(const Duration(seconds: 5));
+  await tester.pumpAndSettle();
   await tester.scrollUntilVisible(
     find.text('납부했어요'),
     200,
     scrollable: find.byType(Scrollable).last,
   );
+  await Scrollable.ensureVisible(
+    tester.element(find.text('납부했어요')),
+    alignment: 0.5,
+  );
+  await tester.pumpAndSettle();
   await tester.tap(find.text('납부했어요'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('제출'));

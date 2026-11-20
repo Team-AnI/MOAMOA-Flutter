@@ -9,14 +9,18 @@ import '../models/regular_due_update_model.dart';
 import '../models/regular_due_update_request.dart';
 import '../models/regular_dues_list_model.dart';
 import '../models/regular_dues_list_request.dart';
+import '../models/settlement_cancel_request.dart';
+import '../models/settlement_canceled_model.dart';
 import '../models/settlement_create_model.dart';
 import '../models/settlement_create_request.dart';
 import '../models/settlement_detail_api_request.dart';
 import '../models/settlement_detail_model.dart';
+import '../models/settlement_edit_request.dart';
 import '../models/settlement_list_model.dart';
 import '../models/settlement_list_request.dart';
 import '../models/settlement_payment_request.dart';
 import '../models/settlement_response_model.dart';
+import '../models/settlement_updated_model.dart';
 import 'settlement_remote_data_source.dart';
 
 class SettlementRemoteDataSourceImpl implements SettlementRemoteDataSource {
@@ -107,6 +111,33 @@ class SettlementRemoteDataSourceImpl implements SettlementRemoteDataSource {
     'DELETE',
     '/v1/meetings/${request.meetingId}/regular-dues/${request.regularDuesId}',
     RegularDueDeleteModel.fromJson,
+  );
+
+  @override
+  Future<SettlementResponseModel<SettlementUpdatedModel>> updateSettlement(
+    SettlementEditRequest request,
+  ) => _request(
+    'PATCH',
+    '/v1/meetings/${request.meetingId}/settlements/${request.settlementId}',
+    SettlementUpdatedModel.fromJson,
+    body: request.toPatchJson(),
+  );
+  @override
+  Future<SettlementResponseModel<SettlementCanceledModel>> cancelSettlement(
+    SettlementCancelRequest request,
+  ) => _request(
+    'POST',
+    '/v1/meetings/${request.meetingId}/settlements/${request.settlementId}/cancellation',
+    SettlementCanceledModel.fromJson,
+    body: request.toJson(),
+  );
+  @override
+  Future<SettlementResponseModel<PaymentActionModel>> refundPayment(
+    SettlementPaymentRequest request,
+  ) => _request(
+    'POST',
+    '/v1/meetings/${request.meetingId}/settlements/${request.settlementId}/payments/${request.paymentId}/refund',
+    PaymentActionModel.fromJson,
   );
 
   Future<SettlementResponseModel<T>> _request<T>(

@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/errors/api_error_code.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../../group/presentation/providers/group_providers.dart';
+import '../../domain/entities/settlement_edit_input.dart';
 import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/cancel_settlement.dart';
 import '../../domain/usecases/create_settlement.dart';
+import '../../domain/usecases/refund_payment.dart';
 import '../../domain/usecases/reject_payment.dart';
 import '../../domain/usecases/submit_payment.dart';
+import '../../domain/usecases/update_settlement.dart';
 import '../providers/settlement_providers.dart';
 import 'settlement_action.dart';
 import 'settlement_action_state.dart';
@@ -22,6 +26,7 @@ class SettlementActionsViewModel extends Notifier<SettlementActionState> {
     SettlementAction.create,
     () => ref.read(createSettlementProvider)(params),
     createdId: (id) => id,
+    settlementId: params.replacesSettlementId,
   );
   Future<void> submit(int settlementId) => _run(
     SettlementAction.submit,
@@ -54,6 +59,45 @@ class SettlementActionsViewModel extends Notifier<SettlementActionState> {
         ),
         settlementId: settlementId,
       );
+
+  Future<void> update(
+    int id,
+    SettlementEditInput changes, {
+    required int memberCount,
+  }) => _run(
+    SettlementAction.update,
+    () => ref.read(updateSettlementProvider)(
+      UpdateSettlementParams(
+        meetingId: meetingId,
+        settlementId: id,
+        changes: changes,
+        memberCount: memberCount,
+      ),
+    ),
+    settlementId: id,
+  );
+  Future<void> cancel(int id, {String? reason}) => _run(
+    SettlementAction.cancel,
+    () => ref.read(cancelSettlementProvider)(
+      CancelSettlementParams(
+        meetingId: meetingId,
+        settlementId: id,
+        reason: reason,
+      ),
+    ),
+    settlementId: id,
+  );
+  Future<void> refund(int id, int paymentId) => _run(
+    SettlementAction.refund,
+    () => ref.read(refundPaymentProvider)(
+      RefundPaymentParams(
+        meetingId: meetingId,
+        settlementId: id,
+        paymentId: paymentId,
+      ),
+    ),
+    settlementId: id,
+  );
 
   void _refresh(int? settlementId) {
     ref.invalidate(settlementListProvider(meetingId));

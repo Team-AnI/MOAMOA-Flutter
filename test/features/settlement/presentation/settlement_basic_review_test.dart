@@ -48,7 +48,7 @@ void main() {
         '승인',
         detail.copyWith(
           payments: [
-            detail.payments.single.copyWith(status: PaymentStatus.pending),
+            detail.payments.first.copyWith(status: PaymentStatus.pending),
           ],
         ),
       ),
@@ -58,7 +58,7 @@ void main() {
         '반려',
         detail.copyWith(
           payments: [
-            detail.payments.single.copyWith(status: PaymentStatus.pending),
+            detail.payments.first.copyWith(status: PaymentStatus.pending),
           ],
         ),
       ),
@@ -81,6 +81,11 @@ void main() {
           180,
           scrollable: find.byType(Scrollable).first,
         );
+        await Scrollable.ensureVisible(
+          tester.element(find.text(scenario.$2).first),
+          alignment: 0.5,
+        );
+        await tester.pumpAndSettle();
         await tester.tap(find.text(scenario.$2).first);
         await tester.pumpAndSettle();
         visible.value = false;

@@ -205,6 +205,50 @@ void main() {
       expect(adapter.request!.data, isNull);
     });
   });
+
+  group('정산 수정·취소·환불 요청', () {
+    test('정산 수정은 변경한 항목만 보내 납부 기록이 있는 금액을 건드리지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"settlementId":40}}',
+      );
+      await repository.updateSettlement(
+        7,
+        40,
+        const SettlementEditInput(title: '수정된 정산', unlinkSchedule: true),
+      );
+      expect(adapter.request?.method, 'PATCH');
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements/40',
+      );
+      expect(adapter.request?.data, {'title': '수정된 정산', 'scheduleId': null});
+    });
+
+    test('정산 취소는 사유를 보내고 기존 내역은 삭제하지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"settlementId":40,"status":"CANCELED"}}',
+      );
+      await repository.cancelSettlement(7, 40, reason: '금액 오류');
+      expect(adapter.request?.method, 'POST');
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements/40/cancellation',
+      );
+      expect(adapter.request?.data, {'reason': '금액 오류'});
+    });
+
+    test('환불 완료 기록은 송금 정보 없이 대상 납부 ID만 보낸다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"paymentId":81,"status":"REFUNDED"}}',
+      );
+      await repository.refundPayment(7, 40, 81);
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements/40/payments/81/refund',
+      );
+      expect(adapter.request?.data, isNull);
+    });
+  });
 }
 
 Map<String, Object?> detailJson({bool refundField = false}) => {
@@ -230,97 +274,129 @@ Map<String, Object?> detailJson({bool refundField = false}) => {
   'payments': null,
 };
 void contractTests() {
-  for (final refundField in [false, true]) {
-    test(
-      '상세 DTO: ${refundField ? "후속 환불 필드가 있어도" : "현재 서버의 환불 필드가 없어도"} 기본 납부 정보를 읽는다',
-      () async {
+  group(SettlementRepositoryImpl, () {
+    test('대체 정산 생성은 원 정산 ID를 전달하고 부분 수정은 일정 연결을 임의로 해제하지 않는다', () async {
+      final (repo, adapter) = _repository(
+        '{"success":true,"data":{"settlementId":99}}',
+      );
+      await repo.create(
+        CreateSettlementInput(
+          meetingId: 7,
+          replacesSettlementId: 40,
+          title: '다시 정산',
+          totalAmount: 1000,
+          memberIds: [3],
+          bankName: '국민',
+          accountNumber: '1234',
+          accountHolder: '김모아',
+          dueAt: DateTime(2026, 12, 1),
+        ),
+      );
+      expect((adapter.request!.data as Map)['replacesSettlementId'], 40);
+      await repo.updateSettlement(
+        7,
+        40,
+        const SettlementEditInput(title: '이름만 수정'),
+      );
+      expect((adapter.request!.data as Map).containsKey('scheduleId'), isFalse);
+    });
+
+    for (final refundField in [false, true]) {
+      test(
+        '상세 DTO: ${refundField ? "후속 환불 필드가 있어도" : "현재 서버의 환불 필드가 없어도"} 기본 납부 정보를 읽는다',
+        () async {
+          final (repository, _) = _repository(
+            jsonEncode({
+              'success': true,
+              'data': detailJson(refundField: refundField),
+            }),
+          );
+          final result = await repository.detail(7, 40);
+          expect(result.myPayment!.status, PaymentStatus.unpaid);
+          expect(result.payments, isEmpty);
+          expect(result.summary.refundedCount, refundField ? 0 : null);
+        },
+      );
+    }
+    for (final field in ['settlementId', 'summary', 'dueAt', 'payments']) {
+      test('상세 DTO의 잘못된 $field 구조는 공통 오류로 전달한다', () async {
+        final data = detailJson();
+        data[field] = switch (field) {
+          'settlementId' => '40',
+          'summary' => [],
+          'dueAt' => 'not-a-date',
+          _ => {},
+        };
         final (repository, _) = _repository(
-          jsonEncode({
-            'success': true,
-            'data': detailJson(refundField: refundField),
-          }),
+          jsonEncode({'success': true, 'data': data}),
         );
-        final result = await repository.detail(7, 40);
-        expect(result.myPayment!.status, PaymentStatus.unpaid);
-        expect(result.payments, isEmpty);
-        expect(result.summary.refundedCount, refundField ? 0 : null);
-      },
-    );
-  }
-  for (final field in ['settlementId', 'summary', 'dueAt', 'payments']) {
-    test('상세 DTO의 잘못된 $field 구조는 공통 오류로 전달한다', () async {
+        await expectLater(
+          repository.detail(7, 40),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.code,
+              'code',
+              ApiErrorCode.unknown,
+            ),
+          ),
+        );
+      });
+    }
+    test('알 수 없는 납부·정산 상태는 unknown으로 보존한다', () async {
       final data = detailJson();
-      data[field] = switch (field) {
-        'settlementId' => '40',
-        'summary' => [],
-        'dueAt' => 'not-a-date',
-        _ => {},
+      data['status'] = 'FUTURE';
+      data['myPayment'] = {
+        'paymentId': 81,
+        'amount': 15000,
+        'status': 'FUTURE',
       };
       final (repository, _) = _repository(
         jsonEncode({'success': true, 'data': data}),
       );
-      await expectLater(
-        repository.detail(7, 40),
-        throwsA(
-          isA<ApiException>().having(
-            (e) => e.code,
-            'code',
-            ApiErrorCode.unknown,
-          ),
-        ),
-      );
+      final result = await repository.detail(7, 40);
+      expect(result.status, SettlementStatus.unknown);
+      expect(result.myPayment!.status, PaymentStatus.unknown);
     });
-  }
-  test('알 수 없는 납부·정산 상태는 unknown으로 보존한다', () async {
-    final data = detailJson();
-    data['status'] = 'FUTURE';
-    data['myPayment'] = {'paymentId': 81, 'amount': 15000, 'status': 'FUTURE'};
-    final (repository, _) = _repository(
-      jsonEncode({'success': true, 'data': data}),
-    );
-    final result = await repository.detail(7, 40);
-    expect(result.status, SettlementStatus.unknown);
-    expect(result.myPayment!.status, PaymentStatus.unknown);
-  });
-  for (final approval in [false, true]) {
-    test('${approval ? "승인" : "제출"} 요청은 경로 ID를 본문에 섞지 않는다', () async {
+    for (final approval in [false, true]) {
+      test('${approval ? "승인" : "제출"} 요청은 경로 ID를 본문에 섞지 않는다', () async {
+        final (repository, adapter) = _repository(
+          '{"success":true,"data":{"paymentId":81,"status":"PENDING"}}',
+        );
+        if (approval) {
+          await repository.approvePayment(7, 40, 81);
+        } else {
+          await repository.submitPayment(7, 40);
+        }
+        expect(
+          adapter.request!.uri.toString(),
+          'https://example.test/v1/meetings/7/settlements/40/payments/${approval ? "81/approval" : "me/submissions"}',
+        );
+        expect(adapter.request!.data, isNull);
+      });
+    }
+    test('선택 사유가 없는 반려 DTO는 경로 변수를 JSON에서 제외한다', () async {
       final (repository, adapter) = _repository(
-        '{"success":true,"data":{"paymentId":81,"status":"PENDING"}}',
+        '{"success":true,"data":{"paymentId":81,"status":"UNPAID"}}',
       );
-      if (approval) {
-        await repository.approvePayment(7, 40, 81);
-      } else {
-        await repository.submitPayment(7, 40);
-      }
-      expect(
-        adapter.request!.uri.toString(),
-        'https://example.test/v1/meetings/7/settlements/40/payments/${approval ? "81/approval" : "me/submissions"}',
-      );
-      expect(adapter.request!.data, isNull);
+      await repository.rejectPayment(7, 40, 81);
+      expect(adapter.request!.data, isEmpty);
     });
-  }
-  test('선택 사유가 없는 반려 DTO는 경로 변수를 JSON에서 제외한다', () async {
-    final (repository, adapter) = _repository(
-      '{"success":true,"data":{"paymentId":81,"status":"UNPAID"}}',
-    );
-    await repository.rejectPayment(7, 40, 81);
-    expect(adapter.request!.data, isEmpty);
+    for (final envelope in <String, Object?>{
+      '최상위 배열': [],
+      '성공 값 누락': {
+        'data': {'settlements': []},
+      },
+      '실패 envelope': {
+        'success': false,
+        'data': {'settlements': []},
+      },
+      'data 누락': {'success': true},
+      'data 타입 오류': {'success': true, 'data': []},
+    }.entries) {
+      test('${envelope.key} 응답은 빈 목록 대신 공통 오류로 전달한다', () async {
+        final (repository, _) = _repository(jsonEncode(envelope.value));
+        await expectLater(repository.list(7), throwsA(isA<ApiException>()));
+      });
+    }
   });
-  for (final envelope in <String, Object?>{
-    '최상위 배열': [],
-    '성공 값 누락': {
-      'data': {'settlements': []},
-    },
-    '실패 envelope': {
-      'success': false,
-      'data': {'settlements': []},
-    },
-    'data 누락': {'success': true},
-    'data 타입 오류': {'success': true, 'data': []},
-  }.entries) {
-    test('${envelope.key} 응답은 빈 목록 대신 공통 오류로 전달한다', () async {
-      final (repository, _) = _repository(jsonEncode(envelope.value));
-      await expectLater(repository.list(7), throwsA(isA<ApiException>()));
-    });
-  }
 }

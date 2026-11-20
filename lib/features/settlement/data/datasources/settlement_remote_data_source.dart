@@ -7,14 +7,18 @@ import '../models/regular_due_update_model.dart';
 import '../models/regular_due_update_request.dart';
 import '../models/regular_dues_list_model.dart';
 import '../models/regular_dues_list_request.dart';
+import '../models/settlement_cancel_request.dart';
+import '../models/settlement_canceled_model.dart';
 import '../models/settlement_create_model.dart';
 import '../models/settlement_create_request.dart';
 import '../models/settlement_detail_api_request.dart';
 import '../models/settlement_detail_model.dart';
+import '../models/settlement_edit_request.dart';
 import '../models/settlement_list_model.dart';
 import '../models/settlement_list_request.dart';
 import '../models/settlement_payment_request.dart';
 import '../models/settlement_response_model.dart';
+import '../models/settlement_updated_model.dart';
 
 abstract interface class SettlementRemoteDataSource {
   Future<SettlementResponseModel<SettlementCreateModel>> create(
@@ -46,5 +50,14 @@ abstract interface class SettlementRemoteDataSource {
   );
   Future<SettlementResponseModel<RegularDueDeleteModel>> deleteRegularDue(
     RegularDueDeleteRequest request,
+  );
+  Future<SettlementResponseModel<SettlementUpdatedModel>> updateSettlement(
+    SettlementEditRequest request,
+  );
+  Future<SettlementResponseModel<SettlementCanceledModel>> cancelSettlement(
+    SettlementCancelRequest request,
+  );
+  Future<SettlementResponseModel<PaymentActionModel>> refundPayment(
+    SettlementPaymentRequest request,
   );
 }

@@ -9,6 +9,7 @@ final class CreateSettlementParams extends Params {
   const CreateSettlementParams({
     required this.meetingId,
     this.scheduleId,
+    this.replacesSettlementId,
     required this.title,
     required this.amount,
     required this.memberIds,
@@ -20,6 +21,7 @@ final class CreateSettlementParams extends Params {
   });
   final int meetingId;
   final int? scheduleId;
+  final int? replacesSettlementId;
   final String title, amount, bankName, accountNumber, accountHolder;
   final List<int> memberIds;
   final DateTime? dueAt;
@@ -28,6 +30,7 @@ final class CreateSettlementParams extends Params {
   List<Object?> get props => [
     meetingId,
     scheduleId,
+    replacesSettlementId,
     title,
     amount,
     memberIds,
@@ -82,6 +85,7 @@ final class CreateSettlementImpl implements CreateSettlement {
     return _settlementRepository.create(
       CreateSettlementInput(
         meetingId: params.meetingId,
+        replacesSettlementId: params.replacesSettlementId,
         scheduleId: params.scheduleId,
         title: params.title.trim(),
         totalAmount: amount,

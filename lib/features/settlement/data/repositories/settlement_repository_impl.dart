@@ -13,9 +13,11 @@ import '../models/regular_due_delete_request.dart';
 import '../models/regular_due_model.dart';
 import '../models/regular_due_update_request.dart';
 import '../models/regular_dues_list_request.dart';
+import '../models/settlement_cancel_request.dart';
 import '../models/settlement_create_request.dart';
 import '../models/settlement_detail_api_request.dart';
 import '../models/settlement_detail_model.dart';
+import '../models/settlement_edit_request.dart';
 import '../models/settlement_list_request.dart';
 import '../models/settlement_model.dart';
 import '../models/settlement_payment_request.dart';
@@ -208,6 +210,58 @@ class SettlementRepositoryImpl implements SettlementRepository {
             RegularDueDeleteRequest(
               meetingId: meetingId,
               regularDuesId: regularDuesId,
+            ),
+          ),
+        );
+      });
+  @override
+  Future<void> updateSettlement(
+    int meetingId,
+    int settlementId,
+    SettlementEditInput input,
+  ) => _read(() async {
+    _data(
+      await _settlementRemoteDataSource.updateSettlement(
+        SettlementEditRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+          title: input.title,
+          totalAmount: input.totalAmount,
+          memberIds: input.memberIds,
+          bankName: input.bankName,
+          accountNumber: input.accountNumber,
+          accountHolder: input.accountHolder,
+          dueAt: input.dueAt?.toUtc(),
+          unlinkSchedule: input.unlinkSchedule,
+        ),
+      ),
+    );
+  });
+  @override
+  Future<void> cancelSettlement(
+    int meetingId,
+    int settlementId, {
+    String? reason,
+  }) => _read(() async {
+    _data(
+      await _settlementRemoteDataSource.cancelSettlement(
+        SettlementCancelRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+          reason: reason,
+        ),
+      ),
+    );
+  });
+  @override
+  Future<void> refundPayment(int meetingId, int settlementId, int paymentId) =>
+      _read(() async {
+        _data(
+          await _settlementRemoteDataSource.refundPayment(
+            SettlementPaymentRequest(
+              meetingId: meetingId,
+              settlementId: settlementId,
+              paymentId: paymentId,
             ),
           ),
         );

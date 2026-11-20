@@ -14,6 +14,7 @@ import 'package:moamoa/features/settlement/domain/entities/settlement.dart';
 import 'package:moamoa/features/settlement/presentation/pages/settlement_create_page.dart';
 import 'package:moamoa/features/settlement/presentation/pages/regular_dues_form_page.dart';
 import 'package:moamoa/features/settlement/presentation/pages/settlement_detail_page.dart';
+import 'package:moamoa/features/settlement/presentation/pages/settlement_edit_page.dart';
 import 'package:moamoa/features/settlement/presentation/pages/settlement_list_page.dart';
 import 'package:moamoa/features/settlement/presentation/providers/settlement_providers.dart';
 
@@ -40,6 +41,7 @@ const regularDue = RegularDue(
 void main() {
   const output = String.fromEnvironment('SETTLEMENT_SCREENSHOTS');
   const regularOnly = bool.fromEnvironment('REGULAR_DUES_SCREENSHOTS');
+  const manageOnly = bool.fromEnvironment('MANAGE_SETTLEMENT_SCREENSHOTS');
   setUpAll(() async {
     if (output.isEmpty) {
       throw ArgumentError('SETTLEMENT_SCREENSHOTS 출력 경로를 지정해 주세요.');
@@ -53,11 +55,13 @@ void main() {
   });
   group('정산 실행화면 캡처', () {
     for (final role
-        in regularOnly
+        in regularOnly || manageOnly
             ? [MemberRole.admin]
             : [MemberRole.admin, MemberRole.member]) {
       for (final screen
-          in regularOnly
+          in manageOnly
+              ? ['manage', 'edit', 'refund', 'replaced']
+              : regularOnly
               ? ['regular-list', 'regular-create', 'regular-edit']
               : [
                   'list',
@@ -79,7 +83,28 @@ void main() {
                 groupMyRoleProvider.overrideWith((ref, id) async => role),
                 groupMembersProvider(7).overrideWith(support.TestMembers.new),
                 settlementDetailProvider.overrideWith(
-                  (ref, key) async => support.detail,
+                  (ref, key) async => switch (screen) {
+                    'refund' => support.detail.copyWith(
+                      status: SettlementStatus.canceled,
+                      cancelReason: '금액 정정',
+                      summary: support.detail.summary.copyWith(
+                        paidCount: 1,
+                        unpaidCount: 0,
+                        paidAmount: 15000,
+                      ),
+                      payments: [
+                        support.detail.payments.first.copyWith(
+                          status: PaymentStatus.paid,
+                        ),
+                      ],
+                    ),
+                    'replaced' => support.detail.copyWith(
+                      status: SettlementStatus.canceled,
+                      cancelReason: '금액 정정',
+                      replacedBySettlementId: 99,
+                    ),
+                    _ => support.detail,
+                  },
                 ),
                 settlementListProvider.overrideWith(
                   (ref, id) async => [
@@ -103,6 +128,10 @@ void main() {
                   theme: AppTheme.light,
                   debugShowCheckedModeBanner: false,
                   home: switch (screen) {
+                    'edit' => const SettlementEditPage(
+                      meetingId: 7,
+                      settlementId: 40,
+                    ),
                     'list' ||
                     'regular-list' => const SettlementListPage(meetingId: 7),
                     'regular-create' => const RegularDuesFormPage(meetingId: 7),
@@ -133,6 +162,19 @@ void main() {
             await tester.tap(find.text('입력 완료'));
             await tester.pumpAndSettle();
           }
+          if (screen == 'refund') {
+            await tester.scrollUntilVisible(
+              find.text('환불 완료 기록'),
+              160,
+              scrollable: find.byType(Scrollable).first,
+            );
+            await Scrollable.ensureVisible(
+              tester.element(find.text('환불 완료 기록')),
+              alignment: 0.7,
+            );
+            await tester.pumpAndSettle();
+          }
+          expect(tester.takeException(), isNull);
           await tester.runAsync(() async {
             final image =
                 await (key.currentContext!.findRenderObject()!
@@ -143,7 +185,9 @@ void main() {
             );
             image.dispose();
             await Directory(output).create(recursive: true);
-            final name = regularOnly
+            final name = manageOnly
+                ? 'settlement-$screen'
+                : regularOnly
                 ? 'regular-dues-${screen.replaceFirst('regular-', '')}'
                 : screen == 'create'
                 ? 'settlement-create'

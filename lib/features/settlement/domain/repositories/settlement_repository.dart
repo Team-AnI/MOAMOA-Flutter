@@ -25,4 +25,15 @@ abstract interface class SettlementRepository {
     RegularDueUpdate changes,
   );
   Future<void> deleteRegularDue(int meetingId, int regularDuesId);
+  Future<void> updateSettlement(
+    int meetingId,
+    int settlementId,
+    SettlementEditInput input,
+  );
+  Future<void> cancelSettlement(
+    int meetingId,
+    int settlementId, {
+    String? reason,
+  });
+  Future<void> refundPayment(int meetingId, int settlementId, int paymentId);
 }

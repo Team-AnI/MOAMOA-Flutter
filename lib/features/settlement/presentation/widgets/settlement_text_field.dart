@@ -10,12 +10,14 @@ class SettlementTextField extends StatelessWidget {
     this.numeric = false,
     this.validator,
     this.maxLength,
+    this.enabled = true,
   });
   final TextEditingController controller;
   final String label;
   final bool numeric;
   final String? Function(String)? validator;
   final int? maxLength;
+  final bool enabled;
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
@@ -26,6 +28,7 @@ class SettlementTextField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          enabled: enabled,
           keyboardType: numeric ? TextInputType.number : TextInputType.text,
           maxLength: maxLength,
           validator: (value) => validator?.call(value ?? ''),
