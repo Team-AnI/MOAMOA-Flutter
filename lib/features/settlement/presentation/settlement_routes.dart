@@ -2,8 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import 'pages/settlement_create_page.dart';
 import 'pages/settlement_detail_page.dart';
-import 'pages/settlement_list_page.dart';
 import 'pages/settlement_history_page.dart';
+import 'pages/settlement_list_page.dart';
 
 final List<RouteBase> settlementRoutes = [
   GoRoute(

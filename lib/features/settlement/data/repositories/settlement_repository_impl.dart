@@ -6,12 +6,14 @@ import '../../../../core/errors/dio_exception_mapper.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
 import '../datasources/settlement_remote_data_source.dart';
-import '../models/settlement_model.dart';
-import '../models/settlement_payment_model.dart';
-import '../models/settlement_detail_model.dart';
 import '../models/payment_action_model.dart';
 import '../models/settlement_create_request.dart';
+import '../models/settlement_detail_api_request.dart';
+import '../models/settlement_detail_model.dart';
+import '../models/settlement_list_request.dart';
+import '../models/settlement_model.dart';
 import '../models/settlement_payment_request.dart';
+import '../models/settlement_response_model.dart';
 
 class SettlementRepositoryImpl implements SettlementRepository {
   const SettlementRepositoryImpl({
@@ -19,6 +21,14 @@ class SettlementRepositoryImpl implements SettlementRepository {
   }) : _settlementRemoteDataSource = settlementRemoteDataSource;
 
   final SettlementRemoteDataSource _settlementRemoteDataSource;
+
+  T _data<T>(SettlementResponseModel<T> response) {
+    final data = response.data;
+    if (!response.success || data == null) {
+      throw const ApiException(code: ApiErrorCode.unknown);
+    }
+    return data;
+  }
 
   Future<T> _read<T>(Future<T> Function() request) async {
     try {
@@ -49,32 +59,43 @@ class SettlementRepositoryImpl implements SettlementRepository {
         replacesSettlementId: input.replacesSettlementId,
       ),
     );
-    return data.settlementId;
+    return _data(data).settlementId;
   });
 
   @override
   Future<List<Settlement>> list(int meetingId) => _read(() async {
-    final data = await _settlementRemoteDataSource.list(meetingId);
-    return data.settlements.map(_settlement).toList(growable: false);
+    final data = _data(
+      await _settlementRemoteDataSource.list(
+        SettlementListRequest(meetingId: meetingId),
+      ),
+    );
+    return data.settlements
+        .map((model) => model.toEntity())
+        .toList(growable: false);
   });
 
   @override
   Future<SettlementDetail> detail(int meetingId, int settlementId) => _read(
-    () async => _detail(
-      await _settlementRemoteDataSource.detail(meetingId, settlementId),
-    ),
+    () async => _data(
+      await _settlementRemoteDataSource.detail(
+        SettlementDetailApiRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+        ),
+      ),
+    ).toEntity(),
   );
 
   @override
   Future<PaymentAction> submitPayment(int meetingId, int settlementId) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.submitPayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
           settlementId: settlementId,
         ),
       ),
-    ),
+    ).toEntity(),
   );
 
   @override
@@ -83,7 +104,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int settlementId,
     int paymentId,
   ) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.approvePayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
@@ -91,7 +112,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
           paymentId: paymentId,
         ),
       ),
-    ),
+    ).toEntity(),
   );
 
   @override
@@ -101,7 +122,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int paymentId, {
     String? reason,
   }) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.rejectPayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
@@ -110,73 +131,6 @@ class SettlementRepositoryImpl implements SettlementRepository {
           reason: reason,
         ),
       ),
-    ),
-  );
-
-  Settlement _settlement(SettlementModel json) => Settlement(
-    id: json.settlementId,
-    title: json.title,
-    scheduleId: json.scheduleId,
-    totalAmount: json.totalAmount,
-    memberCount: json.memberCount,
-    dueAt: json.dueAt,
-    createdAt: json.createdAt,
-    status: SettlementStatus.fromServer(json.status),
-    canceledAt: json.canceledAt,
-    myAmount: json.myAmount,
-    myPaymentStatus: json.myPaymentStatus == null
-        ? null
-        : PaymentStatus.fromServer(json.myPaymentStatus),
-    myConfirmedAt: json.myConfirmedAt,
-  );
-
-  SettlementDetail _detail(SettlementDetailModel json) {
-    final summary = json.summary;
-    return SettlementDetail(
-      id: json.settlementId,
-      title: json.title,
-      scheduleId: json.scheduleId,
-      scheduleTitle: json.scheduleTitle,
-      scheduleStartAt: json.scheduleStartAt,
-      totalAmount: json.totalAmount,
-      bankName: json.bankName,
-      accountNumber: json.accountNumber,
-      accountHolder: json.accountHolder,
-      dueAt: json.dueAt,
-      status: SettlementStatus.fromServer(json.status),
-      noticeId: json.noticeId,
-      canceledAt: json.canceledAt,
-      cancelReason: json.cancelReason,
-      replacesSettlementId: json.replacesSettlementId,
-      replacedBySettlementId: json.replacedBySettlementId,
-      myPayment: json.myPayment == null ? null : _payment(json.myPayment!),
-      summary: SettlementSummary(
-        totalCount: summary.totalCount,
-        unpaidCount: summary.unpaidCount,
-        pendingCount: summary.pendingCount,
-        paidCount: summary.paidCount,
-        refundedCount: summary.refundedCount,
-        paidAmount: summary.paidAmount,
-      ),
-      payments: json.payments.map(_payment).toList(growable: false),
-    );
-  }
-
-  SettlementPayment _payment(SettlementPaymentModel json) => SettlementPayment(
-    id: json.paymentId,
-    amount: json.amount,
-    status: PaymentStatus.fromServer(json.status),
-    memberId: json.memberId,
-    userName: json.userName,
-    submittedAt: json.submittedAt,
-    refundedAt: json.refundedAt,
-  );
-
-  PaymentAction _action(PaymentActionModel json) => PaymentAction(
-    paymentId: json.paymentId,
-    status: PaymentStatus.fromServer(json.status),
-    submittedAt: json.submittedAt,
-    confirmedAt: json.confirmedAt,
-    rejectionReason: json.rejectionReason,
+    ).toEntity(),
   );
 }

@@ -1,12 +1,10 @@
 import 'dart:convert';
-
-import 'package:moamoa/core/errors/api_exception.dart';
-import 'package:moamoa/core/errors/api_error_code.dart';
-
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/core/errors/api_error_code.dart';
+import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/settlement/data/datasources/settlement_remote_data_source_impl.dart';
 import 'package:moamoa/features/settlement/data/repositories/settlement_repository_impl.dart';
 import 'package:moamoa/features/settlement/domain/entities/settlement.dart';
@@ -38,71 +36,81 @@ class _Adapter implements HttpClientAdapter {
 
 (SettlementRepositoryImpl, _Adapter) _repository(String response) {
   final adapter = _Adapter(response);
-  final dio = Dio()..httpClientAdapter = adapter;
+  final dio = Dio(BaseOptions(baseUrl: 'https://example.test'))
+    ..httpClientAdapter = adapter;
   return (
     SettlementRepositoryImpl(
-      settlementRemoteDataSource: SettlementRemoteDataSourceImpl(
-        dio: dio,
-        baseUrl: 'https://example.test',
-      ),
+      settlementRemoteDataSource: SettlementRemoteDataSourceImpl(dio: dio),
     ),
     adapter,
   );
 }
 
 void main() {
-  contractTests();
-  test('정산 생성은 구성원 ID와 UTC 기한을 API에 보내고 생성 ID를 읽는다', () async {
-    final (repository, adapter) = _repository(
-      '{"success":true,"data":{"settlementId":40}}',
-    );
-    final id = await repository.create(
-      CreateSettlementInput(
-        meetingId: 7,
-        title: '모임 회비',
-        totalAmount: 45000,
-        memberIds: [3, 5, 7],
-        bankName: '국민은행',
-        accountNumber: '1234',
-        accountHolder: '김모아',
-        dueAt: DateTime.parse('2026-10-20T23:59:00+09:00'),
-      ),
-    );
-    expect(id, 40);
-    expect(adapter.request?.method, 'POST');
-    expect(
-      adapter.request?.path,
-      'https://example.test/v1/meetings/7/settlements',
-    );
-    final body = adapter.request!.data as Map<String, Object?>;
-    expect(body['memberIds'], [3, 5, 7]);
-    expect(body['dueAt'], '2026-10-20T14:59:00.000Z');
-  });
+  group(SettlementRepositoryImpl, () {
+    contractTests();
+    test('정산 생성은 구성원 ID와 UTC 기한을 API에 보내고 생성 ID를 읽는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"settlementId":40}}',
+      );
+      final id = await repository.create(
+        CreateSettlementInput(
+          meetingId: 7,
+          title: '모임 회비',
+          totalAmount: 45000,
+          memberIds: [3, 5, 7],
+          bankName: '국민은행',
+          accountNumber: '1234',
+          accountHolder: '김모아',
+          dueAt: DateTime.parse('2026-10-20T23:59:00+09:00'),
+        ),
+      );
+      expect(id, 40);
+      expect(adapter.request?.method, 'POST');
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements',
+      );
+      final body = adapter.request!.data as Map<String, Object?>;
+      expect(body['memberIds'], [3, 5, 7]);
+      expect(body['dueAt'], '2026-10-20T14:59:00.000Z');
+    });
 
-  test('정산 목록의 본인 납부 상태를 유지한다', () async {
-    final (repository, _) = _repository(
-      '''{"success":true,"data":{"settlements":[{
+    test('정산 목록의 본인 납부 상태를 유지한다', () async {
+      final (repository, adapter) = _repository(
+        '''{"success":true,"data":{"settlements":[{
       "settlementId":40,"title":"모임 회비","totalAmount":45000,"memberCount":3,
       "dueAt":"2026-10-20T23:59:00+09:00","createdAt":"2026-10-14T10:00:00+09:00",
       "status":"IN_PROGRESS","myAmount":15000,"myPaymentStatus":"PENDING"
     }]}}''',
-    );
-    final items = await repository.list(7);
-    expect(items.single.myPaymentStatus, PaymentStatus.pending);
-    expect(items.single.myAmount, 15000);
-  });
+      );
+      final items = await repository.list(7);
+      expect(items.single.myPaymentStatus, PaymentStatus.pending);
+      expect(items.single.myAmount, 15000);
+      expect(
+        adapter.request!.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements',
+      );
+      expect(adapter.request!.data, isNull);
+    });
 
-  test('납부 반려 사유를 보내고 미납 상태를 반환한다', () async {
-    final (repository, adapter) = _repository(
-      '{"success":true,"data":{"paymentId":81,"status":"UNPAID","rejectionReason":"입금 미확인"}}',
-    );
-    final result = await repository.rejectPayment(7, 40, 81, reason: '입금 미확인');
-    expect(result.status, PaymentStatus.unpaid);
-    expect(
-      adapter.request?.path,
-      'https://example.test/v1/meetings/7/settlements/40/payments/81/rejection',
-    );
-    expect(adapter.request!.data, {'reason': '입금 미확인'});
+    test('납부 반려 사유를 보내고 미납 상태를 반환한다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"paymentId":81,"status":"UNPAID","rejectionReason":"입금 미확인"}}',
+      );
+      final result = await repository.rejectPayment(
+        7,
+        40,
+        81,
+        reason: '입금 미확인',
+      );
+      expect(result.status, PaymentStatus.unpaid);
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements/40/payments/81/rejection',
+      );
+      expect(adapter.request!.data, {'reason': '입금 미확인'});
+    });
   });
 }
 
@@ -181,23 +189,23 @@ void contractTests() {
     expect(result.status, SettlementStatus.unknown);
     expect(result.myPayment!.status, PaymentStatus.unknown);
   });
-  test('납부 제출·승인 요청은 경로 ID를 본문에 섞지 않는다', () async {
-    final (repository, adapter) = _repository(
-      '{"success":true,"data":{"paymentId":81,"status":"PENDING"}}',
-    );
-    await repository.submitPayment(7, 40);
-    expect(
-      adapter.request!.path,
-      'https://example.test/v1/meetings/7/settlements/40/payments/me/submissions',
-    );
-    expect(adapter.request!.data, isNull);
-    await repository.approvePayment(7, 40, 81);
-    expect(
-      adapter.request!.path,
-      'https://example.test/v1/meetings/7/settlements/40/payments/81/approval',
-    );
-    expect(adapter.request!.data, isNull);
-  });
+  for (final approval in [false, true]) {
+    test('${approval ? "승인" : "제출"} 요청은 경로 ID를 본문에 섞지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"paymentId":81,"status":"PENDING"}}',
+      );
+      if (approval) {
+        await repository.approvePayment(7, 40, 81);
+      } else {
+        await repository.submitPayment(7, 40);
+      }
+      expect(
+        adapter.request!.uri.toString(),
+        'https://example.test/v1/meetings/7/settlements/40/payments/${approval ? "81/approval" : "me/submissions"}',
+      );
+      expect(adapter.request!.data, isNull);
+    });
+  }
   test('선택 사유가 없는 반려 DTO는 경로 변수를 JSON에서 제외한다', () async {
     final (repository, adapter) = _repository(
       '{"success":true,"data":{"paymentId":81,"status":"UNPAID"}}',
@@ -205,4 +213,21 @@ void contractTests() {
     await repository.rejectPayment(7, 40, 81);
     expect(adapter.request!.data, isEmpty);
   });
+  for (final envelope in <String, Object?>{
+    '최상위 배열': [],
+    '성공 값 누락': {
+      'data': {'settlements': []},
+    },
+    '실패 envelope': {
+      'success': false,
+      'data': {'settlements': []},
+    },
+    'data 누락': {'success': true},
+    'data 타입 오류': {'success': true, 'data': []},
+  }.entries) {
+    test('${envelope.key} 응답은 빈 목록 대신 공통 오류로 전달한다', () async {
+      final (repository, _) = _repository(jsonEncode(envelope.value));
+      await expectLater(repository.list(7), throwsA(isA<ApiException>()));
+    });
+  }
 }

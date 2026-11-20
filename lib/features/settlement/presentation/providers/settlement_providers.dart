@@ -6,22 +6,20 @@ import '../../data/datasources/settlement_remote_data_source_impl.dart';
 import '../../data/repositories/settlement_repository_impl.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
+import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/create_settlement.dart';
+import '../../domain/usecases/get_settlement.dart';
+import '../../domain/usecases/get_settlements.dart';
+import '../../domain/usecases/reject_payment.dart';
+import '../../domain/usecases/submit_payment.dart';
 import '../settlement_detail_request.dart';
 import '../viewmodels/settlement_action_state.dart';
 import '../viewmodels/settlement_actions_view_model.dart';
+
 export '../settlement_detail_request.dart';
-import '../../domain/usecases/create_settlement.dart';
-import '../../domain/usecases/get_settlements.dart';
-import '../../domain/usecases/get_settlement.dart';
-import '../../domain/usecases/submit_payment.dart';
-import '../../domain/usecases/approve_payment.dart';
-import '../../domain/usecases/reject_payment.dart';
 
 final settlementRemoteDataSourceProvider = Provider<SettlementRemoteDataSource>(
-  (ref) => SettlementRemoteDataSourceImpl(
-    dio: ref.watch(dioProvider),
-    baseUrl: const String.fromEnvironment('API_BASE_URL'),
-  ),
+  (ref) => SettlementRemoteDataSourceImpl(dio: ref.watch(dioProvider)),
 );
 final settlementRepositoryProvider = Provider<SettlementRepository>(
   (ref) => SettlementRepositoryImpl(

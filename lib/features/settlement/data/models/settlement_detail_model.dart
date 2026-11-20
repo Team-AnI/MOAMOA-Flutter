@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../domain/entities/settlement.dart';
 import 'settlement_payment_model.dart';
 import 'settlement_summary_model.dart';
 
@@ -31,4 +32,30 @@ abstract class SettlementDetailModel with _$SettlementDetailModel {
   }) = _SettlementDetailModel;
   factory SettlementDetailModel.fromJson(Map<String, dynamic> json) =>
       _$SettlementDetailModelFromJson(json);
+}
+
+extension SettlementDetailModelX on SettlementDetailModel {
+  SettlementDetail toEntity() => SettlementDetail(
+    id: settlementId,
+    title: title,
+    scheduleId: scheduleId,
+    scheduleTitle: scheduleTitle,
+    scheduleStartAt: scheduleStartAt,
+    totalAmount: totalAmount,
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+    dueAt: dueAt,
+    status: SettlementStatus.fromServer(status),
+    noticeId: noticeId,
+    canceledAt: canceledAt,
+    cancelReason: cancelReason,
+    replacesSettlementId: replacesSettlementId,
+    replacedBySettlementId: replacedBySettlementId,
+    myPayment: myPayment?.toEntity(),
+    summary: summary.toEntity(),
+    payments: payments
+        .map((payment) => payment.toEntity())
+        .toList(growable: false),
+  );
 }

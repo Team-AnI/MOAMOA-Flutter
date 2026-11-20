@@ -1,8 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'settlement_payment.dart';
-import 'settlement_summary.dart';
 import 'settlement_status.dart';
+import 'settlement_summary.dart';
+
 part 'settlement_detail.freezed.dart';
 
 @freezed

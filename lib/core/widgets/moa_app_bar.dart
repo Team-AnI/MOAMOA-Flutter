@@ -10,30 +10,35 @@ import 'package:moamoa/core/theme/moa_theme.dart';
 /// 오른쪽에 버튼이 필요하면 [actions] 로 넘깁니다.
 /// [title] 을 주면 가운데에 제목을 보여주고, [showClose] 가 true 이면 왼쪽을 뒤로가기(<) 대신 닫기(X)로 바꿉니다.
 class MoaAppBar extends AppBar {
-  MoaAppBar({super.key, super.actions, String? title, bool showClose = false})
-    : super(
-        backgroundColor: MoaColors.page,
-        surfaceTintColor: MoaColors.page,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        title: title == null ? null : Text(title, style: MoaText.titleS),
-        // Figma 의 왼쪽 여백(16px)에 맞춥니다.
-        leadingWidth: 60,
-        // 뒤로가기(context.pop)에 BuildContext 가 필요해서 Builder 로 감쌉니다.
-        leading: Builder(
-          builder: (context) => Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: IconButton(
-              onPressed: context.pop,
-              icon: SvgPicture.asset(
-                showClose
-                    ? 'assets/icons/x.svg'
-                    : 'assets/icons/caret_left.svg',
-                width: 20,
-                height: 20,
-              ),
-            ),
-          ),
-        ),
-      );
+  MoaAppBar({
+    super.key,
+    super.actions,
+    String? title,
+    bool showClose = false,
+    VoidCallback? onBack,
+  }) : super(
+         backgroundColor: MoaColors.page,
+         surfaceTintColor: MoaColors.page,
+         scrolledUnderElevation: 0,
+         centerTitle: true,
+         title: title == null ? null : Text(title, style: MoaText.titleS),
+         // Figma 의 왼쪽 여백(16px)에 맞춥니다.
+         leadingWidth: 60,
+         // 뒤로가기(context.pop)에 BuildContext 가 필요해서 Builder 로 감쌉니다.
+         leading: Builder(
+           builder: (context) => Padding(
+             padding: const EdgeInsets.only(left: 12),
+             child: IconButton(
+               onPressed: onBack ?? context.pop,
+               icon: SvgPicture.asset(
+                 showClose
+                     ? 'assets/icons/x.svg'
+                     : 'assets/icons/caret_left.svg',
+                 width: 20,
+                 height: 20,
+               ),
+             ),
+           ),
+         ),
+       );
 }

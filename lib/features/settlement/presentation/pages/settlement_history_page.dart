@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/errors/api_exception.dart';
 import '../../../../core/theme/moa_theme.dart';
+import '../../../../core/widgets/moa_app_bar.dart';
 import '../../../../core/widgets/moa_error_widget.dart';
 import '../../../group/domain/entities/member_role.dart';
 import '../../../group/presentation/providers/group_providers.dart';
@@ -21,14 +22,10 @@ class SettlementHistoryPage extends ConsumerWidget {
     final list = ref.watch(settlementListProvider(meetingId));
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: AppBar(
-        backgroundColor: MoaColors.page,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/meetings/$meetingId/settlements'),
-        ),
+      appBar: MoaAppBar(
+        onBack: () => context.canPop()
+            ? context.pop()
+            : context.go('/meetings/$meetingId/settlements'),
       ),
       body: SafeArea(
         child: switch ((role, list)) {
@@ -185,10 +182,7 @@ class _HistoryContent extends StatelessWidget {
                           ),
                           style: MoaText.captionStrong,
                         ),
-                        Text(
-                          settlementStatusLabel(item.status),
-                          style: MoaText.caption,
-                        ),
+                        Text(item.status.label, style: MoaText.caption),
                       ],
                     ),
                   ),
