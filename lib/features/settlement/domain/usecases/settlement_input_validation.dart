@@ -2,8 +2,10 @@
 class SettlementInputValidation {
   static String? title(String value) => text(value, '정산 이름', 50);
   static String? bankName(String value) => text(value, '은행', 20);
-  static String? accountNumber(String value) => text(value, '계좌번호', 30);
-  static String? accountHolder(String value) => text(value, '예금주', 20);
+  static String? accountNumber(String value) =>
+      value.trim().isEmpty ? '계좌번호를 입력해 주세요.' : text(value, '계좌번호', 30);
+  static String? accountHolder(String value) =>
+      value.trim().isEmpty ? '예금주를 입력해 주세요.' : text(value, '예금주', 20);
   static String? text(String value, String label, int maxLength) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) return '$label을 입력해 주세요.';

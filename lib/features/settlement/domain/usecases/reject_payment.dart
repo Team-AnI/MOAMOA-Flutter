@@ -1,6 +1,6 @@
-import '../../../../core/usecases/usecase.dart';
 import '../../../../core/errors/api_error_code.dart';
 import '../../../../core/errors/api_exception.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../entities/payment_action.dart';
 import '../repositories/settlement_repository.dart';
 

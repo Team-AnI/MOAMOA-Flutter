@@ -1,6 +1,6 @@
 import '../../../../core/usecases/usecase.dart';
-import '../entities/regular_due_update.dart';
 import '../entities/current_settlement_application.dart';
+import '../entities/regular_due_update.dart';
 import '../repositories/settlement_repository.dart';
 import 'regular_due_validation.dart';
 

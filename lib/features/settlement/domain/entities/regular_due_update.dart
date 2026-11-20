@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'dues_cycle.dart';
+
 part 'regular_due_update.freezed.dart';
 
 @freezed

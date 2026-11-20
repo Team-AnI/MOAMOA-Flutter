@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../domain/entities/settlement.dart';
+
 part 'payment_action_model.freezed.dart';
 part 'payment_action_model.g.dart';
 
@@ -14,4 +16,14 @@ abstract class PaymentActionModel with _$PaymentActionModel {
   }) = _PaymentActionModel;
   factory PaymentActionModel.fromJson(Map<String, dynamic> json) =>
       _$PaymentActionModelFromJson(json);
+}
+
+extension PaymentActionModelX on PaymentActionModel {
+  PaymentAction toEntity() => PaymentAction(
+    paymentId: paymentId,
+    status: PaymentStatus.fromServer(status),
+    submittedAt: submittedAt,
+    confirmedAt: confirmedAt,
+    rejectionReason: rejectionReason,
+  );
 }

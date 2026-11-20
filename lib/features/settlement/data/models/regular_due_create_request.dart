@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'regular_due_create_request.freezed.dart';
 part 'regular_due_create_request.g.dart';
 

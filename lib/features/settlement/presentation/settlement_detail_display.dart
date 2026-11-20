@@ -14,7 +14,8 @@ extension SettlementDetailDisplay on SettlementDetail {
       '${summary.paidCount}/${summary.totalCount}명 · ${won(summary.paidAmount)}';
   String get myAmountLabel =>
       myPayment == null ? '정산 대상이 아니에요' : won(myPayment!.amount);
-  String get myStatusLabel => paymentStatusLabel(myPayment?.status);
+  String get myStatusLabel =>
+      myPayment?.status.label ?? PaymentStatus.unknown.label;
   String get pendingHeading => '확인 대기 ${summary.pendingCount}명';
   String get unpaidHeading => '미납 ${summary.unpaidCount}명';
   String get paidHeading => '완납 ${summary.paidCount}명';
@@ -38,7 +39,7 @@ extension SettlementSummaryDisplay on SettlementSummary {
 extension SettlementPaymentDisplay on SettlementPayment {
   String get displayName =>
       userName?.trim().isNotEmpty == true ? userName! : '구성원';
-  String get displayStatus => paymentStatusLabel(status);
+  String get displayStatus => status.label;
   String get submittedLabel =>
       submittedAt == null ? displayStatus : '${shortDate(submittedAt!)} 제출';
 }
