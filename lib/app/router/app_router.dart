@@ -5,6 +5,7 @@ import 'package:moamoa/features/schedule/presentation/schedule_routes.dart';
 
 import '../../features/group/presentation/group_routes.dart';
 import '../../features/notice/presentation/notice_routes.dart';
+import '../../features/settlement/presentation/settlement_routes.dart';
 
 /// 각 feature 의 route 목록을 모으기만 합니다.
 ///
@@ -17,7 +18,7 @@ final List<RouteBase> _featureRoutes = [
   ...groupRoutes,
   ...scheduleRoutes,
   ...noticeRoutes,
-  // ...settlementRoutes,
+  ...settlementRoutes,
 ];
 
 final appRouterProvider = Provider<GoRouter>((ref) {
