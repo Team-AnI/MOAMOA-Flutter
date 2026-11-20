@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'settlement_edit_input.freezed.dart';
 
 @freezed

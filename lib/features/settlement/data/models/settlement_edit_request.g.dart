@@ -11,6 +11,7 @@ _SettlementEditRequest _$SettlementEditRequestFromJson(
 ) => _SettlementEditRequest(
   meetingId: (json['meetingId'] as num).toInt(),
   settlementId: (json['settlementId'] as num).toInt(),
+  unlinkSchedule: json['unlinkSchedule'] as bool? ?? false,
   title: json['title'] as String?,
   totalAmount: (json['totalAmount'] as num?)?.toInt(),
   memberIds: (json['memberIds'] as List<dynamic>?)

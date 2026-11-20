@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:moamoa/features/group/domain/entities/group_member_profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:moamoa/features/group/domain/entities/group_member_profile.dart';
 import 'package:moamoa/features/group/domain/entities/member_role.dart';
-import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/group/presentation/providers/group_members_providers.dart';
+import 'package:moamoa/features/group/presentation/providers/group_providers.dart';
 import 'package:moamoa/features/group/presentation/viewmodels/group_members_state.dart';
 import 'package:moamoa/features/group/presentation/viewmodels/group_members_view_model.dart';
 import 'package:moamoa/features/settlement/domain/entities/settlement.dart';
@@ -29,7 +29,7 @@ class TestSettlementRepository implements SettlementRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) {
     mutations++;
-    return Future<void>.value();
+    throw UnimplementedError(invocation.memberName.toString());
   }
 }
 

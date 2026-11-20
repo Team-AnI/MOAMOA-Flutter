@@ -1,19 +1,18 @@
-import '../../domain/entities/settlement_edit_input.dart';
-import '../../domain/usecases/update_settlement.dart';
-import '../../domain/usecases/cancel_settlement.dart';
-import '../../domain/usecases/refund_payment.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/api_error_code.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../../group/presentation/providers/group_providers.dart';
-import '../../domain/entities/payment_action.dart';
-import '../../domain/usecases/create_settlement.dart';
-import '../../domain/usecases/submit_payment.dart';
+import '../../domain/entities/settlement_edit_input.dart';
 import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/cancel_settlement.dart';
+import '../../domain/usecases/create_settlement.dart';
+import '../../domain/usecases/refund_payment.dart';
 import '../../domain/usecases/reject_payment.dart';
+import '../../domain/usecases/submit_payment.dart';
+import '../../domain/usecases/update_settlement.dart';
 import '../providers/settlement_providers.dart';
+import 'settlement_action.dart';
 import 'settlement_action_state.dart';
 
 /// 같은 모임의 중복 제출을 막고, 화면이 닫혀도 서버 작업 완료 후 공유 조회를 갱신합니다.
@@ -23,17 +22,21 @@ class SettlementActionsViewModel extends Notifier<SettlementActionState> {
   @override
   SettlementActionState build() => const SettlementActionState();
 
-  Future<int?> create(CreateSettlementParams params) => _run(
+  Future<void> create(CreateSettlementParams params) => _run(
+    SettlementAction.create,
     () => ref.read(createSettlementProvider)(params),
+    createdId: (id) => id,
     settlementId: params.replacesSettlementId,
   );
-  Future<PaymentAction?> submit(int settlementId) => _run(
+  Future<void> submit(int settlementId) => _run(
+    SettlementAction.submit,
     () => ref.read(submitPaymentProvider)(
       SubmitPaymentParams(meetingId: meetingId, settlementId: settlementId),
     ),
     settlementId: settlementId,
   );
-  Future<PaymentAction?> approve(int settlementId, int paymentId) => _run(
+  Future<void> approve(int settlementId, int paymentId) => _run(
+    SettlementAction.approve,
     () => ref.read(approvePaymentProvider)(
       ApprovePaymentParams(
         meetingId: meetingId,
@@ -43,57 +46,59 @@ class SettlementActionsViewModel extends Notifier<SettlementActionState> {
     ),
     settlementId: settlementId,
   );
-  Future<PaymentAction?> reject(
-    int settlementId,
-    int paymentId, {
-    String? reason,
-  }) => _run(
-    () => ref.read(rejectPaymentProvider)(
-      RejectPaymentParams(
-        meetingId: meetingId,
+  Future<void> reject(int settlementId, int paymentId, {String? reason}) =>
+      _run(
+        SettlementAction.reject,
+        () => ref.read(rejectPaymentProvider)(
+          RejectPaymentParams(
+            meetingId: meetingId,
+            settlementId: settlementId,
+            paymentId: paymentId,
+            reason: reason,
+          ),
+        ),
         settlementId: settlementId,
-        paymentId: paymentId,
-        reason: reason,
-      ),
-    ),
-    settlementId: settlementId,
-  );
+      );
 
-  Future<bool?> update(
+  Future<void> update(
     int id,
     SettlementEditInput changes, {
     required int memberCount,
-  }) => _run(() async {
-    await ref.read(updateSettlementProvider)(
+  }) => _run(
+    SettlementAction.update,
+    () => ref.read(updateSettlementProvider)(
       UpdateSettlementParams(
         meetingId: meetingId,
         settlementId: id,
         changes: changes,
         memberCount: memberCount,
       ),
-    );
-    return true;
-  }, settlementId: id);
-  Future<bool?> cancel(int id, {String? reason}) => _run(() async {
-    await ref.read(cancelSettlementProvider)(
+    ),
+    settlementId: id,
+  );
+  Future<void> cancel(int id, {String? reason}) => _run(
+    SettlementAction.cancel,
+    () => ref.read(cancelSettlementProvider)(
       CancelSettlementParams(
         meetingId: meetingId,
         settlementId: id,
         reason: reason,
       ),
-    );
-    return true;
-  }, settlementId: id);
-  Future<bool?> refund(int id, int paymentId) => _run(() async {
-    await ref.read(refundPaymentProvider)(
+    ),
+    settlementId: id,
+  );
+  Future<void> refund(int id, int paymentId) => _run(
+    SettlementAction.refund,
+    () => ref.read(refundPaymentProvider)(
       RefundPaymentParams(
         meetingId: meetingId,
         settlementId: id,
         paymentId: paymentId,
       ),
-    );
-    return true;
-  }, settlementId: id);
+    ),
+    settlementId: id,
+  );
+
   void _refresh(int? settlementId) {
     ref.invalidate(settlementListProvider(meetingId));
     if (settlementId != null) {
@@ -108,30 +113,54 @@ class SettlementActionsViewModel extends Notifier<SettlementActionState> {
     }
   }
 
-  Future<T?> _run<T>(Future<T> Function() action, {int? settlementId}) async {
-    if (state.isSubmitting) return null;
-    // 요청 동안만 수명을 유지합니다. 이전 화면으로 돌아가도 성공 결과를 목록에 반영합니다.
+  Future<void> _run<T>(
+    SettlementAction action,
+    Future<T> Function() request, {
+    int? settlementId,
+    int? Function(T)? createdId,
+  }) async {
+    if (state.isSubmitting) return;
     final link = ref.keepAlive();
-    state = const SettlementActionState(isSubmitting: true);
+    state = SettlementActionState(
+      isSubmitting: true,
+      action: action,
+      settlementId: settlementId,
+    );
     try {
-      final result = await action();
-      if (ref.mounted) _refresh(settlementId);
-      return result;
+      final result = await request();
+      if (!ref.mounted) return;
+      _refresh(settlementId);
+      state = SettlementActionState(
+        action: action,
+        settlementId: settlementId,
+        createdSettlementId: createdId?.call(result),
+      );
     } on ApiException catch (error) {
-      if (ref.mounted &&
-          {
-            ApiErrorCode.conflict,
-            ApiErrorCode.unprocessableEntity,
-            ApiErrorCode.forbidden,
-          }.contains(error.code)) {
+      if (!ref.mounted) return;
+      if ({
+        ApiErrorCode.conflict,
+        ApiErrorCode.unprocessableEntity,
+        ApiErrorCode.forbidden,
+      }.contains(error.code)) {
         _refresh(settlementId);
         if (error.code == ApiErrorCode.forbidden) {
           ref.invalidate(groupMyRoleProvider(meetingId));
         }
       }
-      rethrow;
+      state = SettlementActionState(
+        action: action,
+        settlementId: settlementId,
+        failure: error,
+      );
+    } catch (_) {
+      if (ref.mounted) {
+        state = SettlementActionState(
+          action: action,
+          settlementId: settlementId,
+          failure: const ApiException(code: ApiErrorCode.unknown),
+        );
+      }
     } finally {
-      if (ref.mounted) state = const SettlementActionState();
       link.close();
     }
   }

@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/profile_color.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../../../core/theme/moa_theme.dart';
+import '../../../../core/utils/moa_dialogs.dart';
+import '../../../../core/utils/moa_snack_bar.dart';
+import '../../../../core/widgets/moa_app_bar.dart';
 import '../../../../core/widgets/moa_error_widget.dart';
 import '../../../../core/widgets/moa_profile_avatar.dart';
 import '../../../group/domain/entities/member_role.dart';
@@ -14,8 +17,10 @@ import '../../../group/presentation/widgets/group_icon.dart';
 import '../../domain/entities/settlement.dart';
 import '../providers/settlement_providers.dart';
 import '../settlement_detail_display.dart';
-import '../widgets/settlement_status_counts.dart';
 import '../settlement_format.dart';
+import '../viewmodels/settlement_action_state.dart';
+import '../widgets/settlement_reason_dialog.dart';
+import '../widgets/settlement_status_counts.dart';
 
 class SettlementDetailPage extends ConsumerWidget {
   const SettlementDetailPage({
@@ -24,60 +29,26 @@ class SettlementDetailPage extends ConsumerWidget {
     required this.settlementId,
   });
   final int meetingId, settlementId;
-  SettlementDetailRequest get _request =>
-      SettlementDetailRequest(meetingId: meetingId, settlementId: settlementId);
 
-  Future<void> _run(
-    BuildContext context,
-    WidgetRef ref,
-    Future<Object?> Function() action,
-  ) async {
-    if (!context.mounted ||
-        ref.read(settlementActionsProvider(meetingId)).isSubmitting) {
-      return;
-    }
-    try {
-      await action();
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is ApiException
-                ? error.userMessage
-                : '처리하지 못했어요. 다시 시도해 주세요.',
-          ),
-        ),
-      );
+  void _onAction(BuildContext context, SettlementActionState next) {
+    if (next.settlementId != settlementId || next.isSubmitting) return;
+    if (ModalRoute.of(context)?.isCurrent == false) return;
+    if (next.failure case final failure?) {
+      showMoaSnackBar(context, message: failure.userMessage);
     }
   }
 
   Future<void> _submit(BuildContext context, WidgetRef ref) async {
-    final shouldSubmit = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('납부 완료를 알릴까요?'),
-        content: const Text('계좌 이체를 마친 뒤 제출해 주세요. 관리자가 입금 내역을 확인합니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('제출'),
-          ),
-        ],
-      ),
+    final shouldSubmit = await showMoaConfirmDialog(
+      context,
+      title: '납부 완료를 알릴까요?',
+      message: '계좌 이체를 마친 뒤 제출해 주세요. 관리자가 입금 내역을 확인합니다.',
+      confirmLabel: '제출',
     );
     if (shouldSubmit == true && context.mounted) {
-      await _run(
-        context,
-        ref,
-        () => ref
-            .read(settlementActionsProvider(meetingId).notifier)
-            .submit(settlementId),
-      );
+      await ref
+          .read(settlementActionsProvider(meetingId).notifier)
+          .submit(settlementId);
     }
   }
 
@@ -86,31 +57,16 @@ class SettlementDetailPage extends ConsumerWidget {
     WidgetRef ref,
     SettlementPayment payment,
   ) async {
-    final shouldApprove = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('입금을 확인했나요?'),
-        content: Text('${payment.displayName}님의 납부를 승인합니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('승인'),
-          ),
-        ],
-      ),
+    final shouldApprove = await showMoaConfirmDialog(
+      context,
+      title: '입금을 확인했나요?',
+      message: '${payment.displayName}님의 납부를 승인합니다.',
+      confirmLabel: '승인',
     );
     if (shouldApprove == true && context.mounted) {
-      await _run(
-        context,
-        ref,
-        () => ref
-            .read(settlementActionsProvider(meetingId).notifier)
-            .approve(settlementId, payment.id),
-      );
+      await ref
+          .read(settlementActionsProvider(meetingId).notifier)
+          .approve(settlementId, payment.id);
     }
   }
 
@@ -122,24 +78,20 @@ class SettlementDetailPage extends ConsumerWidget {
     // Controller는 다이얼로그 위젯이 소유하고, 확인한 문자열만 돌려줍니다.
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const _RejectionDialog(),
+      builder: (_) =>
+          const SettlementReasonDialog(title: '납부 요청 반려', confirmLabel: '반려'),
     );
     if (reason != null && context.mounted) {
-      await _run(
-        context,
-        ref,
-        () => ref
-            .read(settlementActionsProvider(meetingId).notifier)
-            .reject(settlementId, payment.id, reason: reason),
-      );
+      await ref
+          .read(settlementActionsProvider(meetingId).notifier)
+          .reject(settlementId, payment.id, reason: reason);
     }
   }
 
   Future<void> _copyAccount(BuildContext context, String account) async {
     await Clipboard.setData(ClipboardData(text: account));
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('계좌번호를 복사했어요.')));
+      showMoaSnackBar(context, message: '계좌번호를 복사했어요.');
     }
   }
 
@@ -150,16 +102,16 @@ class SettlementDetailPage extends ConsumerWidget {
   ) async {
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const _CancelDialog(),
+      builder: (_) => const SettlementReasonDialog(
+        title: '정산을 취소할까요?',
+        confirmLabel: '정산 취소',
+        description: '정산과 납부 내역은 보관합니다. 이미 받은 금액은 앱 밖에서 돌려준 뒤 환불 완료로 기록해 주세요.',
+      ),
     );
     if (reason != null && context.mounted) {
-      await _run(
-        context,
-        ref,
-        () => ref
-            .read(settlementActionsProvider(meetingId).notifier)
-            .cancel(data.id, reason: reason),
-      );
+      await ref
+          .read(settlementActionsProvider(meetingId).notifier)
+          .cancel(data.id, reason: reason);
     }
   }
 
@@ -168,204 +120,195 @@ class SettlementDetailPage extends ConsumerWidget {
     WidgetRef ref,
     SettlementPayment payment,
   ) async {
-    final shouldRecordRefund = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('실제 환불을 마쳤나요?'),
-        content: Text(
-          '${payment.displayName}님에게 ${won(payment.amount)}을 앱 밖에서 전액 돌려준 뒤 기록해 주세요. 이 버튼은 송금하지 않습니다.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('환불 완료 기록'),
-          ),
-        ],
-      ),
+    final shouldRefund = await showMoaConfirmDialog(
+      context,
+      title: '실제 환불을 마쳤나요?',
+      message: payment.refundPrompt,
+      confirmLabel: '환불 완료 기록',
     );
-    if (shouldRecordRefund == true && context.mounted) {
-      await _run(
-        context,
-        ref,
-        () => ref
-            .read(settlementActionsProvider(meetingId).notifier)
-            .refund(settlementId, payment.id),
-      );
+    if (shouldRefund == true && context.mounted) {
+      await ref
+          .read(settlementActionsProvider(meetingId).notifier)
+          .refund(settlementId, payment.id);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detail = ref.watch(settlementDetailProvider(_request));
-    final role = ref.watch(groupMyRoleProvider(meetingId));
-    final submitting = ref
-        .watch(settlementActionsProvider(meetingId))
-        .isSubmitting;
+    ref.listen(
+      settlementActionsProvider(meetingId),
+      (_, next) => _onAction(context, next),
+    );
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: AppBar(
-        backgroundColor: MoaColors.page,
-        leading: IconButton(
-          icon: const GroupIcon('settlement_caret_left', size: 20),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/meetings/$meetingId/settlements'),
+      appBar: MoaAppBar(
+        onBack: () => context.canPop()
+            ? context.pop()
+            : context.go('/meetings/$meetingId/settlements'),
+      ),
+      bottomNavigationBar: _MemberSubmitBar(
+        meetingId: meetingId,
+        settlementId: settlementId,
+        onSubmit: () => _submit(context, ref),
+      ),
+      body: _SettlementDetailContent(
+        meetingId: meetingId,
+        settlementId: settlementId,
+        onApprove: (payment) => _approve(context, ref, payment),
+        onReject: (payment) => _reject(context, ref, payment),
+        onSubmit: () => _submit(context, ref),
+        onCopy: (account) => _copyAccount(context, account),
+        onCancel: (data) => _cancel(context, ref, data),
+        onRefund: (payment) => _refund(context, ref, payment),
+      ),
+    );
+  }
+}
+
+class _SettlementDetailContent extends ConsumerWidget {
+  const _SettlementDetailContent({
+    required this.meetingId,
+    required this.settlementId,
+    required this.onApprove,
+    required this.onReject,
+    required this.onSubmit,
+    required this.onCopy,
+    required this.onCancel,
+    required this.onRefund,
+  });
+  final int meetingId, settlementId;
+  final ValueChanged<SettlementPayment> onApprove, onReject, onRefund;
+  final ValueChanged<SettlementDetail> onCancel;
+  final VoidCallback onSubmit;
+  final ValueChanged<String> onCopy;
+  SettlementDetailRequest get _request =>
+      SettlementDetailRequest(meetingId: meetingId, settlementId: settlementId);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final detail = ref.watch(settlementDetailProvider(_request));
+    final role = ref.watch(groupMyRoleProvider(meetingId));
+    final submitting =
+        ref.watch(settlementActionsProvider(meetingId)).isSubmitting ||
+        role.isLoading ||
+        detail.isLoading;
+    return SafeArea(
+      child: switch ((role, detail)) {
+        (AsyncLoading(), _) => const Center(child: CircularProgressIndicator()),
+        (AsyncError(), _) => MoaErrorWidget(
+          message: '모임 권한을 확인하지 못했어요.',
+          onAction: () => ref.invalidate(groupMyRoleProvider(meetingId)),
+        ),
+        (_, AsyncLoading()) => const Center(child: CircularProgressIndicator()),
+        (_, AsyncError(:final error)) => MoaErrorWidget(
+          message: error is ApiException
+              ? error.userMessage
+              : '정산 정보를 불러오지 못했어요.',
+          onAction: () => ref.invalidate(settlementDetailProvider(_request)),
+        ),
+        (AsyncData(value: final currentRole), AsyncData(value: final data)) =>
+          RefreshIndicator(
+            onRefresh: () async =>
+                ref.refresh(settlementDetailProvider(_request).future),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
+              children: [
+                _DetailHeader(data: data, isAdmin: currentRole.canManageGroup),
+                const SizedBox(height: 22),
+                _AmountCard(data: data, isAdmin: currentRole.canManageGroup),
+                const SizedBox(height: 24),
+                if (data.status == SettlementStatus.canceled)
+                  _CancellationInfo(data: data),
+                if (data.hasReplacement)
+                  _ReplacementLinks(data: data, meetingId: meetingId),
+                if (currentRole.canManageGroup)
+                  _ManagementControls(
+                    meetingId: meetingId,
+                    data: data,
+                    submitting: submitting,
+                    onCancel: () => onCancel(data),
+                  ),
+                if (!currentRole.canManageGroup)
+                  _AccountCard(
+                    data: data,
+                    onCopy: () => onCopy(data.accountNumber),
+                  ),
+                if (currentRole.canManageGroup)
+                  _AdminPaymentGroups(
+                    data: data,
+                    submitting: submitting,
+                    onApprove: onApprove,
+                    onReject: onReject,
+                    onRefund: onRefund,
+                  ),
+                if (data.canSubmit && currentRole.canManageGroup)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: FilledButton(
+                      onPressed: submitting ? null : onSubmit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: MoaColors.accent,
+                        minimumSize: const Size.fromHeight(56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(submitting ? '제출 중…' : '납부했어요'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      },
+    );
+  }
+}
+
+class _MemberSubmitBar extends ConsumerWidget {
+  const _MemberSubmitBar({
+    required this.meetingId,
+    required this.settlementId,
+    required this.onSubmit,
+  });
+  final int meetingId, settlementId;
+  final VoidCallback onSubmit;
+  bool _isAvailable(
+    AsyncValue<MemberRole> role,
+    AsyncValue<SettlementDetail> detail,
+  ) =>
+      !role.isLoading &&
+      !role.hasError &&
+      !detail.isLoading &&
+      !detail.hasError &&
+      role.asData?.value == MemberRole.member &&
+      detail.asData?.value.canSubmit == true;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(groupMyRoleProvider(meetingId));
+    final detail = ref.watch(
+      settlementDetailProvider(
+        SettlementDetailRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
         ),
       ),
-      bottomNavigationBar:
-          role.asData?.value == MemberRole.member &&
-              !role.isLoading &&
-              !role.hasError &&
-              detail.asData?.value.canSubmit == true &&
-              !detail.isLoading &&
-              !detail.hasError
-          ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: FilledButton(
-                  onPressed: submitting ? null : () => _submit(context, ref),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: MoaColors.accent,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(submitting ? '제출 중…' : '납부했어요'),
-                ),
-              ),
-            )
-          : null,
-      body: SafeArea(
-        child: switch ((role, detail)) {
-          (AsyncLoading(), _) => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          (AsyncError(), _) => MoaErrorWidget(
-            message: '모임 권한을 확인하지 못했어요.',
-            onAction: () => ref.invalidate(groupMyRoleProvider(meetingId)),
-          ),
-          (_, AsyncLoading()) => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          (_, AsyncError(:final error)) => MoaErrorWidget(
-            message: error is ApiException
-                ? error.userMessage
-                : '정산 정보를 불러오지 못했어요.',
-            onAction: () => ref.invalidate(settlementDetailProvider(_request)),
-          ),
-          (AsyncData(value: final currentRole), AsyncData(value: final data)) =>
-            RefreshIndicator(
-              onRefresh: () async =>
-                  ref.refresh(settlementDetailProvider(_request).future),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
-                children: [
-                  _DetailHeader(
-                    data: data,
-                    isAdmin: currentRole.canManageGroup,
-                  ),
-                  const SizedBox(height: 22),
-                  _AmountCard(data: data, isAdmin: currentRole.canManageGroup),
-                  const SizedBox(height: 24),
-                  if (data.status == SettlementStatus.canceled)
-                    _CancellationInfo(data: data),
-                  if (data.replacedBySettlementId != null ||
-                      data.replacesSettlementId != null)
-                    _ReplacementLinks(data: data, meetingId: meetingId),
-                  if (currentRole.canManageGroup) ...[
-                    if (data.status == SettlementStatus.inProgress)
-                      OutlinedButton(
-                        onPressed: submitting
-                            ? null
-                            : () => context.push(
-                                '/meetings/$meetingId/settlements/$settlementId/edit',
-                              ),
-                        child: const Text('정산 수정'),
-                      ),
-                    if (data.status == SettlementStatus.inProgress ||
-                        data.status == SettlementStatus.completed)
-                      OutlinedButton(
-                        onPressed: submitting || data.summary.pendingCount > 0
-                            ? null
-                            : () => _cancel(context, ref, data),
-                        child: const Text('정산 취소'),
-                      ),
-                    if (data.summary.pendingCount > 0 &&
-                        data.status != SettlementStatus.canceled)
-                      const Text('확인 대기 중인 납부를 먼저 승인하거나 반려해 주세요.'),
-                    if (data.status == SettlementStatus.canceled &&
-                        data.replacedBySettlementId == null)
-                      OutlinedButton(
-                        onPressed: submitting
-                            ? null
-                            : () => context.push(
-                                '/meetings/$meetingId/settlements/new?replacesSettlementId=${data.id}',
-                              ),
-                        child: const Text('새 정산으로 대체'),
-                      ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (!currentRole.canManageGroup)
-                    _AccountCard(
-                      data: data,
-                      onCopy: () => _copyAccount(context, data.accountNumber),
-                    ),
-                  if (currentRole.canManageGroup) ...[
-                    _PaymentGroup(
-                      heading: data.pendingHeading,
-                      payments: data.pendingPayments,
-                      canManage: data.status == SettlementStatus.inProgress,
-                      submitting: submitting,
-                      onApprove: (payment) => _approve(context, ref, payment),
-                      onReject: (payment) => _reject(context, ref, payment),
-                    ),
-                    _PaymentGroup(
-                      heading: data.unpaidHeading,
-                      payments: data.unpaidPayments,
-                    ),
-                    _PaymentGroup(
-                      heading: data.paidHeading,
-                      payments: data.paidPayments,
-                      submitting: submitting,
-                      canRefund: data.status == SettlementStatus.canceled,
-                      onRefund: (payment) => _refund(context, ref, payment),
-                    ),
-                    if (data.status == SettlementStatus.canceled)
-                      _PaymentGroup(
-                        heading: '환불 완료',
-                        payments: data.payments
-                            .where((p) => p.status == PaymentStatus.refunded)
-                            .toList(growable: false),
-                      ),
-                    if (data.canSubmit) Text('내 납부', style: MoaText.titleM),
-                  ],
-                  if (data.canSubmit && currentRole.canManageGroup)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24),
-                      child: FilledButton(
-                        onPressed: submitting
-                            ? null
-                            : () => _submit(context, ref),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: MoaColors.accent,
-                          minimumSize: const Size.fromHeight(56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(submitting ? '제출 중…' : '납부했어요'),
-                      ),
-                    ),
-                ],
-              ),
+    );
+    final busy = ref.watch(settlementActionsProvider(meetingId)).isSubmitting;
+    if (!_isAvailable(role, detail)) return const SizedBox.shrink();
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: FilledButton(
+          onPressed: busy ? null : onSubmit,
+          style: FilledButton.styleFrom(
+            backgroundColor: MoaColors.accent,
+            minimumSize: const Size.fromHeight(56),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-        },
+          ),
+          child: Text(busy ? '제출 중…' : '납부했어요'),
+        ),
       ),
     );
   }
@@ -402,11 +345,7 @@ class _AmountCard extends StatelessWidget {
   final SettlementDetail data;
   final bool isAdmin;
   String get _amount => isAdmin ? data.paidLabel : data.myAmountLabel;
-  String get _label => data.status == SettlementStatus.canceled
-      ? (isAdmin ? '납부 기록' : '취소된 정산')
-      : isAdmin
-      ? '완납'
-      : '내가 낼 금액';
+  String get _label => isAdmin ? '완납' : '내가 낼 금액';
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(22),
@@ -489,16 +428,16 @@ class _PaymentGroup extends StatelessWidget {
   const _PaymentGroup({
     required this.heading,
     required this.payments,
-    this.canManage = false,
     this.submitting = false,
     this.onApprove,
     this.onReject,
-    this.canRefund = false,
     this.onRefund,
   });
   final String heading;
   final List<SettlementPayment> payments;
-  final bool canManage, submitting, canRefund;
+  final bool submitting;
+  bool get _canReview => onApprove != null && onReject != null;
+  bool get _canRefund => onRefund != null;
   final ValueChanged<SettlementPayment>? onApprove, onReject, onRefund;
   @override
   Widget build(BuildContext context) => Padding(
@@ -549,14 +488,17 @@ class _PaymentGroup extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (canRefund && payment.status == PaymentStatus.paid)
-                          OutlinedButton(
-                            onPressed: submitting
-                                ? null
-                                : () => onRefund?.call(payment),
-                            child: const Text('환불 완료 기록'),
+                        if (_canRefund && payment.status == PaymentStatus.paid)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: submitting
+                                  ? null
+                                  : () => onRefund?.call(payment),
+                              child: const Text('환불 완료 기록'),
+                            ),
                           ),
-                        if (canManage &&
+                        if (_canReview &&
                             payment.status == PaymentStatus.pending)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
@@ -590,42 +532,6 @@ class _PaymentGroup extends StatelessWidget {
           ),
       ],
     ),
-  );
-}
-
-class _RejectionDialog extends StatefulWidget {
-  const _RejectionDialog();
-  @override
-  State<_RejectionDialog> createState() => _RejectionDialogState();
-}
-
-class _RejectionDialogState extends State<_RejectionDialog> {
-  final _reason = TextEditingController();
-  @override
-  void dispose() {
-    _reason.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('납부 요청 반려'),
-    scrollable: true,
-    content: TextField(
-      controller: _reason,
-      maxLength: 255,
-      decoration: const InputDecoration(hintText: '사유 (선택)'),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('취소'),
-      ),
-      TextButton(
-        onPressed: () => Navigator.pop(context, _reason.text),
-        child: const Text('반려'),
-      ),
-    ],
   );
 }
 
@@ -681,44 +587,84 @@ class _ReplacementLinks extends StatelessWidget {
   );
 }
 
-class _CancelDialog extends StatefulWidget {
-  const _CancelDialog();
+class _ManagementControls extends StatelessWidget {
+  const _ManagementControls({
+    required this.meetingId,
+    required this.data,
+    required this.submitting,
+    required this.onCancel,
+  });
+  final int meetingId;
+  final SettlementDetail data;
+  final bool submitting;
+  final VoidCallback onCancel;
   @override
-  State<_CancelDialog> createState() => _CancelDialogState();
+  Widget build(BuildContext context) => Column(
+    children: [
+      if (data.canEdit)
+        OutlinedButton(
+          onPressed: submitting
+              ? null
+              : () => context.push(
+                  '/meetings/$meetingId/settlements/${data.id}/edit',
+                ),
+          child: const Text('정산 수정'),
+        ),
+      if (data.canCancel)
+        OutlinedButton(
+          onPressed: submitting || data.hasPendingForCancellation
+              ? null
+              : onCancel,
+          child: const Text('정산 취소'),
+        ),
+      if (data.hasPendingForCancellation)
+        const Text('확인 대기 중인 납부를 먼저 승인하거나 반려해 주세요.'),
+      if (data.canReplace)
+        OutlinedButton(
+          onPressed: submitting
+              ? null
+              : () => context.push(
+                  '/meetings/$meetingId/settlements/new?replacesSettlementId=${data.id}',
+                ),
+          child: const Text('새 정산으로 대체'),
+        ),
+      const SizedBox(height: 20),
+    ],
+  );
 }
 
-class _CancelDialogState extends State<_CancelDialog> {
-  final _reason = TextEditingController();
+class _AdminPaymentGroups extends StatelessWidget {
+  const _AdminPaymentGroups({
+    required this.data,
+    required this.submitting,
+    required this.onApprove,
+    required this.onReject,
+    required this.onRefund,
+  });
+  final SettlementDetail data;
+  final bool submitting;
+  final ValueChanged<SettlementPayment> onApprove, onReject, onRefund;
   @override
-  void dispose() {
-    _reason.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('정산을 취소할까요?'),
-    scrollable: true,
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('납부 기록은 남습니다. 이미 받은 금액은 앱 밖에서 돌려준 뒤 환불 완료로 기록해 주세요.'),
-        TextField(
-          controller: _reason,
-          maxLength: 255,
-          decoration: const InputDecoration(labelText: '취소 사유 (선택)'),
-        ),
-      ],
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('돌아가기'),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _PaymentGroup(
+        heading: data.pendingHeading,
+        payments: data.pendingPayments,
+        submitting: submitting,
+        onApprove: data.canEdit ? onApprove : null,
+        onReject: data.canEdit ? onReject : null,
       ),
-      TextButton(
-        onPressed: () => Navigator.pop(context, _reason.text),
-        child: const Text('정산 취소'),
+      _PaymentGroup(heading: data.unpaidHeading, payments: data.unpaidPayments),
+      _PaymentGroup(
+        heading: data.paidHeading,
+        payments: data.paidPayments,
+        submitting: submitting,
+        onRefund: data.canRefund ? onRefund : null,
       ),
+      if (data.canRefund)
+        _PaymentGroup(heading: '환불 완료', payments: data.refundedPayments),
+      if (data.canSubmit) Text('내 납부', style: MoaText.titleM),
     ],
   );
 }

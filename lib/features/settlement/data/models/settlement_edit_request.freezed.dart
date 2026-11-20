@@ -18,6 +18,8 @@ mixin _$SettlementEditRequest {
   int get meetingId;
   @JsonKey(includeToJson: false)
   int get settlementId;
+  @JsonKey(includeToJson: false)
+  bool get unlinkSchedule;
   @JsonKey(includeIfNull: false)
   String? get title;
   @JsonKey(includeIfNull: false)
@@ -55,6 +57,8 @@ mixin _$SettlementEditRequest {
                 other.meetingId == meetingId) &&
             (identical(other.settlementId, settlementId) ||
                 other.settlementId == settlementId) &&
+            (identical(other.unlinkSchedule, unlinkSchedule) ||
+                other.unlinkSchedule == unlinkSchedule) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.totalAmount, totalAmount) ||
                 other.totalAmount == totalAmount) &&
@@ -74,6 +78,7 @@ mixin _$SettlementEditRequest {
     runtimeType,
     meetingId,
     settlementId,
+    unlinkSchedule,
     title,
     totalAmount,
     const DeepCollectionEquality().hash(memberIds),
@@ -85,7 +90,7 @@ mixin _$SettlementEditRequest {
 
   @override
   String toString() {
-    return 'SettlementEditRequest(meetingId: $meetingId, settlementId: $settlementId, title: $title, totalAmount: $totalAmount, memberIds: $memberIds, bankName: $bankName, accountNumber: $accountNumber, accountHolder: $accountHolder, dueAt: $dueAt)';
+    return 'SettlementEditRequest(meetingId: $meetingId, settlementId: $settlementId, unlinkSchedule: $unlinkSchedule, title: $title, totalAmount: $totalAmount, memberIds: $memberIds, bankName: $bankName, accountNumber: $accountNumber, accountHolder: $accountHolder, dueAt: $dueAt)';
   }
 }
 
@@ -99,6 +104,7 @@ abstract mixin class $SettlementEditRequestCopyWith<$Res> {
   $Res call({
     @JsonKey(includeToJson: false) int meetingId,
     @JsonKey(includeToJson: false) int settlementId,
+    @JsonKey(includeToJson: false) bool unlinkSchedule,
     @JsonKey(includeIfNull: false) String? title,
     @JsonKey(includeIfNull: false) int? totalAmount,
     @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -124,6 +130,7 @@ class _$SettlementEditRequestCopyWithImpl<$Res>
   $Res call({
     Object? meetingId = null,
     Object? settlementId = null,
+    Object? unlinkSchedule = null,
     Object? title = freezed,
     Object? totalAmount = freezed,
     Object? memberIds = freezed,
@@ -142,6 +149,10 @@ class _$SettlementEditRequestCopyWithImpl<$Res>
             ? _self.settlementId
             : settlementId // ignore: cast_nullable_to_non_nullable
                   as int,
+        unlinkSchedule: null == unlinkSchedule
+            ? _self.unlinkSchedule
+            : unlinkSchedule // ignore: cast_nullable_to_non_nullable
+                  as bool,
         title: freezed == title
             ? _self.title
             : title // ignore: cast_nullable_to_non_nullable
@@ -271,6 +282,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
     TResult Function(
       @JsonKey(includeToJson: false) int meetingId,
       @JsonKey(includeToJson: false) int settlementId,
+      @JsonKey(includeToJson: false) bool unlinkSchedule,
       @JsonKey(includeIfNull: false) String? title,
       @JsonKey(includeIfNull: false) int? totalAmount,
       @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -288,6 +300,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
         return $default(
           _that.meetingId,
           _that.settlementId,
+          _that.unlinkSchedule,
           _that.title,
           _that.totalAmount,
           _that.memberIds,
@@ -319,6 +332,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
     TResult Function(
       @JsonKey(includeToJson: false) int meetingId,
       @JsonKey(includeToJson: false) int settlementId,
+      @JsonKey(includeToJson: false) bool unlinkSchedule,
       @JsonKey(includeIfNull: false) String? title,
       @JsonKey(includeIfNull: false) int? totalAmount,
       @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -335,6 +349,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
         return $default(
           _that.meetingId,
           _that.settlementId,
+          _that.unlinkSchedule,
           _that.title,
           _that.totalAmount,
           _that.memberIds,
@@ -365,6 +380,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
     TResult? Function(
       @JsonKey(includeToJson: false) int meetingId,
       @JsonKey(includeToJson: false) int settlementId,
+      @JsonKey(includeToJson: false) bool unlinkSchedule,
       @JsonKey(includeIfNull: false) String? title,
       @JsonKey(includeIfNull: false) int? totalAmount,
       @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -381,6 +397,7 @@ extension SettlementEditRequestPatterns on SettlementEditRequest {
         return $default(
           _that.meetingId,
           _that.settlementId,
+          _that.unlinkSchedule,
           _that.title,
           _that.totalAmount,
           _that.memberIds,
@@ -401,6 +418,7 @@ class _SettlementEditRequest extends SettlementEditRequest {
   const _SettlementEditRequest({
     @JsonKey(includeToJson: false) required this.meetingId,
     @JsonKey(includeToJson: false) required this.settlementId,
+    @JsonKey(includeToJson: false) this.unlinkSchedule = false,
     @JsonKey(includeIfNull: false) this.title,
     @JsonKey(includeIfNull: false) this.totalAmount,
     @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -419,6 +437,9 @@ class _SettlementEditRequest extends SettlementEditRequest {
   @override
   @JsonKey(includeToJson: false)
   final int settlementId;
+  @override
+  @JsonKey(includeToJson: false)
+  final bool unlinkSchedule;
   @override
   @JsonKey(includeIfNull: false)
   final String? title;
@@ -474,6 +495,8 @@ class _SettlementEditRequest extends SettlementEditRequest {
                 other.meetingId == meetingId) &&
             (identical(other.settlementId, settlementId) ||
                 other.settlementId == settlementId) &&
+            (identical(other.unlinkSchedule, unlinkSchedule) ||
+                other.unlinkSchedule == unlinkSchedule) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.totalAmount, totalAmount) ||
                 other.totalAmount == totalAmount) &&
@@ -496,6 +519,7 @@ class _SettlementEditRequest extends SettlementEditRequest {
     runtimeType,
     meetingId,
     settlementId,
+    unlinkSchedule,
     title,
     totalAmount,
     const DeepCollectionEquality().hash(_memberIds),
@@ -507,7 +531,7 @@ class _SettlementEditRequest extends SettlementEditRequest {
 
   @override
   String toString() {
-    return 'SettlementEditRequest(meetingId: $meetingId, settlementId: $settlementId, title: $title, totalAmount: $totalAmount, memberIds: $memberIds, bankName: $bankName, accountNumber: $accountNumber, accountHolder: $accountHolder, dueAt: $dueAt)';
+    return 'SettlementEditRequest(meetingId: $meetingId, settlementId: $settlementId, unlinkSchedule: $unlinkSchedule, title: $title, totalAmount: $totalAmount, memberIds: $memberIds, bankName: $bankName, accountNumber: $accountNumber, accountHolder: $accountHolder, dueAt: $dueAt)';
   }
 }
 
@@ -523,6 +547,7 @@ abstract mixin class _$SettlementEditRequestCopyWith<$Res>
   $Res call({
     @JsonKey(includeToJson: false) int meetingId,
     @JsonKey(includeToJson: false) int settlementId,
+    @JsonKey(includeToJson: false) bool unlinkSchedule,
     @JsonKey(includeIfNull: false) String? title,
     @JsonKey(includeIfNull: false) int? totalAmount,
     @JsonKey(includeIfNull: false) List<int>? memberIds,
@@ -548,6 +573,7 @@ class __$SettlementEditRequestCopyWithImpl<$Res>
   $Res call({
     Object? meetingId = null,
     Object? settlementId = null,
+    Object? unlinkSchedule = null,
     Object? title = freezed,
     Object? totalAmount = freezed,
     Object? memberIds = freezed,
@@ -566,6 +592,10 @@ class __$SettlementEditRequestCopyWithImpl<$Res>
             ? _self.settlementId
             : settlementId // ignore: cast_nullable_to_non_nullable
                   as int,
+        unlinkSchedule: null == unlinkSchedule
+            ? _self.unlinkSchedule
+            : unlinkSchedule // ignore: cast_nullable_to_non_nullable
+                  as bool,
         title: freezed == title
             ? _self.title
             : title // ignore: cast_nullable_to_non_nullable

@@ -4,14 +4,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/errors/api_exception.dart';
 import '../../../../core/theme/moa_theme.dart';
+import '../../../../core/utils/moa_dialogs.dart';
+import '../../../../core/utils/moa_snack_bar.dart';
+import '../../../../core/widgets/moa_app_bar.dart';
 import '../../../group/domain/entities/member_role.dart';
 import '../../../group/presentation/providers/group_providers.dart';
 import '../../domain/entities/settlement.dart';
-import '../providers/settlement_providers.dart';
-import '../settlement_format.dart';
-import '../regular_due_changes.dart';
-import '../regular_due_application_message.dart';
+import '../../domain/usecases/regular_due_validation.dart';
 import '../../domain/usecases/settlement_input_validation.dart';
+import '../providers/settlement_providers.dart';
+import '../regular_due_changes.dart';
+import '../settlement_format.dart';
+import '../viewmodels/regular_due_action_state.dart';
+import '../widgets/settlement_text_field.dart';
 
 class RegularDuesFormPage extends ConsumerWidget {
   const RegularDuesFormPage({
@@ -31,7 +36,7 @@ class RegularDuesFormPage extends ConsumerWidget {
     }
     if (role.hasError) {
       return Scaffold(
-        appBar: AppBar(title: const Text('정기 회비')),
+        appBar: MoaAppBar(title: '정기 회비'),
         body: Center(
           child: TextButton(
             onPressed: () => ref.invalidate(groupMyRoleProvider(meetingId)),
@@ -42,7 +47,7 @@ class RegularDuesFormPage extends ConsumerWidget {
     }
     if (role.asData?.value.canManageGroup != true) {
       return Scaffold(
-        appBar: AppBar(title: const Text('정기 회비')),
+        appBar: MoaAppBar(title: '정기 회비'),
         body: const Center(child: Text('관리자만 정기 회비를 설정할 수 있어요.')),
       );
     }
@@ -55,7 +60,7 @@ class RegularDuesFormPage extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator()),
       ),
       AsyncError() => Scaffold(
-        appBar: AppBar(title: const Text('정기 회비 수정')),
+        appBar: MoaAppBar(title: '정기 회비 수정'),
         body: Center(
           child: TextButton(
             onPressed: () => ref.invalidate(regularDuesProvider(meetingId)),
@@ -135,13 +140,15 @@ class _FormState extends ConsumerState<_Form> {
     super.dispose();
   }
 
+  String get _sendTimeLabel =>
+      '${_sendTime.hour.toString().padLeft(2, '0')}:${_sendTime.minute.toString().padLeft(2, '0')}';
+
   RegularDueInput get _input => RegularDueInput(
     title: _title.text.trim(),
     amount: int.parse(_amount.text),
     cycle: _cycle,
     cycleDay: _cycleDay,
-    sendTime:
-        '${_sendTime.hour.toString().padLeft(2, '0')}:${_sendTime.minute.toString().padLeft(2, '0')}',
+    sendTime: _sendTimeLabel,
     dueDays: int.parse(_dueDays.text),
     bankName: _bank.text.trim(),
     accountNumber: _account.text.trim(),
@@ -150,7 +157,21 @@ class _FormState extends ConsumerState<_Form> {
     isActive: _isActive,
   );
 
-  Future<void> _save() async {
+  void _onAction(RegularDueActionState? previous, RegularDueActionState next) {
+    if (next.isSubmitting || next.action == null) return;
+    if (ModalRoute.of(context)?.isCurrent == false) return;
+    if (next.failure case final error?) {
+      showMoaSnackBar(context, message: error.userMessage);
+      return;
+    }
+    showMoaSnackBar(context, message: next.message);
+    _close();
+  }
+
+  void _close() => context.canPop()
+      ? context.pop()
+      : context.go('/meetings/${widget.meetingId}/settlements');
+  void _save() {
     if (!_formKey.currentState!.validate()) return;
     final input = _input;
     final original = widget.initial;
@@ -158,80 +179,57 @@ class _FormState extends ConsumerState<_Form> {
         ? null
         : input.changesFrom(original, applyToCurrentSettlement: _applyCurrent);
     if (changes?.isEmpty == true) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('변경된 내용이 없어요.')));
+      showMoaSnackBar(context, message: '변경된 내용이 없어요.');
       return;
     }
-    try {
-      final actions = ref.read(
-        regularDueActionsProvider(widget.meetingId).notifier,
-      );
-      String message;
-      if (original == null) {
-        final result = await actions.create(input);
-        if (result == null) return;
-        message = '정기 회비를 저장했어요.';
-      } else {
-        final result = await actions.update(original.id, changes!);
-        if (result == null) return;
-        message = result.message;
-      }
-      if (!mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
-      context.pop();
-      messenger.showSnackBar(SnackBar(content: Text(message)));
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is ApiException ? error.userMessage : '정기 회비를 저장하지 못했어요.',
-          ),
-        ),
-      );
+    final actions = ref.read(
+      regularDueActionsProvider(widget.meetingId).notifier,
+    );
+    if (original == null) {
+      actions.create(input);
+    } else {
+      actions.update(original.id, changes!);
     }
   }
 
   Future<void> _delete() async {
     final original = widget.initial;
     if (original == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('정기 회비를 삭제할까요?'),
-        content: const Text('이후 자동 청구는 중단됩니다. 이미 청구된 회차 정산은 바뀌지 않습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    final shouldDelete = await showMoaConfirmDialog(
+      context,
+      title: '정기 회비를 삭제할까요?',
+      message: '이후 자동 청구는 중단됩니다. 이미 청구된 회차 정산은 바뀌지 않습니다.',
+      confirmLabel: '삭제',
     );
-    if (confirmed != true || !mounted) return;
-    try {
-      final deleted = await ref
-          .read(regularDueActionsProvider(widget.meetingId).notifier)
-          .delete(original.id);
-      if (!mounted || deleted != true) return;
-      context.pop();
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is ApiException ? error.userMessage : '정기 회비를 삭제하지 못했어요.',
-          ),
-        ),
-      );
-    }
+    if (shouldDelete != true || !mounted) return;
+    ref
+        .read(regularDueActionsProvider(widget.meetingId).notifier)
+        .delete(original.id);
+  }
+
+  Future<void> _pickSendTime() async {
+    final value = await showTimePicker(
+      context: context,
+      initialTime: _sendTime,
+    );
+    if (!mounted || value == null) return;
+    setState(() => _sendTime = value);
+  }
+
+  void _changeCycle(DuesCycle? value) {
+    if (value == null || value == DuesCycle.unknown) return;
+    setState(() {
+      _cycle = value;
+      _cycleDay = value == DuesCycle.monthly ? '10' : 'MON';
+    });
+  }
+
+  void _changeDay(String? value) {
+    if (value != null) setState(() => _cycleDay = value);
   }
 
   List<String> get _cycleDays {
+    if (_cycle == DuesCycle.unknown) return [_cycleDay];
     final days = _cycle == DuesCycle.weekly
         ? <String>['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
         : <String>[...List.generate(28, (i) => '${i + 1}'), 'LAST'];
@@ -242,30 +240,33 @@ class _FormState extends ConsumerState<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(regularDueActionsProvider(widget.meetingId), _onAction);
     ref.watch(regularDueActionsProvider(widget.meetingId));
     if (widget.missing) {
       return Scaffold(
-        appBar: AppBar(title: const Text('정기 회비')),
+        appBar: MoaAppBar(title: '정기 회비'),
         body: const Center(child: Text('해당 정기 회비를 찾을 수 없어요.')),
       );
     }
     return Scaffold(
       backgroundColor: MoaColors.page,
-      appBar: AppBar(
-        title: const Text('정기 회비'),
-        backgroundColor: MoaColors.page,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
-        ),
-      ),
+      appBar: MoaAppBar(title: '정기 회비', showClose: true, onBack: _close),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 36),
           children: [
-            _field(_title, '이름'),
-            _field(_amount, '1인당 금액', numeric: true, max: 5000000),
+            SettlementTextField(
+              controller: _title,
+              label: '이름',
+              validator: RegularDueValidation.title,
+            ),
+            SettlementTextField(
+              controller: _amount,
+              label: '1인당 금액',
+              numeric: true,
+              validator: RegularDueValidation.amount,
+            ),
             Text('반복', style: MoaText.subStrong),
             const SizedBox(height: 8),
             Row(
@@ -275,24 +276,22 @@ class _FormState extends ConsumerState<_Form> {
                     isExpanded: true,
                     initialValue: _cycle,
                     decoration: _inputDecoration(),
-                    items: const [
-                      DropdownMenuItem(
-                        value: DuesCycle.unknown,
-                        child: Text('주기 다시 선택'),
-                      ),
-                      DropdownMenuItem(
+                    items: [
+                      if (_cycle == DuesCycle.unknown)
+                        const DropdownMenuItem(
+                          value: DuesCycle.unknown,
+                          child: Text('주기 다시 선택'),
+                        ),
+                      const DropdownMenuItem(
                         value: DuesCycle.monthly,
                         child: Text('매월'),
                       ),
-                      DropdownMenuItem(
+                      const DropdownMenuItem(
                         value: DuesCycle.weekly,
                         child: Text('매주'),
                       ),
                     ],
-                    onChanged: (value) => setState(() {
-                      _cycle = value ?? DuesCycle.monthly;
-                      _cycleDay = _cycle == DuesCycle.monthly ? '10' : 'MON';
-                    }),
+                    onChanged: _busy ? null : _changeCycle,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -306,17 +305,13 @@ class _FormState extends ConsumerState<_Form> {
                         .map(
                           (day) => DropdownMenuItem(
                             value: day,
-                            child: Text(
-                              regularDuesCycleLabel(_cycle, day).replaceFirst(
-                                _cycle == DuesCycle.weekly ? '매주 ' : '매월 ',
-                                '',
-                              ),
-                            ),
+                            child: Text(_cycle.dayLabel(day)),
                           ),
                         )
                         .toList(),
-                    onChanged: (value) =>
-                        setState(() => _cycleDay = value ?? _cycleDays.first),
+                    onChanged: _busy || _cycle == DuesCycle.unknown
+                        ? null
+                        : _changeDay,
                   ),
                 ),
               ],
@@ -328,16 +323,9 @@ class _FormState extends ConsumerState<_Form> {
               color: MoaColors.fill,
               borderRadius: BorderRadius.circular(18),
               child: ListTile(
-                title: Text(_sendTime.format(context)),
+                title: Text(_sendTimeLabel),
                 trailing: const Icon(Icons.access_time),
-                onTap: () async {
-                  final value = await showTimePicker(
-                    context: context,
-                    initialTime: _sendTime,
-                  );
-                  if (!mounted) return;
-                  if (value != null) setState(() => _sendTime = value);
-                },
+                onTap: _busy ? null : _pickSendTime,
               ),
             ),
             const SizedBox(height: 18),
@@ -352,10 +340,27 @@ class _FormState extends ConsumerState<_Form> {
               child: Text('구성원 전체 · 새로 들어온 사람 포함', style: MoaText.body),
             ),
             const SizedBox(height: 18),
-            _field(_dueDays, '납부 기한 (발송 후 일수)', numeric: true, min: 0),
-            _field(_bank, '은행'),
-            _field(_account, '계좌번호'),
-            _field(_holder, '예금주'),
+            SettlementTextField(
+              controller: _dueDays,
+              label: '납부 기한 (발송 후 일수)',
+              numeric: true,
+              validator: RegularDueValidation.dueDays,
+            ),
+            SettlementTextField(
+              controller: _bank,
+              label: '은행',
+              validator: SettlementInputValidation.bankName,
+            ),
+            SettlementTextField(
+              controller: _account,
+              label: '계좌번호',
+              validator: SettlementInputValidation.accountNumber,
+            ),
+            SettlementTextField(
+              controller: _holder,
+              label: '예금주',
+              validator: SettlementInputValidation.accountHolder,
+            ),
             SwitchListTile(
               value: _postNotice,
               onChanged: (value) => setState(() => _postNotice = value),
@@ -409,56 +414,6 @@ class _FormState extends ConsumerState<_Form> {
       ),
     );
   }
-
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    bool numeric = false,
-    int min = 1,
-    int? max,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 18),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: MoaText.subStrong),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: numeric ? TextInputType.number : TextInputType.text,
-          decoration: _inputDecoration(),
-          validator: (value) {
-            final text = value?.trim() ?? '';
-            if (text.isEmpty) return '$label을 입력해 주세요.';
-            final maxLength = switch (label) {
-              '이름' => 50,
-              '은행' => 20,
-              '계좌번호' => 30,
-              '예금주' => 20,
-              _ => null,
-            };
-            if (maxLength != null) {
-              final error = SettlementInputValidation.text(
-                text,
-                label,
-                maxLength,
-              );
-              if (error != null) return error;
-            }
-            if (numeric) {
-              final number = int.tryParse(text);
-              if (number == null ||
-                  number < min ||
-                  (max != null && number > max)) {
-                return '$min~${max ?? '이상'} 범위로 입력해 주세요.';
-              }
-            }
-            return null;
-          },
-        ),
-      ],
-    ),
-  );
 
   InputDecoration _inputDecoration() => InputDecoration(
     filled: true,

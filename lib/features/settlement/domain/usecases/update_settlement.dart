@@ -1,6 +1,6 @@
-import '../../../../core/usecases/usecase.dart';
-import '../../../../core/errors/api_exception.dart';
 import '../../../../core/errors/api_error_code.dart';
+import '../../../../core/errors/api_exception.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../entities/settlement_edit_input.dart';
 import '../repositories/settlement_repository.dart';
 import 'settlement_input_validation.dart';
@@ -42,7 +42,7 @@ final class UpdateSettlementImpl implements UpdateSettlement {
     }
     if (v.totalAmount != null &&
         (v.totalAmount! < 1 ||
-            v.totalAmount! > 2147483647 ||
+            v.totalAmount! > SettlementInputValidation.maxServerInt ||
             v.totalAmount! < (v.memberIds?.length ?? params.memberCount))) {
       throw const ApiException(
         code: ApiErrorCode.validation,

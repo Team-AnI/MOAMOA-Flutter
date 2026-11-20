@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'settlement_updated_model.freezed.dart';
 part 'settlement_updated_model.g.dart';
 

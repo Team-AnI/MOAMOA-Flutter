@@ -1,24 +1,27 @@
-import '../models/settlement_edit_request.dart';
-import '../models/settlement_cancel_request.dart';
-import '../../domain/entities/regular_due_update.dart';
-import '../models/regular_due_model.dart';
-import '../models/regular_due_create_request.dart';
-import '../models/regular_due_update_request.dart';
-
 import 'package:dio/dio.dart';
 
 import '../../../../core/errors/api_error_code.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../../../core/errors/dio_exception_mapper.dart';
+import '../../domain/entities/regular_due_update.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
 import '../datasources/settlement_remote_data_source.dart';
-import '../models/settlement_model.dart';
-import '../models/settlement_payment_model.dart';
-import '../models/settlement_detail_model.dart';
 import '../models/payment_action_model.dart';
+import '../models/regular_due_create_request.dart';
+import '../models/regular_due_delete_request.dart';
+import '../models/regular_due_model.dart';
+import '../models/regular_due_update_request.dart';
+import '../models/regular_dues_list_request.dart';
+import '../models/settlement_cancel_request.dart';
 import '../models/settlement_create_request.dart';
+import '../models/settlement_detail_api_request.dart';
+import '../models/settlement_detail_model.dart';
+import '../models/settlement_edit_request.dart';
+import '../models/settlement_list_request.dart';
+import '../models/settlement_model.dart';
 import '../models/settlement_payment_request.dart';
+import '../models/settlement_response_model.dart';
 
 class SettlementRepositoryImpl implements SettlementRepository {
   const SettlementRepositoryImpl({
@@ -26,6 +29,14 @@ class SettlementRepositoryImpl implements SettlementRepository {
   }) : _settlementRemoteDataSource = settlementRemoteDataSource;
 
   final SettlementRemoteDataSource _settlementRemoteDataSource;
+
+  T _data<T>(SettlementResponseModel<T> response) {
+    final data = response.data;
+    if (!response.success || data == null) {
+      throw const ApiException(code: ApiErrorCode.unknown);
+    }
+    return data;
+  }
 
   Future<T> _read<T>(Future<T> Function() request) async {
     try {
@@ -56,32 +67,43 @@ class SettlementRepositoryImpl implements SettlementRepository {
         replacesSettlementId: input.replacesSettlementId,
       ),
     );
-    return data.settlementId;
+    return _data(data).settlementId;
   });
 
   @override
   Future<List<Settlement>> list(int meetingId) => _read(() async {
-    final data = await _settlementRemoteDataSource.list(meetingId);
-    return data.settlements.map(_settlement).toList(growable: false);
+    final data = _data(
+      await _settlementRemoteDataSource.list(
+        SettlementListRequest(meetingId: meetingId),
+      ),
+    );
+    return data.settlements
+        .map((model) => model.toEntity())
+        .toList(growable: false);
   });
 
   @override
   Future<SettlementDetail> detail(int meetingId, int settlementId) => _read(
-    () async => _detail(
-      await _settlementRemoteDataSource.detail(meetingId, settlementId),
-    ),
+    () async => _data(
+      await _settlementRemoteDataSource.detail(
+        SettlementDetailApiRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+        ),
+      ),
+    ).toEntity(),
   );
 
   @override
   Future<PaymentAction> submitPayment(int meetingId, int settlementId) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.submitPayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
           settlementId: settlementId,
         ),
       ),
-    ),
+    ).toEntity(),
   );
 
   @override
@@ -90,7 +112,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int settlementId,
     int paymentId,
   ) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.approvePayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
@@ -98,7 +120,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
           paymentId: paymentId,
         ),
       ),
-    ),
+    ).toEntity(),
   );
 
   @override
@@ -108,7 +130,7 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int paymentId, {
     String? reason,
   }) => _read(
-    () async => _action(
+    () async => _data(
       await _settlementRemoteDataSource.rejectPayment(
         SettlementPaymentRequest(
           meetingId: meetingId,
@@ -117,101 +139,39 @@ class SettlementRepositoryImpl implements SettlementRepository {
           reason: reason,
         ),
       ),
-    ),
-  );
-
-  Settlement _settlement(SettlementModel json) => Settlement(
-    id: json.settlementId,
-    title: json.title,
-    scheduleId: json.scheduleId,
-    totalAmount: json.totalAmount,
-    memberCount: json.memberCount,
-    dueAt: json.dueAt,
-    createdAt: json.createdAt,
-    status: SettlementStatus.fromServer(json.status),
-    canceledAt: json.canceledAt,
-    myAmount: json.myAmount,
-    myPaymentStatus: json.myPaymentStatus == null
-        ? null
-        : PaymentStatus.fromServer(json.myPaymentStatus),
-    myConfirmedAt: json.myConfirmedAt,
-  );
-
-  SettlementDetail _detail(SettlementDetailModel json) {
-    final summary = json.summary;
-    return SettlementDetail(
-      id: json.settlementId,
-      title: json.title,
-      scheduleId: json.scheduleId,
-      scheduleTitle: json.scheduleTitle,
-      scheduleStartAt: json.scheduleStartAt,
-      totalAmount: json.totalAmount,
-      bankName: json.bankName,
-      accountNumber: json.accountNumber,
-      accountHolder: json.accountHolder,
-      dueAt: json.dueAt,
-      status: SettlementStatus.fromServer(json.status),
-      noticeId: json.noticeId,
-      canceledAt: json.canceledAt,
-      cancelReason: json.cancelReason,
-      replacesSettlementId: json.replacesSettlementId,
-      replacedBySettlementId: json.replacedBySettlementId,
-      myPayment: json.myPayment == null ? null : _payment(json.myPayment!),
-      summary: SettlementSummary(
-        totalCount: summary.totalCount,
-        unpaidCount: summary.unpaidCount,
-        pendingCount: summary.pendingCount,
-        paidCount: summary.paidCount,
-        refundedCount: summary.refundedCount,
-        paidAmount: summary.paidAmount,
-      ),
-      payments: json.payments.map(_payment).toList(growable: false),
-    );
-  }
-
-  SettlementPayment _payment(SettlementPaymentModel json) => SettlementPayment(
-    id: json.paymentId,
-    amount: json.amount,
-    status: PaymentStatus.fromServer(json.status),
-    memberId: json.memberId,
-    userName: json.userName,
-    submittedAt: json.submittedAt,
-    refundedAt: json.refundedAt,
-  );
-
-  PaymentAction _action(PaymentActionModel json) => PaymentAction(
-    paymentId: json.paymentId,
-    status: PaymentStatus.fromServer(json.status),
-    submittedAt: json.submittedAt,
-    confirmedAt: json.confirmedAt,
-    rejectionReason: json.rejectionReason,
+    ).toEntity(),
   );
 
   @override
-  Future<List<RegularDue>> listRegularDues(int meetingId) => _read(
-    () async =>
-        (await _settlementRemoteDataSource.listRegularDues(meetingId))
-            .regularDues
-            .map(_regularDue)
-            .toList(growable: false),
-  );
+  Future<List<RegularDue>> listRegularDues(int meetingId) => _read(() async {
+    final response = _data(
+      await _settlementRemoteDataSource.listRegularDues(
+        RegularDuesListRequest(meetingId: meetingId),
+      ),
+    );
+    return response.regularDues
+        .map((model) => model.toEntity())
+        .toList(growable: false);
+  });
   @override
   Future<int> createRegularDue(int meetingId, RegularDueInput input) => _read(
-    () async => (await _settlementRemoteDataSource.createRegularDue(
-      RegularDueCreateRequest(
-        meetingId: meetingId,
-        title: input.title,
-        amount: input.amount,
-        cycleType: input.cycle.serverValue,
-        cycleDay: input.cycleDay,
-        sendTime: input.sendTime,
-        dueDays: input.dueDays,
-        bankName: input.bankName,
-        accountNumber: input.accountNumber,
-        accountHolder: input.accountHolder,
-        postNotice: input.postNotice,
+    () async => _data(
+      await _settlementRemoteDataSource.createRegularDue(
+        RegularDueCreateRequest(
+          meetingId: meetingId,
+          title: input.title,
+          amount: input.amount,
+          cycleType: input.cycle.serverValue,
+          cycleDay: input.cycleDay,
+          sendTime: input.sendTime,
+          dueDays: input.dueDays,
+          bankName: input.bankName,
+          accountNumber: input.accountNumber,
+          accountHolder: input.accountHolder,
+          postNotice: input.postNotice,
+        ),
       ),
-    )).regularDuesId,
+    ).regularDuesId,
   );
   @override
   Future<bool?> updateRegularDue(
@@ -219,69 +179,62 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int regularDuesId,
     RegularDueUpdate changes,
   ) => _read(
-    () async => (await _settlementRemoteDataSource.updateRegularDue(
-      RegularDueUpdateRequest(
-        meetingId: meetingId,
-        regularDuesId: regularDuesId,
-        title: changes.title,
-        amount: changes.amount,
-        cycleType: changes.cycle?.serverValue,
-        cycleDay: changes.cycleDay,
-        sendTime: changes.sendTime,
-        dueDays: changes.dueDays,
-        bankName: changes.bankName,
-        accountNumber: changes.accountNumber,
-        accountHolder: changes.accountHolder,
-        isActive: changes.isActive,
-        postNotice: changes.postNotice,
-        applyToCurrentSettlement: changes.applyToCurrentSettlement
-            ? true
-            : null,
+    () async => _data(
+      await _settlementRemoteDataSource.updateRegularDue(
+        RegularDueUpdateRequest(
+          meetingId: meetingId,
+          regularDuesId: regularDuesId,
+          title: changes.title,
+          amount: changes.amount,
+          cycleType: changes.cycle?.serverValue,
+          cycleDay: changes.cycleDay,
+          sendTime: changes.sendTime,
+          dueDays: changes.dueDays,
+          bankName: changes.bankName,
+          accountNumber: changes.accountNumber,
+          accountHolder: changes.accountHolder,
+          isActive: changes.isActive,
+          postNotice: changes.postNotice,
+          applyToCurrentSettlement: changes.applyToCurrentSettlement
+              ? true
+              : null,
+        ),
       ),
-    )).currentSettlementApplied,
+    ).currentSettlementApplied,
   );
   @override
   Future<void> deleteRegularDue(int meetingId, int regularDuesId) =>
       _read(() async {
-        await _settlementRemoteDataSource.deleteRegularDue(
-          meetingId,
-          regularDuesId,
+        _data(
+          await _settlementRemoteDataSource.deleteRegularDue(
+            RegularDueDeleteRequest(
+              meetingId: meetingId,
+              regularDuesId: regularDuesId,
+            ),
+          ),
         );
       });
-  RegularDue _regularDue(RegularDueModel model) => RegularDue(
-    id: model.regularDuesId,
-    title: model.title,
-    amount: model.amount,
-    cycle: DuesCycle.fromServer(model.cycleType),
-    cycleDay: model.cycleDay,
-    sendTime: model.sendTime,
-    dueDays: model.dueDays,
-    bankName: model.bankName,
-    accountNumber: model.accountNumber,
-    accountHolder: model.accountHolder,
-    isActive: model.isActive,
-    postNotice: model.postNotice,
-  );
-
   @override
   Future<void> updateSettlement(
     int meetingId,
     int settlementId,
     SettlementEditInput input,
   ) => _read(() async {
-    await _settlementRemoteDataSource.updateSettlement(
-      SettlementEditRequest(
-        meetingId: meetingId,
-        settlementId: settlementId,
-        title: input.title,
-        totalAmount: input.totalAmount,
-        memberIds: input.memberIds,
-        bankName: input.bankName,
-        accountNumber: input.accountNumber,
-        accountHolder: input.accountHolder,
-        dueAt: input.dueAt?.toUtc(),
+    _data(
+      await _settlementRemoteDataSource.updateSettlement(
+        SettlementEditRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+          title: input.title,
+          totalAmount: input.totalAmount,
+          memberIds: input.memberIds,
+          bankName: input.bankName,
+          accountNumber: input.accountNumber,
+          accountHolder: input.accountHolder,
+          dueAt: input.dueAt?.toUtc(),
+          unlinkSchedule: input.unlinkSchedule,
+        ),
       ),
-      unlinkSchedule: input.unlinkSchedule,
     );
   });
   @override
@@ -290,22 +243,26 @@ class SettlementRepositoryImpl implements SettlementRepository {
     int settlementId, {
     String? reason,
   }) => _read(() async {
-    await _settlementRemoteDataSource.cancelSettlement(
-      SettlementCancelRequest(
-        meetingId: meetingId,
-        settlementId: settlementId,
-        reason: reason,
+    _data(
+      await _settlementRemoteDataSource.cancelSettlement(
+        SettlementCancelRequest(
+          meetingId: meetingId,
+          settlementId: settlementId,
+          reason: reason,
+        ),
       ),
     );
   });
   @override
   Future<void> refundPayment(int meetingId, int settlementId, int paymentId) =>
       _read(() async {
-        await _settlementRemoteDataSource.refundPayment(
-          SettlementPaymentRequest(
-            meetingId: meetingId,
-            settlementId: settlementId,
-            paymentId: paymentId,
+        _data(
+          await _settlementRemoteDataSource.refundPayment(
+            SettlementPaymentRequest(
+              meetingId: meetingId,
+              settlementId: settlementId,
+              paymentId: paymentId,
+            ),
           ),
         );
       });

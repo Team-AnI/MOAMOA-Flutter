@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
 part 'settlement_cancel_request.freezed.dart';
 part 'settlement_cancel_request.g.dart';
 

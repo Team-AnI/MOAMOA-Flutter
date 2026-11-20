@@ -1,4 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../domain/entities/settlement.dart';
+
 part 'regular_due_model.freezed.dart';
 part 'regular_due_model.g.dart';
 
@@ -20,4 +23,21 @@ abstract class RegularDueModel with _$RegularDueModel {
   }) = _RegularDueModel;
   factory RegularDueModel.fromJson(Map<String, dynamic> json) =>
       _$RegularDueModelFromJson(json);
+}
+
+extension RegularDueModelX on RegularDueModel {
+  RegularDue toEntity() => RegularDue(
+    id: regularDuesId,
+    title: title,
+    amount: amount,
+    cycle: DuesCycle.fromServer(cycleType),
+    cycleDay: cycleDay,
+    sendTime: sendTime,
+    dueDays: dueDays,
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+    isActive: isActive,
+    postNotice: postNotice,
+  );
 }

@@ -1,11 +1,11 @@
 import 'package:go_router/go_router.dart';
 
+import 'pages/regular_dues_form_page.dart';
 import 'pages/settlement_create_page.dart';
 import 'pages/settlement_detail_page.dart';
-import 'pages/settlement_list_page.dart';
-import 'pages/settlement_history_page.dart';
-import 'pages/regular_dues_form_page.dart';
 import 'pages/settlement_edit_page.dart';
+import 'pages/settlement_history_page.dart';
+import 'pages/settlement_list_page.dart';
 
 final List<RouteBase> settlementRoutes = [
   GoRoute(

@@ -1,5 +1,4 @@
 import '../../../../core/usecases/usecase.dart';
-
 import '../repositories/settlement_repository.dart';
 
 final class RefundPaymentParams extends Params {

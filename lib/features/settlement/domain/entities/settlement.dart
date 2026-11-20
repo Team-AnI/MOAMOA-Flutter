@@ -1,20 +1,20 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'settlement_status.dart';
 import 'payment_status.dart';
+import 'settlement_status.dart';
 
-export 'settlement_payment.dart';
-export 'settlement_summary.dart';
-export 'settlement_detail.dart';
 export 'create_settlement_input.dart';
+export 'dues_cycle.dart';
 export 'payment_action.dart';
 export 'payment_status.dart';
-export 'settlement_status.dart';
-
 export 'regular_due.dart';
 export 'regular_due_input.dart';
-export 'dues_cycle.dart';
+export 'settlement_detail.dart';
 export 'settlement_edit_input.dart';
+export 'settlement_payment.dart';
+export 'settlement_status.dart';
+export 'settlement_summary.dart';
+
 part 'settlement.freezed.dart';
 
 @freezed

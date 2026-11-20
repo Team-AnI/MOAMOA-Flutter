@@ -1,13 +1,3 @@
-import '../../domain/usecases/refund_payment.dart';
-import '../../domain/usecases/cancel_settlement.dart';
-import '../../domain/usecases/update_settlement.dart';
-import '../detail_cache_keys.dart';
-import '../viewmodels/regular_due_actions_view_model.dart';
-import '../../domain/usecases/delete_regular_due.dart';
-import '../../domain/usecases/update_regular_due.dart';
-import '../../domain/usecases/create_regular_due.dart';
-import '../../domain/usecases/get_regular_dues.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_provider.dart';
@@ -16,22 +6,29 @@ import '../../data/datasources/settlement_remote_data_source_impl.dart';
 import '../../data/repositories/settlement_repository_impl.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
+import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/cancel_settlement.dart';
+import '../../domain/usecases/create_regular_due.dart';
+import '../../domain/usecases/create_settlement.dart';
+import '../../domain/usecases/delete_regular_due.dart';
+import '../../domain/usecases/get_regular_dues.dart';
+import '../../domain/usecases/get_settlement.dart';
+import '../../domain/usecases/get_settlements.dart';
+import '../../domain/usecases/refund_payment.dart';
+import '../../domain/usecases/reject_payment.dart';
+import '../../domain/usecases/submit_payment.dart';
+import '../../domain/usecases/update_regular_due.dart';
+import '../../domain/usecases/update_settlement.dart';
 import '../settlement_detail_request.dart';
+import '../viewmodels/regular_due_action_state.dart';
+import '../viewmodels/regular_due_actions_view_model.dart';
 import '../viewmodels/settlement_action_state.dart';
 import '../viewmodels/settlement_actions_view_model.dart';
+
 export '../settlement_detail_request.dart';
-import '../../domain/usecases/create_settlement.dart';
-import '../../domain/usecases/get_settlements.dart';
-import '../../domain/usecases/get_settlement.dart';
-import '../../domain/usecases/submit_payment.dart';
-import '../../domain/usecases/approve_payment.dart';
-import '../../domain/usecases/reject_payment.dart';
 
 final settlementRemoteDataSourceProvider = Provider<SettlementRemoteDataSource>(
-  (ref) => SettlementRemoteDataSourceImpl(
-    dio: ref.watch(dioProvider),
-    baseUrl: const String.fromEnvironment('API_BASE_URL'),
-  ),
+  (ref) => SettlementRemoteDataSourceImpl(dio: ref.watch(dioProvider)),
 );
 final settlementRepositoryProvider = Provider<SettlementRepository>(
   (ref) => SettlementRepositoryImpl(
@@ -77,17 +74,14 @@ final settlementListProvider = FutureProvider.autoDispose
       ),
     );
 final settlementDetailProvider = FutureProvider.autoDispose
-    .family<SettlementDetail, SettlementDetailRequest>((ref, request) {
-      final keys = ref.read(settlementDetailKeysProvider);
-      keys.add(request);
-      ref.onDispose(() => keys.remove(request));
-      return ref.watch(getSettlementProvider)(
+    .family<SettlementDetail, SettlementDetailRequest>(
+      (ref, request) => ref.watch(getSettlementProvider)(
         GetSettlementParams(
           meetingId: request.meetingId,
           settlementId: request.settlementId,
         ),
-      );
-    });
+      ),
+    );
 final settlementActionsProvider = NotifierProvider.autoDispose
     .family<SettlementActionsViewModel, SettlementActionState, int>(
       (meetingId) => SettlementActionsViewModel(meetingId: meetingId),
@@ -125,13 +119,9 @@ final deleteRegularDueProvider = Provider<DeleteRegularDue>(
 );
 
 final regularDueActionsProvider = NotifierProvider.autoDispose
-    .family<RegularDueActionsViewModel, SettlementActionState, int>(
+    .family<RegularDueActionsViewModel, RegularDueActionState, int>(
       (meetingId) => RegularDueActionsViewModel(meetingId: meetingId),
     );
-
-final settlementDetailKeysProvider = Provider<DetailCacheKeys>(
-  (ref) => DetailCacheKeys(),
-);
 
 final updateSettlementProvider = Provider<UpdateSettlement>(
   (ref) => UpdateSettlementImpl(

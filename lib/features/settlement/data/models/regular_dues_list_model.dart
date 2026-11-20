@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'regular_due_model.dart';
+
 part 'regular_dues_list_model.freezed.dart';
 part 'regular_dues_list_model.g.dart';
 

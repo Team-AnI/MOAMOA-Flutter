@@ -15,6 +15,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SettlementActionState {
   bool get isSubmitting;
+  SettlementAction? get action;
+  int? get settlementId;
+  int? get createdSettlementId;
+  ApiException? get failure;
 
   /// Create a copy of SettlementActionState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,15 +36,28 @@ mixin _$SettlementActionState {
         (other.runtimeType == runtimeType &&
             other is SettlementActionState &&
             (identical(other.isSubmitting, isSubmitting) ||
-                other.isSubmitting == isSubmitting));
+                other.isSubmitting == isSubmitting) &&
+            (identical(other.action, action) || other.action == action) &&
+            (identical(other.settlementId, settlementId) ||
+                other.settlementId == settlementId) &&
+            (identical(other.createdSettlementId, createdSettlementId) ||
+                other.createdSettlementId == createdSettlementId) &&
+            (identical(other.failure, failure) || other.failure == failure));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSubmitting);
+  int get hashCode => Object.hash(
+    runtimeType,
+    isSubmitting,
+    action,
+    settlementId,
+    createdSettlementId,
+    failure,
+  );
 
   @override
   String toString() {
-    return 'SettlementActionState(isSubmitting: $isSubmitting)';
+    return 'SettlementActionState(isSubmitting: $isSubmitting, action: $action, settlementId: $settlementId, createdSettlementId: $createdSettlementId, failure: $failure)';
   }
 }
 
@@ -51,7 +68,15 @@ abstract mixin class $SettlementActionStateCopyWith<$Res> {
     $Res Function(SettlementActionState) _then,
   ) = _$SettlementActionStateCopyWithImpl;
   @useResult
-  $Res call({bool isSubmitting});
+  $Res call({
+    bool isSubmitting,
+    SettlementAction? action,
+    int? settlementId,
+    int? createdSettlementId,
+    ApiException? failure,
+  });
+
+  $ApiExceptionCopyWith<$Res>? get failure;
 }
 
 /// @nodoc
@@ -66,15 +91,51 @@ class _$SettlementActionStateCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? isSubmitting = null}) {
+  $Res call({
+    Object? isSubmitting = null,
+    Object? action = freezed,
+    Object? settlementId = freezed,
+    Object? createdSettlementId = freezed,
+    Object? failure = freezed,
+  }) {
     return _then(
       SettlementActionState(
         isSubmitting: null == isSubmitting
             ? _self.isSubmitting
             : isSubmitting // ignore: cast_nullable_to_non_nullable
                   as bool,
+        action: freezed == action
+            ? _self.action
+            : action // ignore: cast_nullable_to_non_nullable
+                  as SettlementAction?,
+        settlementId: freezed == settlementId
+            ? _self.settlementId
+            : settlementId // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        createdSettlementId: freezed == createdSettlementId
+            ? _self.createdSettlementId
+            : createdSettlementId // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        failure: freezed == failure
+            ? _self.failure
+            : failure // ignore: cast_nullable_to_non_nullable
+                  as ApiException?,
       ),
     );
+  }
+
+  /// Create a copy of SettlementActionState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ApiExceptionCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+      return null;
+    }
+
+    return $ApiExceptionCopyWith<$Res>(_self.failure!, (value) {
+      return _then(_self.copyWith(failure: value));
+    });
   }
 }
 
@@ -171,13 +232,26 @@ extension SettlementActionStatePatterns on SettlementActionState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(bool isSubmitting)? $default, {
+    TResult Function(
+      bool isSubmitting,
+      SettlementAction? action,
+      int? settlementId,
+      int? createdSettlementId,
+      ApiException? failure,
+    )?
+    $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _SettlementActionState() when $default != null:
-        return $default(_that.isSubmitting);
+        return $default(
+          _that.isSubmitting,
+          _that.action,
+          _that.settlementId,
+          _that.createdSettlementId,
+          _that.failure,
+        );
       case _:
         return orElse();
     }
@@ -198,12 +272,25 @@ extension SettlementActionStatePatterns on SettlementActionState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(bool isSubmitting) $default,
+    TResult Function(
+      bool isSubmitting,
+      SettlementAction? action,
+      int? settlementId,
+      int? createdSettlementId,
+      ApiException? failure,
+    )
+    $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SettlementActionState():
-        return $default(_that.isSubmitting);
+        return $default(
+          _that.isSubmitting,
+          _that.action,
+          _that.settlementId,
+          _that.createdSettlementId,
+          _that.failure,
+        );
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -223,12 +310,25 @@ extension SettlementActionStatePatterns on SettlementActionState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(bool isSubmitting)? $default,
+    TResult? Function(
+      bool isSubmitting,
+      SettlementAction? action,
+      int? settlementId,
+      int? createdSettlementId,
+      ApiException? failure,
+    )?
+    $default,
   ) {
     final _that = this;
     switch (_that) {
       case _SettlementActionState() when $default != null:
-        return $default(_that.isSubmitting);
+        return $default(
+          _that.isSubmitting,
+          _that.action,
+          _that.settlementId,
+          _that.createdSettlementId,
+          _that.failure,
+        );
       case _:
         return null;
     }
@@ -238,11 +338,25 @@ extension SettlementActionStatePatterns on SettlementActionState {
 /// @nodoc
 
 class _SettlementActionState implements SettlementActionState {
-  const _SettlementActionState({this.isSubmitting = false});
+  const _SettlementActionState({
+    this.isSubmitting = false,
+    this.action,
+    this.settlementId,
+    this.createdSettlementId,
+    this.failure,
+  });
 
   @override
   @JsonKey()
   final bool isSubmitting;
+  @override
+  final SettlementAction? action;
+  @override
+  final int? settlementId;
+  @override
+  final int? createdSettlementId;
+  @override
+  final ApiException? failure;
 
   /// Create a copy of SettlementActionState
   /// with the given fields replaced by the non-null parameter values.
@@ -261,15 +375,28 @@ class _SettlementActionState implements SettlementActionState {
         (other.runtimeType == runtimeType &&
             other is _SettlementActionState &&
             (identical(other.isSubmitting, isSubmitting) ||
-                other.isSubmitting == isSubmitting));
+                other.isSubmitting == isSubmitting) &&
+            (identical(other.action, action) || other.action == action) &&
+            (identical(other.settlementId, settlementId) ||
+                other.settlementId == settlementId) &&
+            (identical(other.createdSettlementId, createdSettlementId) ||
+                other.createdSettlementId == createdSettlementId) &&
+            (identical(other.failure, failure) || other.failure == failure));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSubmitting);
+  int get hashCode => Object.hash(
+    runtimeType,
+    isSubmitting,
+    action,
+    settlementId,
+    createdSettlementId,
+    failure,
+  );
 
   @override
   String toString() {
-    return 'SettlementActionState(isSubmitting: $isSubmitting)';
+    return 'SettlementActionState(isSubmitting: $isSubmitting, action: $action, settlementId: $settlementId, createdSettlementId: $createdSettlementId, failure: $failure)';
   }
 }
 
@@ -282,7 +409,16 @@ abstract mixin class _$SettlementActionStateCopyWith<$Res>
   ) = __$SettlementActionStateCopyWithImpl;
   @override
   @useResult
-  $Res call({bool isSubmitting});
+  $Res call({
+    bool isSubmitting,
+    SettlementAction? action,
+    int? settlementId,
+    int? createdSettlementId,
+    ApiException? failure,
+  });
+
+  @override
+  $ApiExceptionCopyWith<$Res>? get failure;
 }
 
 /// @nodoc
@@ -297,14 +433,50 @@ class __$SettlementActionStateCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $Res call({Object? isSubmitting = null}) {
+  $Res call({
+    Object? isSubmitting = null,
+    Object? action = freezed,
+    Object? settlementId = freezed,
+    Object? createdSettlementId = freezed,
+    Object? failure = freezed,
+  }) {
     return _then(
       _SettlementActionState(
         isSubmitting: null == isSubmitting
             ? _self.isSubmitting
             : isSubmitting // ignore: cast_nullable_to_non_nullable
                   as bool,
+        action: freezed == action
+            ? _self.action
+            : action // ignore: cast_nullable_to_non_nullable
+                  as SettlementAction?,
+        settlementId: freezed == settlementId
+            ? _self.settlementId
+            : settlementId // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        createdSettlementId: freezed == createdSettlementId
+            ? _self.createdSettlementId
+            : createdSettlementId // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        failure: freezed == failure
+            ? _self.failure
+            : failure // ignore: cast_nullable_to_non_nullable
+                  as ApiException?,
       ),
     );
+  }
+
+  /// Create a copy of SettlementActionState
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ApiExceptionCopyWith<$Res>? get failure {
+    if (_self.failure == null) {
+      return null;
+    }
+
+    return $ApiExceptionCopyWith<$Res>(_self.failure!, (value) {
+      return _then(_self.copyWith(failure: value));
+    });
   }
 }
