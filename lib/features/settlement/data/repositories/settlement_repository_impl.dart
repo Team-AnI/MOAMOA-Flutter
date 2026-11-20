@@ -3,10 +3,16 @@ import 'package:dio/dio.dart';
 import '../../../../core/errors/api_error_code.dart';
 import '../../../../core/errors/api_exception.dart';
 import '../../../../core/errors/dio_exception_mapper.dart';
+import '../../domain/entities/regular_due_update.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
 import '../datasources/settlement_remote_data_source.dart';
 import '../models/payment_action_model.dart';
+import '../models/regular_due_create_request.dart';
+import '../models/regular_due_delete_request.dart';
+import '../models/regular_due_model.dart';
+import '../models/regular_due_update_request.dart';
+import '../models/regular_dues_list_request.dart';
 import '../models/settlement_create_request.dart';
 import '../models/settlement_detail_api_request.dart';
 import '../models/settlement_detail_model.dart';
@@ -133,4 +139,77 @@ class SettlementRepositoryImpl implements SettlementRepository {
       ),
     ).toEntity(),
   );
+
+  @override
+  Future<List<RegularDue>> listRegularDues(int meetingId) => _read(() async {
+    final response = _data(
+      await _settlementRemoteDataSource.listRegularDues(
+        RegularDuesListRequest(meetingId: meetingId),
+      ),
+    );
+    return response.regularDues
+        .map((model) => model.toEntity())
+        .toList(growable: false);
+  });
+  @override
+  Future<int> createRegularDue(int meetingId, RegularDueInput input) => _read(
+    () async => _data(
+      await _settlementRemoteDataSource.createRegularDue(
+        RegularDueCreateRequest(
+          meetingId: meetingId,
+          title: input.title,
+          amount: input.amount,
+          cycleType: input.cycle.serverValue,
+          cycleDay: input.cycleDay,
+          sendTime: input.sendTime,
+          dueDays: input.dueDays,
+          bankName: input.bankName,
+          accountNumber: input.accountNumber,
+          accountHolder: input.accountHolder,
+          postNotice: input.postNotice,
+        ),
+      ),
+    ).regularDuesId,
+  );
+  @override
+  Future<bool?> updateRegularDue(
+    int meetingId,
+    int regularDuesId,
+    RegularDueUpdate changes,
+  ) => _read(
+    () async => _data(
+      await _settlementRemoteDataSource.updateRegularDue(
+        RegularDueUpdateRequest(
+          meetingId: meetingId,
+          regularDuesId: regularDuesId,
+          title: changes.title,
+          amount: changes.amount,
+          cycleType: changes.cycle?.serverValue,
+          cycleDay: changes.cycleDay,
+          sendTime: changes.sendTime,
+          dueDays: changes.dueDays,
+          bankName: changes.bankName,
+          accountNumber: changes.accountNumber,
+          accountHolder: changes.accountHolder,
+          isActive: changes.isActive,
+          postNotice: changes.postNotice,
+          applyToCurrentSettlement: changes.applyToCurrentSettlement
+              ? true
+              : null,
+        ),
+      ),
+    ).currentSettlementApplied,
+  );
+  @override
+  Future<void> deleteRegularDue(int meetingId, int regularDuesId) =>
+      _read(() async {
+        _data(
+          await _settlementRemoteDataSource.deleteRegularDue(
+            RegularDueDeleteRequest(
+              meetingId: meetingId,
+              regularDuesId: regularDuesId,
+            ),
+          ),
+        );
+      });
 }

@@ -1,6 +1,14 @@
 import 'package:dio/dio.dart';
 
 import '../models/payment_action_model.dart';
+import '../models/regular_due_create_model.dart';
+import '../models/regular_due_create_request.dart';
+import '../models/regular_due_delete_model.dart';
+import '../models/regular_due_delete_request.dart';
+import '../models/regular_due_update_model.dart';
+import '../models/regular_due_update_request.dart';
+import '../models/regular_dues_list_model.dart';
+import '../models/regular_dues_list_request.dart';
 import '../models/settlement_create_model.dart';
 import '../models/settlement_create_request.dart';
 import '../models/settlement_detail_api_request.dart';
@@ -64,6 +72,41 @@ class SettlementRemoteDataSourceImpl implements SettlementRemoteDataSource {
     '/v1/meetings/${request.meetingId}/settlements/${request.settlementId}/payments/${request.paymentId}/rejection',
     PaymentActionModel.fromJson,
     body: request.toJson(),
+  );
+
+  @override
+  Future<SettlementResponseModel<RegularDuesListModel>> listRegularDues(
+    RegularDuesListRequest request,
+  ) => _request(
+    'GET',
+    '/v1/meetings/${request.meetingId}/regular-dues',
+    RegularDuesListModel.fromJson,
+  );
+  @override
+  Future<SettlementResponseModel<RegularDueCreateModel>> createRegularDue(
+    RegularDueCreateRequest request,
+  ) => _request(
+    'POST',
+    '/v1/meetings/${request.meetingId}/regular-dues',
+    RegularDueCreateModel.fromJson,
+    body: request.toJson(),
+  );
+  @override
+  Future<SettlementResponseModel<RegularDueUpdateModel>> updateRegularDue(
+    RegularDueUpdateRequest request,
+  ) => _request(
+    'PATCH',
+    '/v1/meetings/${request.meetingId}/regular-dues/${request.regularDuesId}',
+    RegularDueUpdateModel.fromJson,
+    body: request.toJson(),
+  );
+  @override
+  Future<SettlementResponseModel<RegularDueDeleteModel>> deleteRegularDue(
+    RegularDueDeleteRequest request,
+  ) => _request(
+    'DELETE',
+    '/v1/meetings/${request.meetingId}/regular-dues/${request.regularDuesId}',
+    RegularDueDeleteModel.fromJson,
   );
 
   Future<SettlementResponseModel<T>> _request<T>(

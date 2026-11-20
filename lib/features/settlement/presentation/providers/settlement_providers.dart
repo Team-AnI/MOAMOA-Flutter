@@ -7,12 +7,18 @@ import '../../data/repositories/settlement_repository_impl.dart';
 import '../../domain/entities/settlement.dart';
 import '../../domain/repositories/settlement_repository.dart';
 import '../../domain/usecases/approve_payment.dart';
+import '../../domain/usecases/create_regular_due.dart';
 import '../../domain/usecases/create_settlement.dart';
+import '../../domain/usecases/delete_regular_due.dart';
+import '../../domain/usecases/get_regular_dues.dart';
 import '../../domain/usecases/get_settlement.dart';
 import '../../domain/usecases/get_settlements.dart';
 import '../../domain/usecases/reject_payment.dart';
 import '../../domain/usecases/submit_payment.dart';
+import '../../domain/usecases/update_regular_due.dart';
 import '../settlement_detail_request.dart';
+import '../viewmodels/regular_due_action_state.dart';
+import '../viewmodels/regular_due_actions_view_model.dart';
 import '../viewmodels/settlement_action_state.dart';
 import '../viewmodels/settlement_actions_view_model.dart';
 
@@ -76,4 +82,40 @@ final settlementDetailProvider = FutureProvider.autoDispose
 final settlementActionsProvider = NotifierProvider.autoDispose
     .family<SettlementActionsViewModel, SettlementActionState, int>(
       (meetingId) => SettlementActionsViewModel(meetingId: meetingId),
+    );
+
+final regularDuesProvider = FutureProvider.autoDispose
+    .family<List<RegularDue>, int>(
+      (ref, meetingId) => ref.watch(getRegularDuesProvider)(
+        GetRegularDuesParams(meetingId: meetingId),
+      ),
+    );
+
+final getRegularDuesProvider = Provider<GetRegularDues>(
+  (ref) => GetRegularDuesImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final createRegularDueProvider = Provider<CreateRegularDue>(
+  (ref) => CreateRegularDueImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final updateRegularDueProvider = Provider<UpdateRegularDue>(
+  (ref) => UpdateRegularDueImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final deleteRegularDueProvider = Provider<DeleteRegularDue>(
+  (ref) => DeleteRegularDueImpl(
+    settlementRepository: ref.watch(settlementRepositoryProvider),
+  ),
+);
+
+final regularDueActionsProvider = NotifierProvider.autoDispose
+    .family<RegularDueActionsViewModel, RegularDueActionState, int>(
+      (meetingId) => RegularDueActionsViewModel(meetingId: meetingId),
     );

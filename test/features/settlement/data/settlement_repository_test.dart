@@ -7,6 +7,7 @@ import 'package:moamoa/core/errors/api_error_code.dart';
 import 'package:moamoa/core/errors/api_exception.dart';
 import 'package:moamoa/features/settlement/data/datasources/settlement_remote_data_source_impl.dart';
 import 'package:moamoa/features/settlement/data/repositories/settlement_repository_impl.dart';
+import 'package:moamoa/features/settlement/domain/entities/regular_due_update.dart';
 import 'package:moamoa/features/settlement/domain/entities/settlement.dart';
 
 class _Adapter implements HttpClientAdapter {
@@ -110,6 +111,98 @@ void main() {
         'https://example.test/v1/meetings/7/settlements/40/payments/81/rejection',
       );
       expect(adapter.request!.data, {'reason': '입금 미확인'});
+    });
+  });
+
+  group('정기 회비 API', () {
+    test('정기 회비 목록을 주기와 활성 상태까지 읽는다', () async {
+      final (repository, adapter) = _repository(
+        '''{"success":true,"data":{"regularDues":[{
+      "regularDuesId":7,"title":"월 회비","amount":10000,"cycleType":"MONTHLY",
+      "cycleDay":"LAST","sendTime":"09:00","dueDays":7,
+      "bankName":"국민은행","accountNumber":"1234","accountHolder":"김모아",
+      "isActive":true,"postNotice":false
+    }]}}''',
+      );
+      final items = await repository.listRegularDues(7);
+      expect(items.single.cycle, DuesCycle.monthly);
+      expect(items.single.cycleDay, 'LAST');
+      expect(items.single.isActive, true);
+      expect(
+        adapter.request?.uri.toString(),
+        'https://example.test/v1/meetings/7/regular-dues',
+      );
+    });
+
+    test('정기 회비 생성은 1인당 금액과 반복 주기를 보낸다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"regularDuesId":7}}',
+      );
+      final id = await repository.createRegularDue(
+        7,
+        const RegularDueInput(
+          title: '월 회비',
+          amount: 10000,
+          cycle: DuesCycle.monthly,
+          cycleDay: 'LAST',
+          sendTime: '09:00',
+          dueDays: 7,
+          bankName: '국민은행',
+          accountNumber: '1234',
+          accountHolder: '김모아',
+          postNotice: false,
+        ),
+      );
+      expect(id, 7);
+      expect(adapter.request?.method, 'POST');
+      final body = adapter.request!.data as Map<String, Object?>;
+      expect(body['amount'], 10000);
+      expect(body['cycleType'], 'MONTHLY');
+      expect(body['cycleDay'], 'LAST');
+    });
+
+    test('정기 회비 수정은 기본적으로 이번 회차 적용을 요청하지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"currentSettlementApplied":null}}',
+      );
+      final applied = await repository.updateRegularDue(
+        7,
+        9,
+        const RegularDueUpdate(title: '수정한 월 회비'),
+      );
+      expect(applied, isNull);
+      expect(adapter.request?.method, 'PATCH');
+      expect(
+        (adapter.request!.data as Map<String, Object?>).containsKey(
+          'applyToCurrentSettlement',
+        ),
+        false,
+      );
+      expect(adapter.request!.data, {'title': '수정한 월 회비'});
+    });
+
+    test('정기 회비 활성 상태만 바꿀 때 기존 금액·계좌를 다시 보내지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"currentSettlementApplied":null}}',
+      );
+      await repository.updateRegularDue(
+        7,
+        9,
+        const RegularDueUpdate(isActive: false),
+      );
+      expect(adapter.request?.data, {'isActive': false});
+    });
+    test('정기 회비 삭제는 경로 ID를 본문에 섞지 않는다', () async {
+      final (repository, adapter) = _repository(
+        '{"success":true,"data":{"regularDuesId":9}}',
+      );
+      await repository.deleteRegularDue(7, 9);
+      expect(adapter.request!.method, 'DELETE');
+      expect(
+        adapter.request!.uri.toString(),
+        'https://example.test/v1/meetings/7/regular-dues/9',
+      );
+      expect(adapter.request!.data, isNull);
     });
   });
 }

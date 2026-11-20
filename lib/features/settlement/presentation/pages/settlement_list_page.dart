@@ -10,6 +10,7 @@ import '../../../group/presentation/providers/group_providers.dart';
 import '../../../group/presentation/widgets/group_icon.dart';
 import '../../domain/entities/settlement.dart';
 import '../providers/settlement_providers.dart';
+import '../settlement_format.dart';
 import '../settlement_list_display.dart';
 import '../widgets/settlement_bottom_tabs.dart';
 import '../widgets/settlement_status_counts.dart';
@@ -92,6 +93,7 @@ class _SettlementListContent extends ConsumerWidget {
               ),
               const SizedBox(height: 28),
             ],
+            _RegularDueSection(meetingId: meetingId, isAdmin: _isAdmin),
             Row(
               children: [
                 Expanded(child: Text(_heading, style: MoaText.titleM)),
@@ -301,6 +303,141 @@ class _SettlementRow extends StatelessWidget {
             const SizedBox(height: 3),
             const GroupIcon('chevron', size: 14),
           ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _RegularDueSection extends ConsumerWidget {
+  const _RegularDueSection({required this.meetingId, required this.isAdmin});
+  final int meetingId;
+  final bool isAdmin;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dues = ref.watch(regularDuesProvider(meetingId));
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text('정기 회비', style: MoaText.titleM)),
+            if (isAdmin)
+              TextButton(
+                onPressed: () =>
+                    context.push('/meetings/$meetingId/regular-dues/new'),
+                child: const Text('등록'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        switch (dues) {
+          AsyncLoading() => const Center(child: CircularProgressIndicator()),
+          AsyncError() => _ActionCard(
+            title: '정기 회비를 불러오지 못했어요',
+            subtitle: '눌러서 다시 시도해 주세요',
+            onTap: () => ref.invalidate(regularDuesProvider(meetingId)),
+          ),
+          AsyncData(value: final items) => Column(
+            children: [
+              if (items.isEmpty)
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('등록된 정기 회비가 없어요.'),
+                ),
+              for (final item in items)
+                _RegularDueRow(
+                  due: item,
+                  onTap: isAdmin
+                      ? () => context.push(
+                          '/meetings/$meetingId/regular-dues/${item.id}/edit',
+                        )
+                      : null,
+                ),
+            ],
+          ),
+        },
+      ],
+    );
+  }
+}
+
+class _RegularDueRow extends StatelessWidget {
+  const _RegularDueRow({required this.due, this.onTap});
+  final RegularDue due;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Material(
+      color: MoaColors.fill,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: MoaColors.accentTint,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.autorenew,
+                      color: MoaColors.accentText,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(due.title, style: MoaText.titleS),
+                        const SizedBox(height: 3),
+                        Text(due.rowSubtitle, style: MoaText.sub),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: due.isActive
+                          ? MoaColors.accentTint
+                          : MoaColors.raised,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      due.activeLabel,
+                      style: MoaText.captionStrong.copyWith(
+                        color: due.isActive
+                            ? MoaColors.accentText
+                            : MoaColors.textTertiary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (onTap != null) ...[
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Expanded(child: Text(due.dueDaysLabel, style: MoaText.sub)),
+                    Text('설정', style: MoaText.sub),
+                    const Icon(Icons.chevron_right, size: 18),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     ),

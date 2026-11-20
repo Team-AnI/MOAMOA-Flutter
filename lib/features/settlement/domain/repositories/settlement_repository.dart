@@ -1,3 +1,4 @@
+import '../entities/regular_due_update.dart';
 import '../entities/settlement.dart';
 
 abstract interface class SettlementRepository {
@@ -16,4 +17,12 @@ abstract interface class SettlementRepository {
     int paymentId, {
     String? reason,
   });
+  Future<List<RegularDue>> listRegularDues(int meetingId);
+  Future<int> createRegularDue(int meetingId, RegularDueInput input);
+  Future<bool?> updateRegularDue(
+    int meetingId,
+    int regularDuesId,
+    RegularDueUpdate changes,
+  );
+  Future<void> deleteRegularDue(int meetingId, int regularDuesId);
 }

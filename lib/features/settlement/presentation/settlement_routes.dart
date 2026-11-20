@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import 'pages/regular_dues_form_page.dart';
 import 'pages/settlement_create_page.dart';
 import 'pages/settlement_detail_page.dart';
 import 'pages/settlement_history_page.dart';
@@ -12,6 +13,26 @@ final List<RouteBase> settlementRoutes = [
         _validId(state.pathParameters['meetingId']) ? null : '/groups',
     builder: (_, state) => SettlementHistoryPage(
       meetingId: int.parse(state.pathParameters['meetingId']!),
+    ),
+  ),
+  GoRoute(
+    path: '/meetings/:meetingId/regular-dues/new',
+    redirect: (_, state) =>
+        _validId(state.pathParameters['meetingId']) ? null : '/groups',
+    builder: (_, state) => RegularDuesFormPage(
+      meetingId: int.parse(state.pathParameters['meetingId']!),
+    ),
+  ),
+  GoRoute(
+    path: '/meetings/:meetingId/regular-dues/:regularDuesId/edit',
+    redirect: (_, state) =>
+        _validId(state.pathParameters['meetingId']) &&
+            _validId(state.pathParameters['regularDuesId'])
+        ? null
+        : '/groups',
+    builder: (_, state) => RegularDuesFormPage(
+      meetingId: int.parse(state.pathParameters['meetingId']!),
+      regularDuesId: int.parse(state.pathParameters['regularDuesId']!),
     ),
   ),
   GoRoute(
